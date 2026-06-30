@@ -2873,7 +2873,7 @@
                 <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importSaveFile(this)">
             </div>
             <div style="font-size: 11px; color: #999; margin-top: 8px;">
-                v<span id="settings-version">1.2.6</span> | 通过文件导入导出，可在任何浏览器中保存进度
+                v<span id="settings-version">1.0.0</span> | 通过文件导入导出，可在任何浏览器中保存进度
             </div>
         </div>
         
@@ -9326,7 +9326,7 @@ function calculateOfflineReward() {
         // 宠物每日饲料消耗（离线期间也要扣）
         if (game.pets) {
             for (const [petId, pet] of Object.entries(game.pets)) {
-                if (!pet || !pet.owned) continue;
+                if (!pet || typeof pet !== 'object') continue;
                 const petData = PET_DATA[petId];
                 if (!petData) continue;
                 const foodCost = petData.dailyFoodCost || 0;
@@ -9716,93 +9716,6 @@ function calculateOfflineReward() {
             // 天气变化
             if (typeof changeWeather === 'function') {
                 changeWeather();
-            }
-            
-            // 银行利息（离线每日结算）
-            if (game.bankDeposit > 0 && typeof BANK_DATA !== 'undefined' && BANK_DATA.interestRate) {
-                const interest = Math.floor(game.bankDeposit * BANK_DATA.interestRate);
-                if (interest > 0) game.bankDeposit += interest;
-            }
-            
-            // 健康恢复（离线每日）
-            let totalHealthRegen = game.healthRegenBonus || 0;
-            const npcHealthRegen = (typeof getNpcBonus === 'function') ? getNpcBonus('healthRegen') : 0;
-            if (npcHealthRegen > 0) totalHealthRegen += Math.floor(npcHealthRegen);
-            if (totalHealthRegen > 0 && game.health < game.maxHealth) {
-                game.health = Math.min(game.maxHealth, game.health + totalHealthRegen);
-            }
-            
-            // 邻里互助（离线每日）
-            if (game.neighborHelp) {
-                for (const [helpId, active] of Object.entries(game.neighborHelp)) {
-                    if (!active) continue;
-                    const help = NEIGHBOR_HELP_DATA[helpId];
-                    if (!help) continue;
-                    if (helpId === 'waterHelp' && game.day % 3 === 0) {
-                        game.fields.forEach(field => {
-                            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-                                field.lastWaterDay = game.day;
-                            }
-                        });
-                    }
-                    if (helpId === 'weedHelp' && game.day % 5 === 0) {
-                        game.fields.forEach(field => {
-                            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-                                field.lastWeedDay = game.day;
-                            }
-                        });
-                    }
-                    if (helpId === 'feedHelp' && game.animals) {
-                        for (const animals of Object.values(game.animals)) {
-                            animals.forEach(animal => { animal.weight = Math.min(100, (animal.weight || 50) + 2); });
-                        }
-                    }
-                }
-            }
-            
-            // harvester 自动收割（离线每日）
-            if (game.automation && game.automation.harvester > 0) {
-                const level = game.automation.harvester;
-                const maxHarvest = level * 2;
-                let harvested = 0;
-                game.fields.forEach(field => {
-                    if (harvested >= maxHarvest && level < 3) return;
-                    if (field.crop && field.stage === 'mature') {
-                        const cropData = CROP_DATA[field.crop];
-                        if (cropData) {
-                            let yield_ = cropData.baseYield;
-                            const levelBonus = { '新手档': 1.0, '进阶档': 1.15, '精英档': 1.35, '终极档': 1.6 };
-                            yield_ *= levelBonus[field.level] || 1.0;
-                            yield_ = Math.max(0, Math.floor(yield_ * (0.9 + Math.random() * 0.2)));
-                            const cropType = cropData.type;
-                            if (cropType === 'rice') game.crops.rice = (game.crops.rice || 0) + yield_;
-                            else if (cropType === 'sweet') game.crops.sweet = (game.crops.sweet || 0) + yield_;
-                            else if (cropType === 'wheat') game.crops.wheat = (game.crops.wheat || 0) + yield_;
-                            else if (cropType === 'corn') game.crops.corn = (game.crops.corn || 0) + yield_;
-                            else if (cropType === 'soybean') game.crops.soybean = (game.crops.soybean || 0) + yield_;
-                            else if (cropType === 'potato') game.crops.potato = (game.crops.potato || 0) + yield_;
-                            else if (cropType === 'peanut') game.crops.peanut = (game.crops.peanut || 0) + yield_;
-                            else if (cropType === 'pepper') game.crops.pepper = (game.crops.pepper || 0) + yield_;
-                            else if (cropType === 'cabbage') game.crops.cabbage = (game.crops.cabbage || 0) + yield_;
-                            else if (cropType === 'radish') game.crops.radish = (game.crops.radish || 0) + yield_;
-                            else if (cropType === 'eggplant') game.crops.eggplant = (game.crops.eggplant || 0) + yield_;
-                            else if (cropType === 'garlic') game.crops.garlic = (game.crops.garlic || 0) + yield_;
-                            field.crop = null; field.stage = 'idle'; field.step = 0; field.growProgress = 0;
-                            field.plantedDay = 0; field.prepared = true; field.fertilized = false;
-                            field.fertilizerType = null;
-                            harvested++;
-                        }
-                    }
-                });
-            }
-            
-            // 宠物重置每日互动（离线）
-            if (game.pets) {
-                Object.keys(game.pets).forEach(k => {
-                    if (!game.pets[k]) return;
-                    game.pets[k].petToday = 0;
-                    game.pets[k].fedToday = false;
-                });
             }
         }
     }
@@ -17773,7 +17686,7 @@ function showGiftModal(npcKey) {
     // 显示弹窗
     const modalTitle = document.getElementById('modal-title');
     const modalContent = document.getElementById('modal-content');
-    const modalOverlay = document.getElementById('modal-overlay');
+    const modalOverlay1 = document.getElementById('modal-overlay');
     const modalButtons = document.querySelector('.modal-buttons');
     const modalConfirm = document.getElementById('modal-confirm');
     const modalSecondary = document.querySelector('.modal-btn.secondary');
@@ -17784,7 +17697,7 @@ function showGiftModal(npcKey) {
     if (modalConfirm) modalConfirm.style.display = 'none';
     if (modalSecondary) modalSecondary.textContent = '关闭';
     closeAllModals(); // 打开弹窗前关闭其他弹窗
-    const modalOverlay = document.getElementById('modal-overlay');
+    const modalOverlay2 = document.getElementById('modal-overlay');
     if (modalOverlay) modalOverlay.style.display = 'flex';
 }
 
@@ -20481,7 +20394,7 @@ function openFeedbackModal() {
     `;
     showModal('提交反馈', html, submitFeedbackEmail, '取消');
     setTimeout(() => {
-        const modalOverlay = document.getElementById('modal-overlay');
+        const modalOverlay3 = document.getElementById('modal-overlay');
         if (!modalOverlay) return;
         const btnContainer = modalOverlay.querySelector('.modal-buttons');
         if (!btnContainer) return;
@@ -21438,7 +21351,7 @@ function showQuestRewardModal() {
     if (modalTitle) modalTitle.textContent = '任务奖励';
     if (modalContent) modalContent.innerHTML = html;
     closeAllModals(); // 打开弹窗前关闭其他弹窗
-    const modalOverlay = document.getElementById('modal-overlay');
+    const modalOverlay4 = document.getElementById('modal-overlay');
     if (modalOverlay) modalOverlay.style.display = 'flex';
 }
 
