@@ -410,20 +410,6 @@
             padding: 10px 0;
         }
 
-        .sidebar-tab {
-            padding: 12px 15px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-        }
-
-        .sidebar-tab:hover {
-            background: #7a6448;
-        }
-
         .sidebar-tab.active {
             background: #6b563f;
             border-left-color: #f39c12;
@@ -668,6 +654,7 @@
             overflow: hidden;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             border: 1px solid rgba(0,0,0,0.04);
+            contain: layout paint;
         }
         
         .field-card:hover {
@@ -1083,7 +1070,9 @@
             animation: popIn 0.3s ease;
             position: relative;
             cursor: grab;
+            -webkit-user-select: none;
             user-select: none;
+            contain: layout paint;
         }
         
         .modal.dragging {
@@ -1097,6 +1086,7 @@
             margin-bottom: 15px;
             color: #5d4e37;
             cursor: grab;
+            -webkit-user-select: none;
             user-select: none;
             padding: 4px 20px;
             margin: -10px -20px 15px -20px;
@@ -1927,7 +1917,8 @@
             .sidebar-tab {
                 flex-shrink: 0;
                 font-size: 12px;
-                padding: 8px 12px;
+                padding: 12px 16px;
+                min-height: 44px;
                 border-left: none;
                 border-bottom: 3px solid transparent;
                 scroll-snap-align: center;
@@ -1982,8 +1973,9 @@
                 margin-left: 4px;
             }
             .speed-btn-top {
-                padding: 3px 6px;
-                font-size: 11px;
+                padding: 8px 12px;
+                font-size: 12px;
+                min-height: 44px;
             }
             .speed-control {
                 margin-left: 6px;
@@ -3071,7 +3063,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.2.8';
+const GAME_VERSION = '1.2.9';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3881,7 +3873,8 @@ function startMusic() {
 // ========== 音量控制 ==========
 
 function setMusicVolume(value) {
-    musicVolume = parseFloat(value);
+    const parsedMusic = parseFloat(value);
+    musicVolume = isNaN(parsedMusic) ? 0.3 : Math.max(0, Math.min(1, parsedMusic));
     if (musicGainNode) {
         musicGainNode.gain.value = musicVolume;
     }
@@ -3889,7 +3882,8 @@ function setMusicVolume(value) {
 }
 
 function setSfxVolume(value) {
-    sfxVolume = parseFloat(value);
+    const parsedSfx = parseFloat(value);
+    sfxVolume = isNaN(parsedSfx) ? 0.5 : Math.max(0, Math.min(1, parsedSfx));
     if (sfxGainNode) {
         sfxGainNode.gain.value = sfxVolume;
     }
@@ -10272,13 +10266,13 @@ function fixSaveData() {
     if (!game) return;
     
     // 补全核心游戏状态（极旧存档可能缺少这些基础字段）
-    if (game.mode === undefined) game.mode = 'normal';
-    if (game.money === undefined) game.money = 1500;
+    if (game.mode == null) game.mode = 'normal';
+    if (game.money == null) game.money = 1500;
     if (game.maxHealth === undefined) game.maxHealth = 200;
     if (game.health === undefined) game.health = Math.floor(game.maxHealth * 0.6);
     if (game.maxStamina === undefined) game.maxStamina = 200;
     if (game.stamina === undefined) game.stamina = Math.floor(game.maxStamina * 0.5);
-    if (game.day === undefined) game.day = 1;
+    if (game.day == null) game.day = 1;
     if (game.totalDay === undefined) game.totalDay = game.day || 1;
     if (game.season === undefined) game.season = 'spring';
     if (game.time === undefined) game.time = 6;
@@ -10505,7 +10499,7 @@ function fixSaveData() {
             const pet = game.pets[key];
             if (pet && typeof pet === 'object' && pet.have === false) {
                 // 旧版未领养格式，删除该键
-                delete game.pets[key];
+                game.pets[key] = null;
             } else if (pet && typeof pet === 'object' && pet.have === true) {
                 // 旧版已领养格式，确保新字段存在
                 if (pet.affection === undefined) pet.affection = pet.friendship || 10;
@@ -10577,7 +10571,7 @@ function fixSaveData() {
                     field.crop = newCropId;
                 } else {
                     // 尝试找到该作物类型的第一个可用季节
-                    const availableKeys = if (!cropType) return []; Object.keys(CROP_DATA).filter(k => k.startsWith(cropType + '_'));
+                    const availableKeys = cropType ? Object.keys(CROP_DATA).filter(k => k.startsWith(cropType + '_')) : [];
                     if (availableKeys.length > 0) {
                         field.crop = availableKeys[0];
                     } else {
@@ -10729,6 +10723,47 @@ function fixSaveData() {
     if (!game.achievements) game.achievements = {};
     if (!game.milestones) game.milestones = {};
     if (!game.neighborHelp) game.neighborHelp = {};
+    
+    // 清理 NaN/Infinity，防止污染计算与UI渲染
+    function sanitizeNumber(val, fallback) {
+        return (typeof val === 'number' && isFinite(val) && !isNaN(val)) ? val : fallback;
+    }
+    game.money = sanitizeNumber(game.money, 1500);
+    game.health = sanitizeNumber(game.health, 100);
+    game.stamina = sanitizeNumber(game.stamina, 100);
+    game.bankDeposit = sanitizeNumber(game.bankDeposit, 0);
+    game.reputation = sanitizeNumber(game.reputation, 0);
+    game.day = sanitizeNumber(game.day, 1);
+    game.totalDay = sanitizeNumber(game.totalDay, game.day || 1);
+    game.time = sanitizeNumber(game.time, 6);
+    game.disasterRate = sanitizeNumber(game.disasterRate, 1.0);
+    game.storageCapacity = sanitizeNumber(game.storageCapacity, 2000);
+    game.maxHealth = sanitizeNumber(game.maxHealth, 200);
+    game.maxStamina = sanitizeNumber(game.maxStamina, 200);
+    game.researchPoints = sanitizeNumber(game.researchPoints, 0);
+    game.sellBonus = sanitizeNumber(game.sellBonus, 0);
+    game.pestReduction = sanitizeNumber(game.pestReduction, 0);
+    game.mood = sanitizeNumber(game.mood, 50);
+    game.tickCount = sanitizeNumber(game.tickCount, 0);
+    if (game.stats) {
+        game.stats.totalHarvest = sanitizeNumber(game.stats.totalHarvest, 0);
+        game.stats.totalSell = sanitizeNumber(game.stats.totalSell, 0);
+        game.stats.totalEarned = sanitizeNumber(game.stats.totalEarned, 0);
+        game.stats.totalFish = sanitizeNumber(game.stats.totalFish, 0);
+        game.stats.totalForage = sanitizeNumber(game.stats.totalForage, 0);
+        game.stats.totalProcessed = sanitizeNumber(game.stats.totalProcessed, 0);
+        game.stats.totalCooked = sanitizeNumber(game.stats.totalCooked, 0);
+        game.stats.totalDigs = sanitizeNumber(game.stats.totalDigs, 0);
+        game.stats.daysPlayed = sanitizeNumber(game.stats.daysPlayed, 0);
+    }
+    if (game.fields) {
+        game.fields.forEach(field => {
+            field.growProgress = sanitizeNumber(field.growProgress, 0);
+            field.yieldLoss = sanitizeNumber(field.yieldLoss, 0);
+            field.yieldBonus = sanitizeNumber(field.yieldBonus, 0);
+            field.step = sanitizeNumber(field.step, 0);
+        });
+    }
 }
 
 function loadGame() {
@@ -10825,7 +10860,7 @@ function exportSave() {
             // 最终降级：显示弹窗让用户手动复制
             showModal(
                 '导出存档',
-                '<div style="text-align:left;"><p>请长按复制以下存档代码，保存到备忘录或微信收藏：</p><textarea readonly style="width:100%;height:120px;margin-top:10px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:12px;resize:none;" onclick="this.select()">' + saveData.substring(0, 500) + '...</textarea><p style="font-size:11px;color:#999;margin-top:8px;">💡 提示：点击文本框即可全选，然后复制</p></div>',
+                '<div style="text-align:left;"><p>请长按复制以下存档代码，保存到备忘录或微信收藏：</p><textarea readonly style="width:100%;height:120px;margin-top:10px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:12px;resize:none;" onclick="this.select()">' + escapeHtml(saveData.substring(0, 500)) + '...</textarea><p style="font-size:11px;color:#999;margin-top:8px;">💡 提示：点击文本框即可全选，然后复制</p></div>',
                 null
             );
         }
@@ -10855,7 +10890,7 @@ function doImportSave() {
     try {
         const data = JSON.parse(text);
         // 验证基本结构（修复了原来的逻辑bug：!data.money === undefined 永远为false）
-        if (!data || data.day === undefined || data.money === undefined) {
+        if (!data || data.day == null || data.money == null) {
             showToast('存档格式不正确！缺少关键字段', 'bad');
             return;
         }
@@ -10933,7 +10968,8 @@ function setGameSpeed(speed) {
 function loadGameSpeed() {
     const saved = safeStorageGet('farm_game_speed');
     if (saved) {
-        gameSpeed = parseInt(saved, 10) || 1;
+        const parsedSpeed = parseInt(saved, 10);
+    gameSpeed = isNaN(parsedSpeed) ? 1 : parsedSpeed;
     }
     // 更新所有时间流速按钮的选中状态
     setTimeout(() => {
@@ -11004,7 +11040,9 @@ function startGameLoop() {
     }
     // 2秒 = 2游戏小时，24秒 = 1游戏天（比原来120秒/天快5倍）
     const baseInterval = 2000;
-    const interval = baseInterval / Math.max(1, gameSpeed || 1);
+    let safeSpeed = Math.max(1, Math.min(100, parseFloat(gameSpeed) || 1));
+    if (!isFinite(safeSpeed) || safeSpeed <= 0) safeSpeed = 1;
+    const interval = baseInterval / safeSpeed;
     gameLoopInterval = setInterval(gameTick, interval);
     updateUI();
 }
@@ -11098,7 +11136,8 @@ function gameTick() {
     if (game.time >= 24) {
         game.time = 6;
         game.day++;
-        game.totalDay = (game.totalDay || game.day) + 1;
+        const baseDay = (game.totalDay || game.day || 1);
+    game.totalDay = baseDay + 1;
         advanceSeason(); // 先检查季节变化
         onNewDay();      // 然后执行新的一天逻辑
     }
@@ -11650,7 +11689,8 @@ function changeWeather() {
         const wData = WEATHER_DATA[game.weather];
         const minD = wData.duration[0];
         const maxD = wData.duration[1];
-        game.weatherDuration = minD + Math.floor(Math.random() * (maxD - minD + 1));
+        const weatherRange = Math.max(0, maxD - minD);
+    game.weatherDuration = minD + Math.floor(Math.random() * (weatherRange + 1));
     }
 }
 
@@ -12691,7 +12731,7 @@ function triggerRandomEvent() {
     // 1. 先尝试触发故事事件
     const availableStoryEvents = STORY_EVENTS.filter(e => {
         // 天数检查（使用totalDay累计天数，避免季节切换重置）
-        if (e.minDay !== undefined && e.minDay !== null && game.totalDay <= e.minDay) return false;
+        if (e.minDay != null && game.totalDay <= e.minDay) return false;
         if (e.maxDay !== undefined && e.maxDay !== null && game.totalDay >= e.maxDay) return false;
         
         // 季节检查
@@ -12953,9 +12993,9 @@ function triggerNightEvent() {
     addLog(`🌙 ${selectedEvent.name}：${selectedEvent.desc}`, selectedEvent.type === 'good' ? 'good' : (selectedEvent.type === 'bad' ? 'bad' : 'info'));
     
     // 显示弹窗
-    showModal(selectedEvent.name, selectedEvent.desc + '<br><br>' + 
+    showModal(selectedEvent.name, escapeHtml(selectedEvent.desc) + '<br><br>' + 
         '<span style="color: ' + (selectedEvent.type === 'good' ? '#27ae60' : '#e74c3c') + ';">' +
-        selectedEvent.effectText + '</span>');
+        escapeHtml(selectedEvent.effectText) + '</span>');
     
     saveGame();
     updateUI();
@@ -12985,9 +13025,9 @@ function showEventModal(event) {
     
     modalCallback = null; // 清除之前的回调，避免事件弹窗触发旧的确认回调
     let html = `<div style="text-align: center; margin-bottom: 20px;">`;
-    html += `<div style="font-size: 60px; margin-bottom: 10px;">${event.emoji}</div>`;
-    html += `<div style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: ${event.type === 'disaster' ? '#e74c3c' : event.type === 'gain' ? '#27ae60' : '#f39c12'};">${event.name}</div>`;
-    html += `<div style="font-size: 14px; line-height: 1.8; color: #666; margin-bottom: 20px;">${event.description}</div>`;
+    html += `<div style="font-size: 60px; margin-bottom: 10px;">${escapeHtml(event.emoji)}</div>`;
+    html += `<div style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: ${event.type === 'disaster' ? '#e74c3c' : event.type === 'gain' ? '#27ae60' : '#f39c12'};">${escapeHtml(event.name)}</div>`;
+    html += `<div style="font-size: 14px; line-height: 1.8; color: #666; margin-bottom: 20px;">${escapeHtml(event.description)}</div>`;
     html += `</div>`;
     
     // 显示弹窗
@@ -13275,7 +13315,8 @@ function handleEventChoice(optionIdx) {
         while (game.time >= 24) {
             game.time -= 24;
             game.day += 1;
-            game.totalDay = (game.totalDay || game.day) + 1;
+            const baseDay = (game.totalDay || game.day || 1);
+    game.totalDay = baseDay + 1;
             // 触发完整的新的一天逻辑
             onNewDay();
         }
@@ -14170,26 +14211,6 @@ function renderQuestBox() {
     }
     
     // 里程碑进度（已移除，避免占用过多空间）
-    /*
-    if (typeof MILESTONE_DATA !== 'undefined' && game.milestones) {
-        const totalMilestones = Object.keys(MILESTONE_DATA).length;
-        const completedMilestones = Object.keys(game.milestones).filter(k => game.milestones[k]).length;
-        
-        html += `
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 13px; color: #f1c40f; font-weight: bold; margin-bottom: 6px;">
-                    🏆 里程碑成就
-                </div>
-                <div style="font-size: 12px; color: #bbb; margin-bottom: 4px;">
-                    已达成 ${completedMilestones} / ${totalMilestones} 个
-                </div>
-                <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                    <div style="height: 100%; width: ${(completedMilestones / totalMilestones * 100)}%; background: linear-gradient(90deg, #f1c40f, #e67e22); border-radius: 3px;"></div>
-                </div>
-            </div>
-        `;
-    }
-    */
     
     html += '</div>';
     return html;
@@ -14397,8 +14418,8 @@ function toggleQuestList() {
 function renderFieldCard(field, idx) {
     let html = '<div class="field-card">';
     html += `<div class="field-header">
-                <span class="field-name">第${field.id}块田</span>
-                <span class="field-level">${field.level}</span>
+                <span class="field-name">第${escapeHtml(field.id)}块田</span>
+                <span class="field-level">${escapeHtml(field.level)}</span>
              </div>`;
 
     if (field.stage === 'idle' || !field.crop) {
@@ -14430,7 +14451,7 @@ function renderFieldCard(field, idx) {
             });
             
             // 计算当前季节剩余天数（每季28天）
-            const daysLeftInSeason = 28 - game.day;
+            const daysLeftInSeason = Math.max(0, 28 - game.day);
             
             if (availableCrops.length === 0) {
                 html += '<div style="text-align: center; padding: 15px;">';
@@ -14990,7 +15011,8 @@ function goSleep() {
     
     // 增加天数（跳过当天）
     game.day++;
-    game.totalDay = (game.totalDay || game.day) + 1;
+    const baseDay = (game.totalDay || game.day || 1);
+    game.totalDay = baseDay + 1;
     
     // 检查季节切换
     advanceSeason();
@@ -15592,7 +15614,8 @@ function renderProcessingPanel() {
             
             // 获取加工坊等级（安全访问数组，防止越界）
             const buildingLevel = game.builtProcessing[key] || 1;
-            const dailyCapacity = item.levelCapacity && item.levelCapacity[buildingLevel - 1] !== undefined ? item.levelCapacity[buildingLevel - 1] : item.dailyCapacity;
+            const levelIndex = Math.max(0, buildingLevel - 1);
+    const dailyCapacity = item.levelCapacity && item.levelCapacity[levelIndex] !== undefined ? item.levelCapacity[levelIndex] : item.dailyCapacity;
             const levelStaminaCost = item.levelStaminaCost && item.levelStaminaCost[buildingLevel - 1] !== undefined ? item.levelStaminaCost[buildingLevel - 1] : item.staminaCost;
             const canUpgrade = buildingLevel < 3 && item.upgradeCost && item.upgradeCost[buildingLevel - 1] !== undefined;
             const upgradeBtn = canUpgrade ? 
@@ -20428,6 +20451,12 @@ function checkQuests() {
     }
 }
 
+// 简单的 HTML 转义，防止文本中包含的 HTML 标签被解析
+function escapeHtml(str) {
+    if (typeof str !== 'string') return String(str);
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // ==================== 日志系统 ====================
 function addLog(text, type = 'normal') {
     const logEl = document.getElementById('event-log');
@@ -20444,10 +20473,6 @@ function addLog(text, type = 'normal') {
     let timeStr = `[第${game.totalDay || game.day}天]`;
     let icon = '';
     
-    // 简单的 HTML 转义，防止文本中包含的 HTML 标签被解析
-    function escapeHtml(str) {
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
     const safeText = escapeHtml(text);
     
     switch(type) {
@@ -20526,7 +20551,7 @@ function openFeedbackModal() {
                 </label>
             </div>
             <div style="font-size:11px;color:#999;margin-bottom:12px;text-align:left;background:#f5f0e6;padding:8px;border-radius:4px;">
-                📊 当前游戏状态：第${(game && game.day) || '?'}天 | ${(game && game.money) || 0}元 | ${(game && game.season) || '?'} | ${(game && game.mode) || 'normal'}模式
+                📊 当前游戏状态：第${(game && game.day) || '?'}天 | ${(game && game.money) || 0}元 | ${escapeHtml((game && game.season) || '?')} | ${escapeHtml((game && game.mode) || 'normal')}模式
             </div>
             <div style="background:#fff8e1;border:1px solid #ffe0b2;border-radius:8px;padding:10px;margin-bottom:12px;text-align:left;">
                 <div style="font-size:12px;color:#e65100;margin-bottom:6px;"><strong>💡 如何反馈最方便？</strong></div>
@@ -21638,7 +21663,8 @@ function mineLayer(layerKey) {
     
     for (const yieldData of layer.yields) {
         if (Math.random() < yieldData.probability) {
-            const amount = Math.floor(Math.random() * (yieldData.max - yieldData.min + 1)) + yieldData.min;
+            const range = Math.max(0, yieldData.max - yieldData.min);
+    const amount = Math.floor(Math.random() * (range + 1)) + yieldData.min;
             if (amount > 0) {
                 game.mineInventory[yieldData.ore] = (game.mineInventory[yieldData.ore] || 0) + amount;
                 totalOres.push({ ore: yieldData.ore, amount });
@@ -21653,7 +21679,7 @@ function mineLayer(layerKey) {
     game.mineStats.totalDigs = (game.mineStats.totalDigs || 0) + 1;
     if (!game.stats) game.stats = {};
     game.stats.totalDigs = game.mineStats.totalDigs;
-    const layerIndex = parseInt(layerKey.replace('layer', '')) - 1;
+    const layerIndex = parseInt(layerKey.replace('layer', ''), 10) - 1;
     if (layerIndex > (game.mineStats.deepestLayer || 0)) {
         game.mineStats.deepestLayer = layerIndex;
     }
