@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(function() { try { if (typeof selectMode === 'function') { selectMode('easy'); return {selectMode: 'easy called'}; } return {error: 'selectMode not found'}; } catch(e) { return {error: e.message}; } })()"},"session":"farm-game"}

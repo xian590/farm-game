@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(()=>{const allTabs=Array.from(document.querySelectorAll('.sidebar-tab'));const skillTab=allTabs.find(e=>e.textContent.includes('技能树'));if(skillTab){skillTab.click();return 'clicked_skill_tab';}return 'not_found';})()"
-  },
-  "session": "farm-game"
-}

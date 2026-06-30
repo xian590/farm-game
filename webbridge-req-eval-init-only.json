@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(function() { try { var story = document.getElementById('story-container'); if (story) story.style.display = 'none'; initGame('easy'); var g = window.game; return {gameExists: !!g, gameKeys: g ? Object.keys(g).slice(0,20) : null, day: g ? g.day : null}; } catch(e) { return {error: e.message}; } })()"},"session":"farm-game"}

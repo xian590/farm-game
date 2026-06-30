@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { const story = document.getElementById(\"story-container\"); if (story) { story.style.display = \"none\"; return \"hidden_story\"; } else { return \"no_story_container\"; } })()"},"session":"farm-game"}

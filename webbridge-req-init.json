@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { initGame('normal'); var sel = document.getElementById('select-container'); if (sel) sel.style.display = 'none'; showGame(); startGameLoop(); saveGame(); return 'game initialized normal mode'; })()"}, "session": "farm-game"}

@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(()=>{const text=document.body.innerText;return JSON.stringify({text});})()"
-  },
-  "session": "farm-game"
-}

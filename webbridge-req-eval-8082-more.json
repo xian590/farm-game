@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { const save = JSON.parse(localStorage.getItem('farm_game_save_v1')); return JSON.stringify({ milestones: save.milestones, eventHistory: save.eventHistory, dailyEvents: save.dailyEvents, events: save.events, npcFavor: save.npcFavor, saveSize: localStorage.getItem('farm_game_save_v1').length }); })()"},"session":"farm-game"}

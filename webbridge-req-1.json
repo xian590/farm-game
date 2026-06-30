@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"location.href = 'http://127.0.0.1:8082/farm_game.html?t=' + Date.now()"},"session":"farm-test"}

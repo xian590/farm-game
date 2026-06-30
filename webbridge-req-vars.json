@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(()=>{const allVars=Object.keys(window).filter(k=>{try{const v=window[k];return v!==null&&v!==undefined&&typeof v==='object'&&k!=='window'&&k!=='document'&&k!=='location'&&k!=='navigator'&&k!=='localStorage'&&k!=='sessionStorage';}catch(e){return false;}}).slice(0,50);const candidates=allVars.filter(k=>{try{const v=window[k];return v&&typeof v==='object'&&((v.day!==undefined&&v.season!==undefined)||(v.money!==undefined&&v.health!==undefined));}catch(e){return false;}});return JSON.stringify({candidates,allVars:allVars.slice(0,30)});})()"
-  },
-  "session": "farm-game"
-}

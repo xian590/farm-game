@@ -1,8 +1,0 @@
-{
-  "action": "screenshot",
-  "args": {
-    "format": "png",
-    "path": "C:\\Users\\Administrator\\Documents\\kimi\\workspace\\farm_game_screenshot.png"
-  },
-  "session": "farm-game"
-}

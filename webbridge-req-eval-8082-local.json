@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { const allKeys = Object.keys(localStorage); const data = {}; allKeys.forEach(k => { try { data[k] = localStorage.getItem(k).slice(0,500); } catch(e) { data[k] = 'error'; } }); return JSON.stringify({ keys: allKeys, data: data }); })()"},"session":"farm-game"}

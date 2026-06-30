@@ -17,6 +17,8 @@
             color: #333;
             overflow: hidden;
             height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         body.select-open {
             overflow: auto;
@@ -1935,10 +1937,22 @@
                 border-bottom-color: #f39c12;
             }
             .sidebar-quests {
-                display: none;
+                display: block;
+                max-height: 70px;
+                padding: 6px 8px;
+                font-size: 11px;
+                border-top: 1px solid #f39c12;
+            }
+            .sidebar-quests-title {
+                font-size: 11px;
+                margin-bottom: 4px;
+            }
+            .sidebar-quests-list .quest-item {
+                padding: 2px 4px;
+                font-size: 10px;
             }
             .content-panel {
-                padding: 10px 10px 80px 10px;
+                padding: 10px 10px 180px 10px;
                 order: 1;
             }
             .mode-cards {
@@ -1992,7 +2006,7 @@
                 padding-bottom: 60px;
             }
             body {
-                overflow: auto;
+                overflow: hidden;
                 -webkit-overflow-scrolling: touch;
             }
             /* 移动端顶部状态栏精简 */
@@ -2002,7 +2016,8 @@
                 top: 0;
                 z-index: 100;
             }
-            .stats-right .stat-item:nth-child(n+4) {
+            .stats-right .stat-item:nth-child(4),
+            .stats-right .stat-item:nth-child(5) {
                 display: none;
             }
             /* 移动端背包适配 */
@@ -2057,13 +2072,43 @@
                 bottom: 50px;
                 left: 0;
                 right: 0;
-                z-index: 999;
+                z-index: 1001;
                 max-height: 120px;
+                min-height: 80px;
                 border-radius: 12px 12px 0 0;
+                transition: height 0.3s ease, max-height 0.3s ease;
+                padding-bottom: env(safe-area-inset-bottom, 0);
             }
-            .modal-content {
+            .event-log.expanded {
+                max-height: 60vh;
+            }
+            .modal {
                 width: 95%;
                 max-height: 85vh;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+            }
+            .modal-content {
+                flex: 1;
+                overflow-y: auto;
+                min-height: 0;
+            }
+            .modal-buttons {
+                flex-shrink: 0;
+                padding-top: 15px;
+                border-top: 1px solid #eee;
+            }
+            /* 移动端快捷操作按钮调整位置 */
+            .quick-actions {
+                bottom: 65px;
+                left: 8px;
+                z-index: 2002;
+            }
+            .quick-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
             }
         }
     
@@ -2532,7 +2577,7 @@
 
 <!-- 开头故事 -->
 <div id="story-container" onclick="nextStoryPage()">
-    <div id="file-warning" style="display:none;position:fixed;top:0;left:0;right:0;background:#e74c3c;color:#fff;padding:12px 16px;font-size:14px;text-align:center;z-index:9999;">
+    <div id="file-warning" style="display:none;position:fixed;top:0;left:0;right:0;background:#e74c3c;color:#fff;padding:12px 16px;font-size:14px;text-align:center;z-index:100;">
         ⚠️ 检测到通过文件直接打开游戏，存档刷新后会丢失！<br>
         <span style="font-size:13px;opacity:0.9;">请通过 http://localhost:8082/farm_game.html 访问，才能正常保存和放置挂机</span>
     </div>
@@ -2828,7 +2873,7 @@
                 <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importSaveFile(this)">
             </div>
             <div style="font-size: 11px; color: #999; margin-top: 8px;">
-                v${GAME_VERSION} | 通过文件导入导出，可在任何浏览器中保存进度
+                v<span id="settings-version">1.2.6</span> | 通过文件导入导出，可在任何浏览器中保存进度
             </div>
         </div>
         
@@ -2942,12 +2987,18 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.0.0';
+const GAME_VERSION = '1.2.6';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
+let lastErrorLogTime = 0;
 window.addEventListener('error', function(e) {
     try {
+        // 限制写入频率：每5秒最多写入一次，避免频繁I/O导致卡顿
+        const now = Date.now();
+        if (now - lastErrorLogTime < 5000) return;
+        lastErrorLogTime = now;
+        
         const logs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
         logs.push({
             time: new Date().toLocaleString(),
@@ -2956,8 +3007,8 @@ window.addEventListener('error', function(e) {
             line: e.lineno,
             col: e.colno
         });
-        // 最多保留50条
-        if (logs.length > 50) logs.shift();
+        // 最多保留20条
+        if (logs.length > 20) logs.shift();
         localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(logs));
     } catch(err) { console.error('全局错误日志记录失败', err); }
 });
@@ -3228,6 +3279,7 @@ const NPC_VOICE_CONFIG = {
 function playNpcChatter(npcKey, duration = 1.2) {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     const config = NPC_VOICE_CONFIG[npcKey] || NPC_VOICE_CONFIG['wangcunzhang'];
     const startTime = audioCtx.currentTime;
@@ -3283,6 +3335,7 @@ const SING_MELODIES = {
 function playStorySinging(emotion = 'normal', speed = 1.0) {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     const melody = SING_MELODIES[emotion] || SING_MELODIES['normal'];
     const startTime = audioCtx.currentTime;
@@ -3323,6 +3376,7 @@ function playStorySinging(emotion = 'normal', speed = 1.0) {
 function playPageFlipSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     playNoise(0.15, 0.025, 2000);
 }
 
@@ -3537,20 +3591,24 @@ function playTabSound() {
     initAudio();
     if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(sfxGainNode);
-    
-    osc.type = 'sine';
-    osc.frequency.value = 1200;
-    
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.08);
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(sfxGainNode);
+        
+        osc.type = 'sine';
+        osc.frequency.value = 1200;
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+    } catch (e) {
+        console.error('playTabSound error', e);
+    }
 }
 
 // ========== 背景音乐系统 ==========
@@ -3638,7 +3696,38 @@ function stopMusic() {
     stopRainSound();
 }
 
-// 平滑切换BGM
+// 页面可见性变化：后台时暂停BGM，前台时恢复，避免setTimeout堆积
+let bgmPausedByVisibility = false;
+let bgmResumeName = null;
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // 页面进入后台：暂停BGM
+        if (musicIsPlaying && currentBgm) {
+            bgmPausedByVisibility = true;
+            bgmResumeName = currentBgm;
+            stopMusic();
+        }
+    } else {
+        // 页面回到前台：恢复BGM
+        if (bgmPausedByVisibility && bgmResumeName && musicEnabled) {
+            bgmPausedByVisibility = false;
+            startBgm(bgmResumeName, false);
+            bgmResumeName = null;
+        }
+    }
+});
+
+// 页面可见性变化：后台暂停游戏循环，前台恢复，节省电量并避免离线收益计算异常
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden && gameLoopInterval && !gamePaused) {
+        // 页面进入后台：暂停游戏循环（但保持gamePaused状态，避免UI显示暂停）
+        clearInterval(gameLoopInterval);
+        gameLoopInterval = null;
+    } else if (!document.hidden && !gameLoopInterval && !gamePaused) {
+        // 页面回到前台：恢复游戏循环
+        startGameLoop();
+    }
+});
 function switchBgm(bgmName) {
     if (currentBgm === bgmName) return;
     if (!musicEnabled) {
@@ -3772,29 +3861,62 @@ function selectBgmStyle(styleName, clickedBtn) {
 function toggleSettings() {
     playClickSound();
     const overlay = document.getElementById('settings-overlay');
+    if (!overlay) {
+        console.error('设置面板元素未找到');
+        return;
+    }
     if (overlay.style.display === 'flex') {
         closeSettings();
     } else {
-        document.getElementById('music-toggle').checked = musicEnabled;
-        document.getElementById('sfx-toggle').checked = sfxEnabled;
-        document.getElementById('music-volume').value = musicVolume;
-        document.getElementById('sfx-volume').value = sfxVolume;
+        const musicToggle = document.getElementById('music-toggle');
+        const sfxToggle = document.getElementById('sfx-toggle');
+        const musicVolume = document.getElementById('music-volume');
+        const sfxVolume = document.getElementById('sfx-volume');
+        if (musicToggle) musicToggle.checked = musicEnabled;
+        if (sfxToggle) sfxToggle.checked = sfxEnabled;
+        if (musicVolume) musicVolume.value = window.musicVolume || 0.3;
+        if (sfxVolume) sfxVolume.value = window.sfxVolume || 0.5;
         
         // 同步BGM风格选中状态
         const savedStyle = safeStorageGet('farm_bgm_style') || currentBgm || 'game';
         document.querySelectorAll('.bgm-btn').forEach(btn => {
             btn.classList.remove('active');
-            if (btn.getAttribute('onclick').includes(savedStyle)) {
+            const onclickAttr = btn.getAttribute('onclick');
+            if (onclickAttr && onclickAttr.includes(savedStyle)) {
                 btn.classList.add('active');
             }
         });
         
+        closeAllModals(); // 打开设置前关闭其他弹窗
         overlay.style.display = 'flex';
+        
+        // 动态设置版本号
+        const versionEl = document.getElementById('settings-version');
+        if (versionEl && typeof GAME_VERSION !== 'undefined') {
+            versionEl.textContent = GAME_VERSION;
+        }
     }
 }
 
 function closeSettings() {
-    document.getElementById('settings-overlay').style.display = 'none';
+    const overlay = document.getElementById('settings-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+// ==================== 弹窗统一管理：防止叠加 ====================
+function closeAllModals() {
+    const overlays = [
+        'modal-overlay',
+        'settings-overlay',
+        'backpack-overlay',
+        'countdown-overlay',
+        'error-log-overlay'
+    ];
+    overlays.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    // 注意：不恢复默认按钮结构，因为每个弹窗函数会自己管理按钮
 }
 
 // 加载音频设置
@@ -8672,6 +8794,7 @@ function getRandomFlavor(type) {
 let game = null;
 let storyPage = 0;
 let modalCallback = null;
+let modalClosing = false; // 防止弹窗重复关闭
 let currentMainTab = 'fields'; // 当前主标签
 let currentShopTab = 'seeds'; // 当前商店子标签：默认显示种子（玩家刚进来买种子最重要）
 
@@ -8799,7 +8922,8 @@ window.onload = function() {
 
 // ==================== 开头故事 ====================
 function showStory() {
-    document.getElementById('story-container').style.display = 'flex';
+    const storyContainer = document.getElementById('story-container');
+    if (storyContainer) storyContainer.style.display = 'flex';
     storyPage = 0;
     updateStoryPage();
     
@@ -8812,29 +8936,37 @@ function showStory() {
 
 function updateStoryPage() {
     const page = STORY_PAGES[storyPage];
-    document.getElementById('story-emoji').textContent = page.emoji;
-    document.getElementById('story-title').textContent = page.title;
+    const storyEmoji = document.getElementById('story-emoji');
+    const storyTitle = document.getElementById('story-title');
+    const storyText = document.getElementById('story-text');
+    if (storyEmoji) storyEmoji.textContent = page.emoji;
+    if (storyTitle) storyTitle.textContent = page.title;
     
     let html = '';
     page.texts.forEach(t => {
         html += `<div class="story-text">${t}</div>`;
     });
-    document.getElementById('story-text').innerHTML = html;
+    if (storyText) storyText.innerHTML = html;
 
     // 背景色
     const container = document.getElementById('story-container');
-    if (page.warm) {
-        container.classList.add('warm');
-    } else {
-        container.classList.remove('warm');
+    if (container) {
+        if (page.warm) {
+            container.classList.add('warm');
+        } else {
+            container.classList.remove('warm');
+        }
     }
 
     // 动画
     const pageEl = document.getElementById('story-page');
-    pageEl.classList.remove('active');
-    setTimeout(() => {
-        pageEl.classList.add('active');
-    }, 50);
+    if (pageEl) {
+        pageEl.classList.remove('active');
+        setTimeout(() => {
+            const pageEl2 = document.getElementById('story-page');
+            if (pageEl2) pageEl2.classList.add('active');
+        }, 50);
+    }
 }
 
 function nextStoryPage() {
@@ -8868,7 +9000,8 @@ function nextStoryPage() {
 
 function skipStory() {
     playClickSound();
-    document.getElementById('story-container').style.display = 'none';
+    const storyContainer = document.getElementById('story-container');
+    if (storyContainer) storyContainer.style.display = 'none';
     
     // 检查是否有存档，有存档直接加载，不进入模式选择
     const save = localStorage.getItem('farm_game_save_v1');
@@ -8884,7 +9017,8 @@ function skipStory() {
 
 // ==================== 开局选择 ====================
 function showSelectMode() {
-    document.getElementById('select-container').style.display = 'flex';
+    const selectContainer = document.getElementById('select-container');
+    if (selectContainer) selectContainer.style.display = 'flex';
     document.body.classList.add('select-open');
 }
 
@@ -8896,7 +9030,8 @@ function selectMode(mode) {
         () => {
             initGame(mode);
             closeModal();
-            document.getElementById('select-container').style.display = 'none';
+            const selectContainer = document.getElementById('select-container');
+            if (selectContainer) selectContainer.style.display = 'none';
             document.body.classList.remove('select-open');
             showGame();
             startGameLoop();
@@ -8930,6 +9065,7 @@ function initGame(mode) {
         season: 'spring',
         time: 6, // 小时
         disasterRate: cfg.disasterRate,
+        needsRender: true,
         fields: [
             { 
                 id: 1, 
@@ -9040,7 +9176,6 @@ function initGame(mode) {
         dailyActivities: {}, // 今日已完成的日常活动次数
         npcs: {},
         friendship: {},
-        lastChatDay: {},
         // 宠物初始未领养，需要通过事件触发
         pets: {},
         petEvents: {
@@ -9060,44 +9195,14 @@ function initGame(mode) {
             totalDigs: 0,
             daysPlayed: 0
         },
-        achievements: {}, // { achievementId: { unlocked: true, unlockDay: 123 } }
-        tutorialStep: 0,
-        hiredWorker: null, // 当前雇佣的村民
-        hireStartDay: 0, // 雇佣开始的日期
-        lastWorkerWaterDay: 0, // 雇佣的村民上次浇水的日期
-        lastWorkerWeedDay: 0, // 雇佣的村民上次除草的日期
-        pestReduction: 0,
-        quests: (() => {
-            const all = {};
-            Object.keys(QUEST_DATA || {}).forEach(id => { all[id] = false; });
-            return all;
-        })(),
-        milestones: {}, // 已达成的里程碑
-        currentEvent: null, // 当前事件
-        eventHistory: [], // 事件历史
-        nextSeasonBonus: 0, // 下一季产量加成（瑞雪兆丰年）
-        currentSeasonBonus: 0, // 当前季产量加成
-        sellBonus: 0, // 售卖价格加成（收购商、粮价上涨等）
-        weather: 'sunny', // 天气
-        weatherDuration: 0, // 天气剩余天数
-        justStarted: true,  // 标记刚进入游戏，跳过第一次事件触发
-        unlockedTabs: {}, // 已解锁的页签（永久解锁）
-        pendingQuestRewards: [], // 待领取的任务奖励队列
-        metSunmiaoqing: false, // 是否遇到过孙妙青
-        metChenyang: false, // 是否遇到过陈阳
-        metLinxiaoyu: false, // 是否遇到过林小雨
-        hasBookBonus: false, // 林老师借书加成
-        hasMedicineKit: false, // 药包加成
-        zhaoBonusNoticed: false, // 赵老板优惠已通知
-        neighborHelp: {}, // 已激活的邻里互助 { helpId: true }
-        marketVisited: false, // 今日是否已赶集
-        villageProjects: {}, // 村长合作项目
-        farmStay: { level: 0, guests: 0, reputation: 0 }, // 农家乐
-        farmStayDishes: {}, // 农家乐招牌菜
-        animals: {}, // 畜牧
         animalProducts: {}, // 动物产品
-        orchard: [], // 果园
-        fruits: {}, // 水果库存
+        // 注意：以下字段已在上面 "新增：缺失字段补全" 部分定义，不要重复
+        // 包括但不限于：quests, milestones, currentEvent, eventHistory, nextSeasonBonus, 
+        // currentSeasonBonus, sellBonus, weather, weatherDuration, justStarted, unlockedTabs,
+        // pendingQuestRewards, metSunmiaoqing, metChenyang, metLinxiaoyu, hasBookBonus,
+        // hasMedicineKit, zhaoBonusNoticed, neighborHelp, marketVisited, villageProjects,
+        // farmStay, farmStayDishes, animals, orchard, fruits, achievements, tutorialStep,
+        // hiredWorker, hireStartDay, lastWorkerWaterDay, lastWorkerWeedDay, pestReduction
     };
 
     saveGame();
@@ -9157,8 +9262,6 @@ function calculateOfflineReward() {
     // 确保totalDay有初始值，避免fallback时因game.day已改变而计算错误
     if (!game.totalDay) game.totalDay = game.day;
     game.time += remainingHours;
-    game.day += gameDays;
-    game.totalDay += gameDays;
     
     // 处理跨天
     let daysPassed = 0;
@@ -9269,7 +9372,7 @@ function calculateOfflineReward() {
         }
         // 检查季节变化（28天/季）
         if (game.day > 28) {
-            advanceSeason();
+            advanceSeason(true);
         }
         // 推进加工任务
         if (game.processingJobs && game.processingJobs.length > 0) {
@@ -9384,12 +9487,57 @@ function calculateOfflineReward() {
         }
     }
     
-    // 修复P0-4：处理gameDays的剩余天数（之前被完全跳过，导致离线多天时吃饭、季节变化、作物生长等不执行）
+    // 修复P0：统一离线每日逻辑。for循环中每天执行完整的离线模拟（与while循环保持一致）
     if (gameDays > 0) {
         for (let d = 0; d < gameDays; d++) {
             game.day++;
-            game.totalDay = (game.totalDay || game.day) + 1;
-            // 每天吃饭
+            game.totalDay = (game.totalDay !== undefined ? game.totalDay : game.day) + 1;
+            
+            // 重置每日操作
+            game.dailyActions = {exercise: 0, chat: 0, fish: 0, read: 0, foraging: 0, sideHustle: 0};
+            game.dailyProcessed = {};
+            
+            // 村民每天帮你干活（浇水除草）并扣日薪
+            if (game.hiredWorker && NPC_DATA[game.hiredWorker]) {
+                const npc = NPC_DATA[game.hiredWorker];
+                let actualWage = npc.dailyWage;
+                const workerDiscount = (typeof getTechBonus === 'function') ? getTechBonus('workerDiscount') : 0;
+                if (workerDiscount > 0) {
+                    actualWage = Math.floor(npc.dailyWage * (1 - workerDiscount));
+                }
+                if (game.money >= actualWage) {
+                    game.money -= actualWage;
+                } else {
+                    // 钱不够发工资，自动解雇
+                    game.hiredWorker = null;
+                    game.hireStartDay = 0;
+                    game.lastWorkerWaterDay = 0;
+                    game.lastWorkerWeedDay = 0;
+                }
+                // 只有没解雇才干活
+                if (game.hiredWorker) {
+                    const workerDays = game.day - (game.lastWorkerWaterDay || game.day - 1);
+                    if (npc.skills && npc.skills.includes('water') && workerDays >= 1) {
+                        game.fields.forEach(field => {
+                            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                                field.lastWaterDay = game.day;
+                            }
+                        });
+                        game.lastWorkerWaterDay = game.day;
+                    }
+                    const weedDays = game.day - (game.lastWorkerWeedDay || game.day - 3);
+                    if (npc.skills && npc.skills.includes('weed') && weedDays >= 3) {
+                        game.fields.forEach(field => {
+                            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                                field.lastWeedDay = game.day;
+                            }
+                        });
+                        game.lastWorkerWeedDay = game.day;
+                    }
+                }
+            }
+            
+            // 每天吃饭扣钱（低保机制：没钱时不扣健康体力）
             const mealCost = 15;
             if (game.money >= mealCost) {
                 game.money -= mealCost;
@@ -9398,36 +9546,270 @@ function calculateOfflineReward() {
             } else {
                 game.money += 15; // 低保救济粮
             }
-            // 每天扣日租（已改为季租，由advanceSeason统一扣除）
-            // const houseData = HOUSE_DATA[game.house];
-            // if (houseData && houseData.rent > 0) {
-            //     const dailyRent = Math.ceil(houseData.rent / 7);
-            //     if (game.money >= dailyRent) {
-            //         game.money -= dailyRent;
-            //     }
-            // }
-            // 季节变化检查
-            if (game.day > 28) {
-                advanceSeason();
+            
+            // 宠物每日饲料消耗（离线期间也要扣）
+            if (game.pets) {
+                for (const [petId, pet] of Object.entries(game.pets)) {
+                    if (!pet || typeof pet !== 'object') continue;
+                    const petData = PET_DATA[petId];
+                    if (!petData) continue;
+                    const foodCost = petData.dailyFoodCost || 0;
+                    if (foodCost > 0) {
+                        if (game.money >= foodCost) {
+                            game.money -= foodCost;
+                        } else {
+                            game.money = 0;
+                        }
+                    }
+                }
             }
+            
+            // 自动化设备离线运行
+            if (game.automation) {
+                for (const [deviceId, level] of Object.entries(game.automation)) {
+                    if (level <= 0) continue;
+                    const device = AUTOMATION_DATA[deviceId];
+                    if (!device) continue;
+                    
+                    if (deviceId === 'sprinkler') {
+                        const maxFields = level;
+                        game.fields.forEach((field, idx) => {
+                            if (idx < maxFields && field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                                field.lastWaterDay = game.day;
+                            }
+                        });
+                    }
+                    if (deviceId === 'weeder') {
+                        game.fields.forEach(field => {
+                            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                                field.lastWeedDay = game.day;
+                            }
+                        });
+                    }
+                    if (deviceId === 'autoFeeder' && game.animals) {
+                        for (const animals of Object.values(game.animals)) {
+                            animals.forEach(animal => {
+                                animal.weight = Math.min(100, (animal.weight || 50) + 1);
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // 检查季节变化（28天/季）
+            if (game.day > 28) {
+                advanceSeason(true);
+            }
+            
+            // 推进加工任务
+            if (game.processingJobs && game.processingJobs.length > 0) {
+                updateProcessingJobs();
+            }
+            
             // 作物生长
             if (typeof growCrops === 'function') {
                 growCrops();
             }
-            // 体力恢复
-            const regenRate = getStaminaRegenRate();
-            game.stamina = Math.min(game.maxStamina, game.stamina + regenRate * 8);
+            
+            // 离线自动收获成熟作物
+            game.fields.forEach((field) => {
+                if (field.crop && field.stage === 'mature') {
+                    const cropData = CROP_DATA[field.crop];
+                    let yield_ = cropData.baseYield;
+                    const levelBonus = { '新手档': 1.0, '进阶档': 1.15, '精英档': 1.35, '终极档': 1.6 };
+                    yield_ *= levelBonus[field.level] || 1.0;
+                    const cropSkillLevel = (game.skills.cropFamiliarity && game.skills.cropFamiliarity.level) || 0;
+                    if (cropSkillLevel > 0) yield_ *= (1 + cropSkillLevel * 0.03);
+                    if (field.fertilized) {
+                        yield_ *= (field.fertilizerType === 'organic' ? 1.08 : 1.05);
+                    }
+                    const daysSinceWeed = game.day - field.lastWeedDay;
+                    if (daysSinceWeed < 7) yield_ *= 1.08;
+                    const daysSinceWater = game.day - field.lastWaterDay;
+                    if (daysSinceWater < 3) yield_ *= 1.05;
+                    if (cropData.type === 'sweet') {
+                        if (field.turnedVine1) yield_ *= 1.05;
+                        if (field.turnedVine2) yield_ *= 1.05;
+                    }
+                    if (field.yieldBonus) yield_ *= (1 + field.yieldBonus);
+                    if (field.yieldLoss) yield_ *= Math.max(0.1, 1 - field.yieldLoss);
+                    if (game.currentSeasonBonus) yield_ *= (1 + game.currentSeasonBonus);
+                    yield_ *= (0.9 + Math.random() * 0.2);
+                    yield_ = Math.max(0, Math.floor(yield_));
+                    
+                    const storageCap = game.storageCapacity || 2000;
+                    const currentStorage = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
+                    let actualYield = yield_;
+                    if (currentStorage + yield_ > storageCap) {
+                        actualYield = Math.max(0, storageCap - currentStorage);
+                    }
+                    
+                    // 入库
+                    const cropType = cropData.type;
+                    if (cropType === 'rice') game.crops.rice = (game.crops.rice || 0) + actualYield;
+                    else if (cropType === 'sweet') game.crops.sweet = (game.crops.sweet || 0) + actualYield;
+                    else if (cropType === 'wheat') game.crops.wheat = (game.crops.wheat || 0) + actualYield;
+                    else if (cropType === 'corn') game.crops.corn = (game.crops.corn || 0) + actualYield;
+                    else if (cropType === 'soybean') game.crops.soybean = (game.crops.soybean || 0) + actualYield;
+                    else if (cropType === 'potato') game.crops.potato = (game.crops.potato || 0) + actualYield;
+                    else if (cropType === 'peanut') game.crops.peanut = (game.crops.peanut || 0) + actualYield;
+                    else if (cropType === 'pepper') game.crops.pepper = (game.crops.pepper || 0) + actualYield;
+                    else if (cropType === 'cabbage') game.crops.cabbage = (game.crops.cabbage || 0) + actualYield;
+                    else if (cropType === 'radish') game.crops.radish = (game.crops.radish || 0) + actualYield;
+                    else if (cropType === 'eggplant') game.crops.eggplant = (game.crops.eggplant || 0) + actualYield;
+                    else if (cropType === 'garlic') game.crops.garlic = (game.crops.garlic || 0) + actualYield;
+                    
+                    if (!game.stats) game.stats = {};
+                    game.stats.totalHarvest = (game.stats.totalHarvest || 0) + actualYield;
+                    
+                    // 经验
+                    let cropExp = 6;
+                    const npcCropExpBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('cropExpGain') : 0;
+                    if (npcCropExpBonus > 0) cropExp = Math.floor(cropExp * (1 + npcCropExpBonus));
+                    if (typeof addSkillExp === 'function') addSkillExp('cropFamiliarity', cropExp);
+                    
+                    const rpGain = Math.floor(actualYield / 100);
+                    if (rpGain > 0) game.researchPoints += rpGain;
+                    
+                    // 重置田地
+                    field.crop = null;
+                    field.stage = 'idle';
+                    field.step = 0;
+                    field.growProgress = 0;
+                    field.plantedDay = 0;
+                    field.prepared = true;
+                    field.fertilized = false;
+                    field.fertilizerType = null;
+                    field.yieldLoss = 0;
+                    field.yieldBonus = 0;
+                    field.turnedVine1 = false;
+                    field.turnedVine2 = false;
+                }
+            });
+            
+            // 离线自动种植
+            game.fields.forEach((field) => {
+                if (field.stage === 'idle' && field.prepared) {
+                    const seasonCrops = Object.keys(CROP_DATA).filter(key => CROP_DATA[key].season === game.season);
+                    for (const cropKey of seasonCrops) {
+                        if (game.seeds[cropKey] > 0) {
+                            game.seeds[cropKey]--;
+                            field.crop = cropKey;
+                            field.stage = 'seedling';
+                            field.step = 1;
+                            field.growProgress = 0;
+                            field.plantedDay = game.day;
+                            field.lastWaterDay = game.day;
+                            field.lastWeedDay = game.day;
+                            field.fertilized = false;
+                            field.fertilizerType = null;
+                            field.yieldLoss = 0;
+                            field.yieldBonus = 0;
+                            field.turnedVine1 = false;
+                            field.turnedVine2 = false;
+                            break;
+                        }
+                    }
+                }
+            });
+            
+            // 天气变化
+            if (typeof changeWeather === 'function') {
+                changeWeather();
+            }
+            
+            // 银行利息（离线每日结算）
+            if (game.bankDeposit > 0 && typeof BANK_DATA !== 'undefined' && BANK_DATA.interestRate) {
+                const interest = Math.floor(game.bankDeposit * BANK_DATA.interestRate);
+                if (interest > 0) game.bankDeposit += interest;
+            }
+            
+            // 健康恢复（离线每日）
+            let totalHealthRegen = game.healthRegenBonus || 0;
+            const npcHealthRegen = (typeof getNpcBonus === 'function') ? getNpcBonus('healthRegen') : 0;
+            if (npcHealthRegen > 0) totalHealthRegen += Math.floor(npcHealthRegen);
+            if (totalHealthRegen > 0 && game.health < game.maxHealth) {
+                game.health = Math.min(game.maxHealth, game.health + totalHealthRegen);
+            }
+            
+            // 邻里互助（离线每日）
+            if (game.neighborHelp) {
+                for (const [helpId, active] of Object.entries(game.neighborHelp)) {
+                    if (!active) continue;
+                    const help = NEIGHBOR_HELP_DATA[helpId];
+                    if (!help) continue;
+                    if (helpId === 'waterHelp' && game.day % 3 === 0) {
+                        game.fields.forEach(field => {
+                            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                                field.lastWaterDay = game.day;
+                            }
+                        });
+                    }
+                    if (helpId === 'weedHelp' && game.day % 5 === 0) {
+                        game.fields.forEach(field => {
+                            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                                field.lastWeedDay = game.day;
+                            }
+                        });
+                    }
+                    if (helpId === 'feedHelp' && game.animals) {
+                        for (const animals of Object.values(game.animals)) {
+                            animals.forEach(animal => { animal.weight = Math.min(100, (animal.weight || 50) + 2); });
+                        }
+                    }
+                }
+            }
+            
+            // harvester 自动收割（离线每日）
+            if (game.automation && game.automation.harvester > 0) {
+                const level = game.automation.harvester;
+                const maxHarvest = level * 2;
+                let harvested = 0;
+                game.fields.forEach(field => {
+                    if (harvested >= maxHarvest && level < 3) return;
+                    if (field.crop && field.stage === 'mature') {
+                        const cropData = CROP_DATA[field.crop];
+                        if (cropData) {
+                            let yield_ = cropData.baseYield;
+                            const levelBonus = { '新手档': 1.0, '进阶档': 1.15, '精英档': 1.35, '终极档': 1.6 };
+                            yield_ *= levelBonus[field.level] || 1.0;
+                            yield_ = Math.max(0, Math.floor(yield_ * (0.9 + Math.random() * 0.2)));
+                            const cropType = cropData.type;
+                            if (cropType === 'rice') game.crops.rice = (game.crops.rice || 0) + yield_;
+                            else if (cropType === 'sweet') game.crops.sweet = (game.crops.sweet || 0) + yield_;
+                            else if (cropType === 'wheat') game.crops.wheat = (game.crops.wheat || 0) + yield_;
+                            else if (cropType === 'corn') game.crops.corn = (game.crops.corn || 0) + yield_;
+                            else if (cropType === 'soybean') game.crops.soybean = (game.crops.soybean || 0) + yield_;
+                            else if (cropType === 'potato') game.crops.potato = (game.crops.potato || 0) + yield_;
+                            else if (cropType === 'peanut') game.crops.peanut = (game.crops.peanut || 0) + yield_;
+                            else if (cropType === 'pepper') game.crops.pepper = (game.crops.pepper || 0) + yield_;
+                            else if (cropType === 'cabbage') game.crops.cabbage = (game.crops.cabbage || 0) + yield_;
+                            else if (cropType === 'radish') game.crops.radish = (game.crops.radish || 0) + yield_;
+                            else if (cropType === 'eggplant') game.crops.eggplant = (game.crops.eggplant || 0) + yield_;
+                            else if (cropType === 'garlic') game.crops.garlic = (game.crops.garlic || 0) + yield_;
+                            field.crop = null; field.stage = 'idle'; field.step = 0; field.growProgress = 0;
+                            field.plantedDay = 0; field.prepared = true; field.fertilized = false;
+                            field.fertilizerType = null;
+                            harvested++;
+                        }
+                    }
+                });
+            }
+            
+            // 宠物重置每日互动（离线）
+            if (game.pets) {
+                Object.keys(game.pets).forEach(k => {
+                    if (!game.pets[k]) return;
+                    game.pets[k].petToday = 0;
+                    game.pets[k].fedToday = false;
+                });
+            }
         }
     }
     
-    // 处理季节变化（28天/季）
+    // 处理季节变化（兜底，确保game.day不超过28）
     while (game.day > 28) {
-        advanceSeason();
-    }
-    
-    // 作物生长（剩余小时）
-    if (typeof growCrops === 'function') {
-        growCrops();
+        advanceSeason(true);
     }
     
     // 推进加工任务（剩余小时）
@@ -9435,7 +9817,7 @@ function calculateOfflineReward() {
         updateProcessingJobs();
     }
     
-    // 体力恢复
+    // 体力恢复（一次性按实际离线小时计算，避免重复）
     const regenRate = getStaminaRegenRate();
     const totalRegen = actualGameHours * regenRate;
     game.stamina = Math.min(game.maxStamina, game.stamina + totalRegen);
@@ -9622,90 +10004,18 @@ function showOfflineReward(reward) {
 
 
 function doExercise() {
-    // 统一使用 exerciseToday 计数器（与UI和按钮状态一致）
-    if (!game.exerciseToday) game.exerciseToday = { day: 0, count: 0 };
-    if (game.exerciseToday.day !== game.day) game.exerciseToday = { day: game.day, count: 0 };
-    if (game.exerciseToday.count >= 3) { addLog('今天已经锻炼过了，胳膊都酸了，明天再练吧', 'warn'); return; }
-    if (game.stamina < 20) { addLog('累得不行了，先吃点东西或睡一觉恢复体力再来吧', 'warn'); return; }
-    game.stamina -= 20;
-    game.health = Math.min(game.maxHealth, game.health + 2);
-    game.exerciseToday.count++;
-    game.dailyActions.exercise++;
-    addLog('你锻炼了一会，身体更结实了，健康+2', 'action');
-    // 任务检查：第一次锻炼
-    if (!game.quests.q18) {
-        game.quests.q18 = true;
-        queueQuestReward('q18', 80, '✅ 任务完成：强身健体，奖励80元');
-    }
-    updateDailyButtons();
-    updateUI();
+    // 直接调用角色面板的 exercise()，确保两个入口逻辑完全一致
+    exercise();
 }
 
 function doChat() {
-    // 统一使用 visitToday 计数器（与UI和按钮状态一致）
-    if (!game.visitToday) game.visitToday = { day: 0, count: 0 };
-    if (game.visitToday.day !== game.day) game.visitToday = { day: game.day, count: 0 };
-    if (game.visitToday.count >= 3) { addLog('今天串了太多门了，人家都烦了', 'warn'); return; }
-    if (game.stamina < 10) { addLog('累得不行了，先吃点东西或睡一觉恢复体力再来吧', 'warn'); return; }
-    game.stamina -= 10;
-    // 只从已认识的NPC中随机选择
-    const npcKeys = Object.keys(NPC_DATA).filter(k => isNpcKnown(k));
-    if (npcKeys.length === 0) {
-        addLog('👋 去村里转了转，但还不认识什么人...', 'action');
-        updateDailyButtons();
-        updateUI();
-        return;
-    }
-    const npcKey = npcKeys[Math.floor(Math.random() * npcKeys.length)];
-    const npcData = NPC_DATA[npcKey];
-    const npcName = npcData ? npcData.name : npcKey;
-    const add = Math.floor(Math.random() * 3) + 1;
-    const oldFriendship = game.npcs[npcKey] || 0;
-    game.npcs[npcKey] = Math.min(100, oldFriendship + add);
-    if (!game.friendship[npcKey]) game.friendship[npcKey] = 0;
-    game.friendship[npcKey] = Math.min(100, game.friendship[npcKey] + add);
-    game.visitToday.count++;
-    game.dailyActions.chat++;
-    addLog(`你去${npcName}家串了个门，好感+${add}`, 'action');
-    // 任务检查：第一次和村民聊天（通过串门也触发）
-    if (!game.quests.q9) {
-        game.quests.q9 = true;
-        queueQuestReward('q9', 50, '✅ 任务完成：初次交流，奖励50元');
-    }
-    // 检查是否达到友好
-    const friendship = game.npcs[npcKey] || 0;
-    if (!game.quests.q15 && friendship >= 40) {
-        game.quests.q15 = true;
-        queueQuestReward('q15', 300, '✅ 任务完成：打成一片，奖励300元');
-    }
-    updateDailyButtons();
-    updateUI();
+    // 直接调用角色面板的 visitNeighbor()，确保两个入口逻辑完全一致
+    visitNeighbor();
 }
 
 function doFish() {
-    // 统一使用 fishToday 计数器（与UI和按钮状态一致）
-    if (!game.fishToday) game.fishToday = { day: 0, count: 0 };
-    if (game.fishToday.day !== game.day) game.fishToday = { day: game.day, count: 0 };
-    if (game.fishToday.count >= 2) { addLog('今天钓过鱼了，明天再钓吧', 'warn'); return; }
-    if (game.stamina < 15) { addLog('累得不行了，先吃点东西或睡一觉恢复体力再来吧', 'warn'); return; }
-    game.stamina -= 15;
-    const fishCount = Math.floor(Math.random() * 3);
-    game.fishToday.count++;
-    game.dailyActions.fish++;
-    if (fishCount > 0) {
-        game.items.fish = (game.items.fish || 0) + fishCount;
-        addLog(`你钓了${fishCount}条鱼，晚上可以炖鱼吃了`, 'action');
-    } else {
-        addLog('你钓了半天，鱼都跑了，什么都没钓到', 'action');
-    }
-    // 任务检查：第一次钓鱼
-    if (!game.quests.q19) {
-        game.quests.q19 = true;
-        queueQuestReward('q19', 80, '✅ 任务完成：垂钓之乐，奖励80元');
-    }
-    updateDailyButtons();
-    updateUI();
-    renderBackpack();
+    // 直接调用河边钓鱼面板的 goFishing()，确保两个入口逻辑完全一致
+    goFishing();
 }
 
 function doRead() {
@@ -9782,12 +10092,16 @@ function renderBackpack() {
 function useItem(itemId) {
     if (!game.items[itemId] || game.items[itemId] <= 0) return;
     const item = ITEM_EFFECTS[itemId];
+    if (!item) {
+        console.error('物品效果未定义:', itemId);
+        return;
+    }
     game.items[itemId]--;
     // 加效果
-    if (item.use.stamina) game.stamina = Math.min(game.maxStamina, game.stamina + item.use.stamina);
-    if (item.use.health) game.health = Math.min(game.maxHealth, game.health + item.use.health);
-    if (item.use.mood) game.mood = Math.min(100, game.mood + item.use.mood);
-    addLog(`使用了${item.icon}${item.name}`, 'item');
+    if (item.use && item.use.stamina) game.stamina = Math.min(game.maxStamina, game.stamina + item.use.stamina);
+    if (item.use && item.use.health) game.health = Math.min(game.maxHealth, game.health + item.use.health);
+    if (item.use && item.use.mood) game.mood = Math.min(100, game.mood + item.use.mood);
+    addLog(`使用了${item.icon || ''}${item.name || itemId}`, 'item');
     renderBackpack();
     updateDailyButtons();
     updateUI();
@@ -9958,6 +10272,7 @@ function fixSaveData() {
     if (game.season === undefined) game.season = 'spring';
     if (game.time === undefined) game.time = 6;
     if (game.disasterRate === undefined) game.disasterRate = 1.0;
+    if (game.needsRender === undefined) game.needsRender = true;
     
     // 升级旧存档：将旧版100上限升级到200
     if (game.maxHealth < 200) {
@@ -10408,9 +10723,14 @@ function fixSaveData() {
 function loadGame() {
     const saved = localStorage.getItem(SAVE_KEY);
     if (saved) {
-        game = JSON.parse(saved);
-        fixSaveData(); // 加载后修复存档兼容性
-        return true;
+        try {
+            game = JSON.parse(saved);
+            fixSaveData(); // 加载后修复存档兼容性
+            game.needsRender = true; // 加载存档后强制刷新面板
+            return true;
+        } catch (e) {
+            console.error('主存档解析失败，尝试从备份恢复', e);
+        }
     }
     // 尝试从备份恢复
     for (let i = 1; i <= 3; i++) {
@@ -10419,6 +10739,7 @@ function loadGame() {
             try {
                 game = JSON.parse(backup);
                 fixSaveData(); // 加载后修复存档兼容性
+                game.needsRender = true; // 加载存档后强制刷新面板
                 localStorage.setItem(SAVE_KEY, backup);
                 if (typeof showToast === 'function') {
                     showToast('📂 已从备份' + i + '恢复存档', 'warn');
@@ -10500,13 +10821,17 @@ function exportSave() {
 }
 
 function importSavePrompt() {
-    document.getElementById('save-import-area').style.display = 'block';
-    document.getElementById('save-import-text').value = '';
-    document.getElementById('save-import-text').focus();
+    const saveImportArea = document.getElementById('save-import-area');
+    const saveImportText = document.getElementById('save-import-text');
+    if (saveImportArea) saveImportArea.style.display = 'block';
+    if (saveImportText) {
+        saveImportText.value = '';
+        saveImportText.focus();
+    }
 }
 
 function cancelImportSave() {
-    document.getElementById('save-import-area').style.display = 'none';
+    const saveImportArea = document.getElementById('save-import-area'); if (saveImportArea) saveImportArea.style.display = 'none';
 }
 
 function doImportSave() {
@@ -10525,7 +10850,7 @@ function doImportSave() {
         game = data;
         fixSaveData();
         localStorage.setItem(SAVE_KEY, JSON.stringify(game));
-        document.getElementById('save-import-area').style.display = 'none';
+        const saveImportArea = document.getElementById('save-import-area'); if (saveImportArea) saveImportArea.style.display = 'none';
         showToast('✅ 存档导入成功！即将刷新...', 'good');
         // 刷新页面以应用新存档
         setTimeout(() => {
@@ -10672,7 +10997,7 @@ function startGameLoop() {
     updateUI();
 }
 
-function advanceSeason() {
+function advanceSeason(silent = false) {
     if (game.day <= 28) return;
     
     const oldDay = game.day;
@@ -10684,7 +11009,9 @@ function advanceSeason() {
     game.season = seasons[(idx + 1) % 4];
     
     game.fields.forEach(field => {
-        if (field.plantedDay > 0) field.plantedDay -= dayOffset;
+        if (field.plantedDay > 0) {
+            field.plantedDay = Math.max(0, field.plantedDay - dayOffset);
+        }
     });
     
     let removedCount = 0;
@@ -10696,7 +11023,7 @@ function advanceSeason() {
                 field.stage = 'idle';
                 field.growProgress = 0;
                 field.step = 0;
-                field.prepared = true;  // 季节变化后保持已整地，方便立即再种
+                field.prepared = true;
                 field.fertilized = false;
                 field.fertilizerType = null;
                 field.yieldLoss = 0;
@@ -10708,10 +11035,11 @@ function advanceSeason() {
     
     if (removedCount > 0) {
         addLog(`🍂 季节更替，${removedCount}块田里的作物因不适应新季节而枯萎了。`, 'bad');
-        // 显示弹窗提示玩家
-        setTimeout(() => {
-            showModal('🍂 季节更替', `随着${SEASON_NAMES[game.season]}的到来，${removedCount}块田里的作物因不适应新季节而枯萎了。<br><br><span style="color: #999; font-size: 13px;">💡 提示：不同季节适合种植不同作物，春天适合水稻、红薯、大豆、小麦等。</span>`, null);
-        }, 300);
+        if (!silent) {
+            setTimeout(() => {
+                showModal('🍂 季节更替', `随着${SEASON_NAMES[game.season]}的到来，${removedCount}块田里的作物因不适应新季节而枯萎了。<br><br><span style="color: #999; font-size: 13px;">💡 提示：不同季节适合种植不同作物，春天适合水稻、红薯、大豆、小麦等。</span>`, null);
+            }, 300);
+        }
     }
     
     // 季租扣除（每28天扣一次整季租金）
@@ -10772,13 +11100,19 @@ function gameTick() {
     // 防止浮点数累积
     roundGameState();
     
+    // 标记面板需要重新渲染（游戏状态已更新）
+    if (game) game.needsRender = true;
+    
     // tickCount 初始化（确保判断前存在）
     if (!game.tickCount) game.tickCount = 0;
     game.tickCount++;
     
-    // 每30秒保存一次，或新的一天立即保存
-    const shouldSave = game.time === 6 || (game.tickCount % 6 === 0);
+    // 每30秒保存一次（基于时间戳，不受游戏速度影响），或新的一天立即保存
+    const nowSave = Date.now();
+    const lastSave = game._lastSaveTime || 0;
+    const shouldSave = game.time === 6 || (nowSave - lastSave > 30000);
     if (shouldSave) {
+        game._lastSaveTime = nowSave;
         saveGame();
     }
     updateUI();
@@ -10959,7 +11293,7 @@ function onNewDay() {
     // 宠物每日饲料消耗
     if (game.pets) {
         for (const [petId, pet] of Object.entries(game.pets)) {
-            if (!pet || !pet.owned) continue;
+            if (!pet || typeof pet !== 'object') continue;
             const petData = PET_DATA[petId];
             if (!petData) continue;
             const foodCost = petData.dailyFoodCost || 0;
@@ -11240,6 +11574,8 @@ function onNewDay() {
     if (typeof checkHealthDeath === 'function') {
         checkHealthDeath();
     }
+    
+    game.needsRender = true;
 }
 
 function checkHealthDeath() {
@@ -12624,30 +12960,51 @@ function showEventPopup(event) {
 }
 
 function showEventModal(event) {
+    const titleEl = document.getElementById('modal-title');
+    const contentEl = document.getElementById('modal-content');
+    const overlayEl = document.getElementById('modal-overlay');
+    if (!titleEl || !contentEl || !overlayEl) {
+        console.error('弹窗元素未找到');
+        return;
+    }
+    
+    closeAllModals(); // 打开弹窗前关闭其他弹窗
+    
+    modalCallback = null; // 清除之前的回调，避免事件弹窗触发旧的确认回调
     let html = `<div style="text-align: center; margin-bottom: 20px;">`;
     html += `<div style="font-size: 60px; margin-bottom: 10px;">${event.emoji}</div>`;
     html += `<div style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: ${event.type === 'disaster' ? '#e74c3c' : event.type === 'gain' ? '#27ae60' : '#f39c12'};">${event.name}</div>`;
     html += `<div style="font-size: 14px; line-height: 1.8; color: #666; margin-bottom: 20px;">${event.description}</div>`;
     html += `</div>`;
     
-    html += '<div style="display: flex; flex-direction: column; gap: 10px;">';
-    
-    // 有选项的事件：必须选择
-    if (event.options && event.options.length > 0) {
-        event.options.forEach((opt, idx) => {
-            html += `<button class="modal-btn" onclick="handleEventChoice(${idx})">${opt.text}</button>`;
-        });
-    } else {
-        // 被动事件（无选项）：显示"知道了"按钮
-        html += `<button class="modal-btn" onclick="closeEventModal()">知道了</button>`;
-    }
-    html += '</div>';
-    
     // 显示弹窗
-    document.getElementById('modal-title').textContent = '突发事件';
-    document.getElementById('modal-content').innerHTML = html;
-    document.querySelector('.modal-buttons').style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'flex';
+    titleEl.textContent = '突发事件';
+    contentEl.innerHTML = html;
+    
+    // 设置按钮区域
+    const buttonsContainer = document.querySelector('.modal-buttons');
+    if (buttonsContainer) {
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.innerHTML = '';
+        
+        if (event.options && event.options.length > 0) {
+            event.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'modal-btn';
+                btn.textContent = opt.text;
+                btn.onclick = function() { handleEventChoice(idx); };
+                buttonsContainer.appendChild(btn);
+            });
+        } else {
+            const btn = document.createElement('button');
+            btn.className = 'modal-btn';
+            btn.textContent = '知道了';
+            btn.onclick = closeEventModal;
+            buttonsContainer.appendChild(btn);
+        }
+    }
+    
+    overlayEl.style.display = 'flex';
 }
 
 function getSkillName(skillKey) {
@@ -12697,7 +13054,7 @@ function handleEventChoice(optionIdx) {
     }
     if (!event || !event.options || !event.options[optionIdx]) {
         console.error('事件或选项不存在:', eventId, optionIdx);
-        closeModal();
+        closeEventModal();
         return;
     }
     const option = event.options[optionIdx];
@@ -12952,7 +13309,7 @@ function handleEventChoice(optionIdx) {
     roundGameState();
     
     // 关闭弹窗
-    closeModal();
+    closeEventModal();
     
     saveGame();
     updateUI();
@@ -12979,8 +13336,8 @@ function updateProcessingJobs() {
             game.processedItems[job.outputItem] = (game.processedItems[job.outputItem] || 0) + job.outputAmount;
             
             // 记录今日加工（按输入量计算，而非产出量）
-            if (!game.dailyProcessed) game.dailyProcessed = {};
-            game.dailyProcessed[job.buildingKey] = (game.dailyProcessed[job.buildingKey] || 0) + job.inputAmount;
+            // 注意：dailyProcessed 在 manualProcess 创建任务时已经累加，这里不再重复累加
+            // 以避免任务创建和完成时重复计算
             
             addLog(`🏡 ${job.buildingName}加工完成！产出${job.outputAmount}斤${(PROCESSED_ITEMS[job.outputItem] && PROCESSED_ITEMS[job.outputItem].name) || ''}`, 'good');
             
@@ -13026,14 +13383,14 @@ function growCrops() {
         
         // 育苗期
         if (field.stage === 'seedling') {
-            const seedlingDays = cropData.seedlingDays || 5;
+            const seedlingDays = cropData.seedlingDays !== undefined ? cropData.seedlingDays : 5;
             field.growProgress = Math.min(20, (growDays * growRate / seedlingDays) * 20);
             return;
         }
         
         // 移栽后（返青期/幼苗期）
         if (field.stage === 'transplanting') {
-            const transplantDays = growDays - (cropData.seedlingDays || 5);
+            const transplantDays = growDays - (cropData.seedlingDays !== undefined ? cropData.seedlingDays : 5);
             if (transplantDays * growRate >= TRANSPLANT_NEED_DAYS) {
                 field.stage = 'growing';
                 field.step = 3;
@@ -13045,8 +13402,8 @@ function growCrops() {
         
         // 生长期
         if (field.stage === 'growing') {
-            const growingDays = growDays - (cropData.seedlingDays || 5) - TRANSPLANT_NEED_DAYS;
-            const totalGrowingDays = (cropData.growDays || 50) - (cropData.seedlingDays || 5) - TRANSPLANT_NEED_DAYS;
+            const growingDays = growDays - (cropData.seedlingDays !== undefined ? cropData.seedlingDays : 5) - TRANSPLANT_NEED_DAYS;
+            const totalGrowingDays = (cropData.growDays || 50) - (cropData.seedlingDays !== undefined ? cropData.seedlingDays : 5) - TRANSPLANT_NEED_DAYS;
             
             // 安全边界：生长期天数不足或为零时直接成熟
             if (totalGrowingDays <= 0) {
@@ -13070,6 +13427,13 @@ function growCrops() {
             field.growProgress = 100;
         }
     });
+    game.needsRender = true;
+}
+
+// 安全设置元素文本，防止null错误
+function safeSetText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
 }
 
 // ==================== UI更新 ====================
@@ -13082,24 +13446,24 @@ function updateUI() {
     game.health = Math.max(0, Math.min(game.maxHealth, game.health));
 
     // 顶部状态栏
-    document.getElementById('stat-money').textContent = Math.floor(game.money);
-    document.getElementById('stat-stamina').textContent = Math.floor(game.stamina);
-    document.getElementById('stat-max-stamina').textContent = game.maxStamina;
-    document.getElementById('stat-health').textContent = Math.floor(game.health);
-    document.getElementById('stat-max-health').textContent = game.maxHealth;
-    document.getElementById('stat-rice').textContent = Math.floor(game.crops.rice);
-    document.getElementById('stat-sweet').textContent = Math.floor(game.crops.sweet);
-    document.getElementById('stat-wheat').textContent = Math.floor(game.crops.wheat || 0);
-    document.getElementById('stat-corn').textContent = Math.floor(game.crops.corn || 0);
-    document.getElementById('stat-soybean').textContent = Math.floor(game.crops.soybean || 0);
-    document.getElementById('stat-day').textContent = game.totalDay || game.day;
-    document.getElementById('stat-season').textContent = SEASON_NAMES[game.season];
-    document.getElementById('season-icon').textContent = SEASON_ICONS[game.season];
+    safeSetText('stat-money', Math.floor(game.money));
+    safeSetText('stat-stamina', Math.floor(game.stamina));
+    safeSetText('stat-max-stamina', game.maxStamina);
+    safeSetText('stat-health', Math.floor(game.health));
+    safeSetText('stat-max-health', game.maxHealth);
+    safeSetText('stat-rice', Math.floor(game.crops.rice || 0));
+    safeSetText('stat-sweet', Math.floor(game.crops.sweet || 0));
+    safeSetText('stat-wheat', Math.floor(game.crops.wheat || 0));
+    safeSetText('stat-corn', Math.floor(game.crops.corn || 0));
+    safeSetText('stat-soybean', Math.floor(game.crops.soybean || 0));
+    safeSetText('stat-day', game.totalDay || game.day);
+    safeSetText('stat-season', SEASON_NAMES[game.season]);
+    safeSetText('season-icon', SEASON_ICONS[game.season]);
     
     // 天气显示
     const wData = WEATHER_DATA[game.weather] || WEATHER_DATA.sunny;
-    document.getElementById('stat-weather').textContent = wData.name;
-    document.getElementById('weather-icon').textContent = wData.emoji;
+    safeSetText('stat-weather', wData.name);
+    safeSetText('weather-icon', wData.emoji);
     
     // 游戏时钟
     const hour = game.time || 6;
@@ -13118,9 +13482,11 @@ function updateUI() {
     // 更新浮动倒计时按钮角标
     updateCountdownBadge();
 
-    // 更新当前面板（只更新内容，不切换标签）
-    if (currentMainTab) {
+    // 更新当前面板（只在需要时重渲染，避免每tick完全重建DOM）
+    // 使用脏标记优化：只在数据变化或状态切换时刷新
+    if (currentMainTab && game.needsRender !== false) {
         renderPanel(currentMainTab);
+        game.needsRender = false;
     }
     
     // 更新页签解锁状态
@@ -13152,7 +13518,8 @@ function updateUI() {
 function showGame() {
     const savedStyle = safeStorageGet('farm_bgm_style') || 'game';
     switchBgm(savedStyle);
-    document.getElementById('game-container').style.display = 'flex';
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) gameContainer.style.display = 'flex';
     
     // 检测是否是localhost，提示手机访问方式
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
@@ -14107,7 +14474,7 @@ function renderFieldCard(field, idx) {
         } else {
             // 育苗阶段
             if (field.stage === 'seedling') {
-                const daysLeft = Math.ceil((cropData.seedlingDays || 5) - (game.day - field.plantedDay));
+                const daysLeft = Math.ceil((cropData.seedlingDays !== undefined ? cropData.seedlingDays : 5) - (game.day - field.plantedDay));
                 if (daysLeft <= 0) {
                     const transplantCost = game.tools.includes('seedlingRider') ? 7 : 18;
                     html += `<button class="action-btn highlight" onclick="transplantCrop(${idx})" ${game.stamina < transplantCost ? 'disabled' : ''}>🌱 移栽 (-${transplantCost}体力)</button>`;
@@ -14244,16 +14611,19 @@ function renderShopPanel() {
     
     panel.innerHTML = html;
     
-    // 绑定页签点击
-    document.querySelectorAll('.shop-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
+    // 绑定页签点击（使用事件委托，避免重复绑定）
+    if (!panel._shopTabDelegated) {
+        panel._shopTabDelegated = true;
+        panel.addEventListener('click', function(e) {
+            const tab = e.target.closest('.shop-tab');
+            if (!tab) return;
             playTabSound();
-            document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            currentShopTab = this.dataset.shop;
+            panel.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentShopTab = tab.dataset.shop;
             refreshShopContent();
         });
-    });
+    }
 }
 
 // 只刷新商店内容，不重新渲染整个面板
@@ -15174,17 +15544,17 @@ function renderProcessingPanel() {
             hasUnlocked = true;
             
             const product = PROCESSED_ITEMS[item.outputItem];
-            const have =(game.processedItems && game.processedItems[item.outputItem]) || 0;
-            const dailyDone =(game.dailyProcessed && game.dailyProcessed[key]) || 0;
+            const have = (game.processedItems && game.processedItems[item.outputItem]) || 0;
+            const dailyDone = (game.dailyProcessed && game.dailyProcessed[key]) || 0;
             
             // 计算价格
             let price = getProcessedItemPrice(item.outputItem);
             
-            // 获取加工坊等级
+            // 获取加工坊等级（安全访问数组，防止越界）
             const buildingLevel = game.builtProcessing[key] || 1;
-            const dailyCapacity = item.levelCapacity ? item.levelCapacity[buildingLevel - 1] : item.dailyCapacity;
-            const levelStaminaCost = item.levelStaminaCost ? item.levelStaminaCost[buildingLevel - 1] : item.staminaCost;
-            const canUpgrade = buildingLevel < 3 && item.upgradeCost;
+            const dailyCapacity = item.levelCapacity && item.levelCapacity[buildingLevel - 1] !== undefined ? item.levelCapacity[buildingLevel - 1] : item.dailyCapacity;
+            const levelStaminaCost = item.levelStaminaCost && item.levelStaminaCost[buildingLevel - 1] !== undefined ? item.levelStaminaCost[buildingLevel - 1] : item.staminaCost;
+            const canUpgrade = buildingLevel < 3 && item.upgradeCost && item.upgradeCost[buildingLevel - 1] !== undefined;
             const upgradeBtn = canUpgrade ? 
                 `<button class="buy-btn" onclick="upgradeProcessing('${key}')" ${game.money < item.upgradeCost[buildingLevel-1] ? 'disabled' : ''}>⬆️ Lv${buildingLevel+1}（${item.upgradeCost[buildingLevel-1]}元）</button>` : 
                 '<span style="color:#27ae60;">✅ 已满级</span>';
@@ -15549,8 +15919,8 @@ function petThePet(petId) {
     game.mood = Math.min(100, (game.mood === undefined ? 50 : game.mood) + 5);
     p.petToday++;
     p.affection = (p.affection || 0) + 1;
-    const names = { dog: '大黄', cat: '阿花' };
-    const flavors = petId === 'dog'
+    const names = { dahuang: '大黄', ahua: '阿花' };
+    const flavors = petId === 'dahuang'
         ? ['大黄舒服地眯起眼睛，尾巴摇得像风车一样。', '大黄翻过身来露出肚皮，让你多摸几下。', '大黄舔了舔你的手，眼神里满是信任。']
         : ['阿花发出咕噜咕噜的声音，用脑袋蹭你的手心。', '阿花伸了个懒腰，在你腿上踩起了奶。', '阿花眯着眼，尾巴尖轻轻晃了晃，看起来很享受。'];
     addLog(`🐾 你撸了撸${names[petId]}。${flavors[Math.floor(Math.random() * flavors.length)]}`, 'pet');
@@ -15578,8 +15948,8 @@ function feedThePet(petId) {
     p.fedToday = true;
     p.affection = (p.affection || 0) + 2;
     game.mood = Math.min(100, (game.mood === undefined ? 50 : game.mood) + 10);
-    const names = { dog: '大黄', cat: '阿花' };
-    const flavors = petId === 'dog'
+    const names = { dahuang: '大黄', ahua: '阿花' };
+    const flavors = petId === 'dahuang'
         ? ['大黄狼吞虎咽地吃完，满足地打了个饱嗝。', '大黄吃完后叼着碗跑到你脚边，还想再来一份。', '大黄吃得尾巴直摇，吃完还用鼻子拱了拱你的手。']
         : ['阿花优雅地吃完，舔了舔爪子开始洗脸。', '阿花吃完后跳到你腿上，蜷成一团打起了呼噜。', '阿花细嚼慢咽地吃完，冲你喵了一声，像是在说谢谢。'];
     addLog(`🍖 你喂了${names[petId]}一个${foodName}。${flavors[Math.floor(Math.random() * flavors.length)]}`, 'pet');
@@ -16738,7 +17108,8 @@ function upgradeProcessing(buildingKey) {
     if (!building) return;
     const currentLevel = game.builtProcessing[buildingKey] || 1;
     if (currentLevel >= 3) { showToast('已满级', 'warn'); return; }
-    const cost = building.upgradeCost[currentLevel - 1];
+    const cost = building.upgradeCost && building.upgradeCost[currentLevel - 1] !== undefined ? building.upgradeCost[currentLevel - 1] : 0;
+    if (cost <= 0) { showToast('升级数据异常', 'bad'); return; }
     if (game.money < cost) { showToast('资金不足', 'bad'); return; }
     
     game.money -= cost;
@@ -17400,12 +17771,21 @@ function showGiftModal(npcKey) {
     html += '</div>';
     
     // 显示弹窗
-    document.getElementById('modal-title').textContent = `🎁 给${npc.name}送礼`;
-    document.getElementById('modal-content').innerHTML = html;
-    document.querySelector('.modal-buttons').style.display = 'flex';
-    document.getElementById('modal-confirm').style.display = 'none';
-    document.querySelector('.modal-btn.secondary').textContent = '关闭';
-    document.getElementById('modal-overlay').style.display = 'flex';
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalButtons = document.querySelector('.modal-buttons');
+    const modalConfirm = document.getElementById('modal-confirm');
+    const modalSecondary = document.querySelector('.modal-btn.secondary');
+    
+    if (modalTitle) modalTitle.textContent = `🎁 给${npc.name}送礼`;
+    if (modalContent) modalContent.innerHTML = html;
+    if (modalButtons) modalButtons.style.display = 'flex';
+    if (modalConfirm) modalConfirm.style.display = 'none';
+    if (modalSecondary) modalSecondary.textContent = '关闭';
+    closeAllModals(); // 打开弹窗前关闭其他弹窗
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) modalOverlay.style.display = 'flex';
 }
 
 // 送礼
@@ -18223,7 +18603,8 @@ function renderMarketPanel() {
     
     if (!isMarketDay) {
         html += '<p class="panel-desc">今天不是赶集日。集市每月7、14、21、28日开放。</p>';
-        html += '<div class="empty-state">📅 下次赶集日是第' + MARKET_DATA.openDay.find(d => d > game.day) + '天</div>';
+        const nextMarketDay = MARKET_DATA.openDay.find(d => d > game.day);
+        html += '<div class="empty-state">📅 下次赶集日是第' + (nextMarketDay || '下月首') + '天</div>';
         panel.innerHTML = html;
         return;
     }
@@ -18937,6 +19318,7 @@ function prepareField(fieldIdx) {
         queueQuestReward('q0', 0, '✅ 任务完成：整地');
     }
     
+    game.needsRender = true;
     saveGame();
     updateUI();
     showToast('整地完成！', 'good');
@@ -19019,6 +19401,7 @@ function plantCrop(fieldIdx, cropKey) {
         queueQuestReward('q2', 50, '✅ 任务完成：育苗，奖励50元');
     }
     
+    game.needsRender = true;
     saveGame();
     updateUI();
     showToast(`种下了${cropData.name}！`, 'good');
@@ -19060,6 +19443,7 @@ function transplantCrop(fieldIdx) {
         queueQuestReward('q3', 50, '✅ 任务完成：移栽，奖励50元');
     }
     
+    game.needsRender = true;
     saveGame();
     updateUI();
     showToast('移栽完成！', 'good');
@@ -19103,6 +19487,7 @@ function waterField(fieldIdx) {
     addSkillExp('fieldManagement', 2);
     
     addLog(`💧 给第${field.id}块田浇了水。禾苗喝饱了水，看起来更精神了。`, 'info');
+    game.needsRender = true;
     saveGame();
     updateUI();
     showToast('浇水完成！', 'good');
@@ -19136,6 +19521,7 @@ function weedField(fieldIdx) {
     addSkillExp('fieldManagement', 3);
     
     addLog(`🌿 给第${field.id}块田除了草。${getRandomFlavor('weed')}`, 'info');
+    game.needsRender = true;
     saveGame();
     updateUI();
     showToast('除草完成！', 'good');
@@ -19202,6 +19588,7 @@ function fertilizeField(fieldIdx, type = 'normal') {
     // 增加田间管理经验
     addSkillExp('fieldManagement', 2);
     
+    game.needsRender = true;
     saveGame();
     updateUI();
     showToast('施肥完成！', 'good');
@@ -19227,6 +19614,7 @@ function turnVine(fieldIdx, turnNum) {
         addLog(`🍃 给第${field.id}块田的红薯翻了第二次藤。看着满地的藤蔓，想象着下面藏着的大红薯，心里美滋滋的。`, 'info');
     }
     
+    game.needsRender = true;
     saveGame();
     updateUI();
     showToast('翻藤完成！', 'good');
@@ -19429,6 +19817,7 @@ function harvestCrop(fieldIdx) {
     
     checkAchievements();
     
+    game.needsRender = true;
     saveGame();
     updateUI();
     showToast(`收获${yield_}斤${cropData.name}！`, 'good');
@@ -19484,7 +19873,7 @@ function sellCrop(cropKey, amount) {
         if (game.reputationBonus) {
             repGain = Math.floor(repGain * (1 + game.reputationBonus));
         }
-        game.reputation += repGain;
+        // 声望奖励通过 queueQuestReward 统一发放，避免重复
         queueQuestReward('q5', 100, `✅ 任务完成：第一桶金，奖励100元+${repGain}声望`, repGain);
     }
     
@@ -19626,14 +20015,14 @@ function startCompost() {
         return;
     }
     
-    if (game.money < 100) {
+    if (game.money < 50) {
         showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
         playErrorSound();
         return;
     }
     
     playDirtSound();
-    game.money -= 100;
+    game.money -= 50;
     game.composting = true;
     game.compostStartTotalDay = game.totalDay || game.day;
     game.compostStartDay = game.day; // 保留兼容旧存档
@@ -19707,22 +20096,22 @@ function roundGameState() {
 // 只更新顶部状态栏，不重新渲染面板
 function updateTopBar() {
     if (!game) return;
-    document.getElementById('stat-money').textContent = Math.floor(game.money);
-    document.getElementById('stat-stamina').textContent = Math.floor(game.stamina);
-    document.getElementById('stat-max-stamina').textContent = game.maxStamina;
-    document.getElementById('stat-health').textContent = Math.floor(game.health);
-    document.getElementById('stat-max-health').textContent = game.maxHealth;
-    document.getElementById('stat-rice').textContent = Math.floor(game.crops.rice);
-    document.getElementById('stat-sweet').textContent = Math.floor(game.crops.sweet);
-    document.getElementById('stat-wheat').textContent = Math.floor(game.crops.wheat || 0);
-    document.getElementById('stat-corn').textContent = Math.floor(game.crops.corn || 0);
-    document.getElementById('stat-soybean').textContent = Math.floor(game.crops.soybean || 0);
-    document.getElementById('stat-day').textContent = game.totalDay || game.day;
-    document.getElementById('stat-season').textContent = SEASON_NAMES[game.season];
-    document.getElementById('season-icon').textContent = SEASON_ICONS[game.season];
+    safeSetText('stat-money', Math.floor(game.money));
+    safeSetText('stat-stamina', Math.floor(game.stamina));
+    safeSetText('stat-max-stamina', game.maxStamina);
+    safeSetText('stat-health', Math.floor(game.health));
+    safeSetText('stat-max-health', game.maxHealth);
+    safeSetText('stat-rice', Math.floor(game.crops.rice || 0));
+    safeSetText('stat-sweet', Math.floor(game.crops.sweet || 0));
+    safeSetText('stat-wheat', Math.floor(game.crops.wheat || 0));
+    safeSetText('stat-corn', Math.floor(game.crops.corn || 0));
+    safeSetText('stat-soybean', Math.floor(game.crops.soybean || 0));
+    safeSetText('stat-day', game.totalDay || game.day);
+    safeSetText('stat-season', SEASON_NAMES[game.season]);
+    safeSetText('season-icon', SEASON_ICONS[game.season]);
     const wData = WEATHER_DATA[game.weather] || WEATHER_DATA.sunny;
-    document.getElementById('stat-weather').textContent = wData.name;
-    document.getElementById('weather-icon').textContent = wData.emoji;
+    safeSetText('stat-weather', wData.name);
+    safeSetText('weather-icon', wData.emoji);
 }
 
 // 租用新田地
@@ -19934,8 +20323,9 @@ function checkQuests() {
     }
     
     // q46: 全面丰收（同时拥有早稻和红薯的成熟作物）
-    const hasRiceMature = game.fields.some(f => f.crop === 'rice' && f.stage === 'mature');
-    const hasSweetMature = game.fields.some(f => f.crop === 'sweet' && f.stage === 'mature');
+    // 新版作物ID带季节后缀，使用includes匹配
+    const hasRiceMature = game.fields.some(f => f.crop && f.crop.includes('rice') && f.stage === 'mature');
+    const hasSweetMature = game.fields.some(f => f.crop && f.crop.includes('sweet') && f.stage === 'mature');
     if (hasRiceMature && hasSweetMature && !game.quests.q46) {
         game.quests.q46 = true;
         queueQuestReward('q46', 200, '✅ 任务完成：全面丰收，奖励200元');
@@ -19985,49 +20375,59 @@ function checkQuests() {
 // ==================== 日志系统 ====================
 function addLog(text, type = 'normal') {
     const logEl = document.getElementById('event-log');
+    if (!logEl) return; // 防御：如果日志元素不存在则直接返回
+    
     const item = document.createElement('div');
     item.className = 'log-item new';
     
     // 3秒后移除new高亮
     setTimeout(() => {
-        item.classList.remove('new');
+        if (item.parentNode) item.classList.remove('new');
     }, 3000);
     
     let timeStr = `[第${game.totalDay || game.day}天]`;
     let icon = '';
     
+    // 简单的 HTML 转义，防止文本中包含的 HTML 标签被解析
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    const safeText = escapeHtml(text);
+    
     switch(type) {
         case 'good':
             icon = '✨';
-            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-good">${text}</span>`;
+            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-good">${safeText}</span>`;
             break;
         case 'bad':
             icon = '⚠️';
-            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-bad">${text}</span>`;
+            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-bad">${safeText}</span>`;
             break;
         case 'info':
             icon = '💡';
-            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-info">${text}</span>`;
+            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-info">${safeText}</span>`;
             break;
         case 'crop':
             icon = '🌾';
-            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-crop">${text}</span>`;
+            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-crop">${safeText}</span>`;
             break;
         case 'npc':
             icon = '👤';
-            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-npc">${text}</span>`;
+            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-npc">${safeText}</span>`;
             break;
         case 'pet':
             icon = '🐾';
-            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-pet">${text}</span>`;
+            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span class="log-pet">${safeText}</span>`;
             break;
         default:
             icon = '📝';
-            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span>${text}</span>`;
+            item.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-icon">${icon}</span><span>${safeText}</span>`;
     }
     
     logEl.appendChild(item);
-    logEl.scrollTop = logEl.scrollHeight;
+    // 仅在用户已滚动到底部时自动滚动
+    const isAtBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 20;
+    if (isAtBottom) logEl.scrollTop = logEl.scrollHeight;
     
     // 限制日志数量，最多保留200条
     const logItems = logEl.querySelectorAll('.log-item');
@@ -20081,9 +20481,9 @@ function openFeedbackModal() {
     `;
     showModal('提交反馈', html, submitFeedbackEmail, '取消');
     setTimeout(() => {
-        const modal = document.getElementById('modal');
-        if (!modal) return;
-        const btnContainer = modal.querySelector('.modal-buttons');
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (!modalOverlay) return;
+        const btnContainer = modalOverlay.querySelector('.modal-buttons');
         if (!btnContainer) return;
         
         // 修改确认按钮为发送邮件
@@ -20103,7 +20503,7 @@ function openFeedbackModal() {
 }
 
 function submitFeedback() {
-    const text = (document.getElementById('feedback-text') && document.getElementById('feedback-text').value && document.getElementById('feedback-text').value.trim)();
+    const text = (document.getElementById('feedback-text') && document.getElementById('feedback-text').value && document.getElementById('feedback-text').value.trim()) || '';
     const includeLog =(document.getElementById('feedback-include-log') && document.getElementById('feedback-include-log').checked);
     
     if (!text) {
@@ -20292,64 +20692,132 @@ function saveFeedbackLog() {
 // 展开/收起日志
 let logExpanded = false;
 function toggleLogExpand() {
-    playClickSound();
+    try {
+        playClickSound();
+    } catch(e) {
+        // 音频出错不影响日志展开
+    }
     const logEl = document.getElementById('event-log');
     const btn = document.querySelector('.event-log-expand-btn');
+    if (!logEl || !btn) return;
     
     if (logExpanded) {
-        logEl.style.height = '200px';
+        // 收起：恢复默认高度
+        const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+        logEl.style.height = isMobile ? '100px' : '200px';
+        logEl.style.maxHeight = isMobile ? '100px' : '200px';
         btn.textContent = '🔍 展开查看';
         logExpanded = false;
     } else {
-        logEl.style.height = '500px';
+        // 展开：使用视口高度计算，避免超出屏幕
+        const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+        if (isMobile) {
+            const viewportHeight = window.innerHeight;
+            const topBarHeight = 50; // 顶部状态栏估算
+            const expandHeight = Math.min(400, viewportHeight - topBarHeight - 20);
+            logEl.style.height = expandHeight + 'px';
+            logEl.style.maxHeight = expandHeight + 'px';
+        } else {
+            logEl.style.height = '500px';
+            logEl.style.maxHeight = '500px';
+        }
         btn.textContent = '📉 收起';
         logExpanded = true;
     }
+    // 展开后滚动到底部
+    setTimeout(() => {
+        if (logEl) logEl.scrollTop = logEl.scrollHeight;
+    }, 100);
 }
 
 // ==================== 弹窗系统 ====================
 function showModal(title, content, onConfirm) {
-    document.getElementById('modal-title').textContent = title;
-    modalCallback = onConfirm;
-    if (!onConfirm) {
-        // 被动事件：内容末尾添加"知道了"按钮
-        document.querySelector('.modal-buttons').style.display = 'none';
-        document.getElementById('modal-content').innerHTML = content + 
-            '<div style="text-align:center;margin-top:20px;"><button class="modal-btn" onclick="closeModal()">知道了</button></div>';
-    } else {
-        document.querySelector('.modal-buttons').style.display = 'flex';
-        document.getElementById('modal-content').innerHTML = content;
+    const titleEl = document.getElementById('modal-title');
+    const contentEl = document.getElementById('modal-content');
+    const overlayEl = document.getElementById('modal-overlay');
+    if (!titleEl || !contentEl || !overlayEl) {
+        console.error('弹窗元素未找到');
+        return;
     }
-    document.getElementById('modal-overlay').style.display = 'flex';
+    
+    titleEl.textContent = title;
+    modalCallback = onConfirm;
+    
+    const buttonsContainer = document.querySelector('.modal-buttons');
+    let confirmBtn = document.getElementById('modal-confirm');
+    let secondaryBtn = document.querySelector('.modal-btn.secondary');
+    
+    // 如果按钮结构被showEventModal破坏，恢复原始结构
+    if (buttonsContainer && (!confirmBtn || !secondaryBtn)) {
+        buttonsContainer.innerHTML = `
+            <button class="modal-btn secondary" onclick="closeModal()">取消</button>
+            <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
+        `;
+        confirmBtn = document.getElementById('modal-confirm');
+        secondaryBtn = document.querySelector('.modal-btn.secondary');
+    }
+    
+    if (!onConfirm) {
+        // 被动事件：只显示"知道了"按钮在按钮区域
+        if (buttonsContainer) buttonsContainer.style.display = 'flex';
+        if (secondaryBtn) secondaryBtn.style.display = 'none';
+        if (confirmBtn) {
+            confirmBtn.style.display = 'inline-block';
+            confirmBtn.textContent = '知道了';
+            confirmBtn.onclick = function() { closeModal(); };
+        }
+    } else {
+        if (buttonsContainer) buttonsContainer.style.display = 'flex';
+        if (secondaryBtn) secondaryBtn.style.display = 'inline-block';
+        if (confirmBtn) {
+            confirmBtn.style.display = 'inline-block';
+            confirmBtn.textContent = '确定';
+            confirmBtn.onclick = confirmModal;
+        }
+    }
+    
+    contentEl.innerHTML = content;
+    closeAllModals(); // 打开弹窗前关闭其他弹窗
+    overlayEl.style.display = 'flex';
 }
 
 function closeEventModal() {
+    if (modalClosing) return;
+    modalClosing = true;
     playClickSound();
     const overlay = document.getElementById('modal-overlay');
     if (overlay) overlay.style.display = 'none';
     game.currentEvent = null;
     modalCallback = null;
-    // 重置弹窗按钮状态（安全处理）
+    // 恢复原始按钮结构
     const buttonsContainer = document.querySelector('.modal-buttons');
-    if (buttonsContainer) buttonsContainer.style.display = 'flex';
-    const confirmBtn = document.getElementById('modal-confirm');
-    if (confirmBtn) confirmBtn.style.display = 'inline-block';
-    const secondaryBtn = document.querySelector('.modal-btn.secondary');
-    if (secondaryBtn) secondaryBtn.textContent = '取消';
+    if (buttonsContainer) {
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.innerHTML = `
+            <button class="modal-btn secondary" onclick="closeModal()">取消</button>
+            <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
+        `;
+    }
+    setTimeout(() => { modalClosing = false; }, 100);
 }
 
 function closeModal() {
+    if (modalClosing) return;
+    modalClosing = true;
     playClickSound();
     const overlay = document.getElementById('modal-overlay');
     if (overlay) overlay.style.display = 'none';
     modalCallback = null;
-    // 重置弹窗按钮状态（安全处理，避免null错误）
+    // 恢复原始按钮结构
     const buttonsContainer = document.querySelector('.modal-buttons');
-    if (buttonsContainer) buttonsContainer.style.display = 'flex';
-    const confirmBtn = document.getElementById('modal-confirm');
-    if (confirmBtn) confirmBtn.style.display = 'inline-block';
-    const secondaryBtn = document.querySelector('.modal-btn.secondary');
-    if (secondaryBtn) secondaryBtn.textContent = '取消';
+    if (buttonsContainer) {
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.innerHTML = `
+            <button class="modal-btn secondary" onclick="closeModal()">取消</button>
+            <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
+        `;
+    }
+    setTimeout(() => { modalClosing = false; }, 100);
 }
 
 function confirmModal() {
@@ -20362,6 +20830,10 @@ function confirmModal() {
 
 // ==================== 弹窗拖拽功能 ====================
 (function initModalDrag() {
+    // 移动端禁用弹窗拖拽，避免与触摸滚动冲突
+    const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+    if (isMobile) return;
+    
     let isDragging = false;
     let startX, startY, initialLeft, initialTop;
     let currentModal = null;
@@ -20441,12 +20913,15 @@ function confirmModal() {
 function openCountdownModal() {
     playClickSound();
     renderCountdownContent();
-    document.getElementById('countdown-overlay').style.display = 'flex';
+    closeAllModals(); // 打开弹窗前关闭其他弹窗
+    const overlay = document.getElementById('countdown-overlay');
+    if (overlay) overlay.style.display = 'flex';
 }
 
 function closeCountdownModal() {
     playClickSound();
-    document.getElementById('countdown-overlay').style.display = 'none';
+    const overlay = document.getElementById('countdown-overlay');
+    if (overlay) overlay.style.display = 'none';
 }
 
 function renderCountdownContent() {
@@ -20647,12 +21122,15 @@ function updateCountdownBadge() {
 function openBackpackModal() {
     playClickSound();
     renderBackpackModal();
-    document.getElementById('backpack-overlay').style.display = 'flex';
+    closeAllModals(); // 打开弹窗前关闭其他弹窗
+    const overlay = document.getElementById('backpack-overlay');
+    if (overlay) overlay.style.display = 'flex';
 }
 
 function closeBackpackModal() {
     playClickSound();
-    document.getElementById('backpack-overlay').style.display = 'none';
+    const overlay = document.getElementById('backpack-overlay');
+    if (overlay) overlay.style.display = 'none';
 }
 
 function renderBackpackModal() {
@@ -20858,12 +21336,13 @@ function showErrorLogs() {
         content.innerHTML = html;
     }
     
+    closeAllModals(); // 打开弹窗前关闭其他弹窗
     overlay.style.display = 'flex';
-    closeSettings();
 }
 
 function closeErrorLogModal() {
-    document.getElementById('error-log-overlay').style.display = 'none';
+    const overlay = document.getElementById('error-log-overlay');
+    if (overlay) overlay.style.display = 'none';
 }
 
 function copyErrorLogs() {
@@ -20954,9 +21433,13 @@ function showQuestRewardModal() {
     html += `<button class="modal-btn" onclick="closeModal()">稍后再领</button>`;
     html += `</div>`;
     
-    document.getElementById('modal-title').textContent = '任务奖励';
-    document.getElementById('modal-content').innerHTML = html;
-    document.getElementById('modal-overlay').style.display = 'flex';
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+    if (modalTitle) modalTitle.textContent = '任务奖励';
+    if (modalContent) modalContent.innerHTML = html;
+    closeAllModals(); // 打开弹窗前关闭其他弹窗
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) modalOverlay.style.display = 'flex';
 }
 
 function claimQuestReward() {

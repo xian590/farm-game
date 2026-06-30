@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(()=>{const els=Array.from(document.querySelectorAll('*')).filter(e=>e.textContent.includes('角色属性')&&e.children.length===0);return JSON.stringify({count:els.length,first:els.length>0?{tag:els[0].tagName,class:els[0].className,text:els[0].textContent.trim()}:'none'});})()"
-  },
-  "session": "farm-game"
-}

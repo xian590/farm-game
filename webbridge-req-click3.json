@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { const el = [...document.querySelectorAll('*')].find(e => e.textContent.trim() === '角色属性'); if (el) { const clickable = el.closest('[role=button], button, a, .menu-item, li, div') || el.parentElement; clickable.click(); return 'clicked parent: ' + clickable.tagName; } return 'not found'; })()"},"session":"farm-game"}

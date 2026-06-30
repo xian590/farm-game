@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { const fns = ['initGame','autoPlayTick','checkSkillLevelUp','getSkillName','checkHealthDeath']; const res = {}; fns.forEach(fn => { try { res[fn] = typeof window[fn] === 'function'; } catch(e) { res[fn] = false; } }); return JSON.stringify(res); })()"},"session":"farm-test"}

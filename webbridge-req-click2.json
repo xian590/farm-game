@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { const el = [...document.querySelectorAll('*')].find(e => e.textContent.includes('角色属性') && e.children.length === 0); if (el) { el.click(); return 'clicked'; } return 'not found'; })()"},"session":"farm-game"}
