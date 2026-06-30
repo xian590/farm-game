@@ -1602,6 +1602,9 @@
         .toast.bad {
             background: rgba(231, 76, 60, 0.9);
         }
+        .toast.warn {
+            background: rgba(243, 156, 18, 0.9);
+        }
 
         /* 任务追踪器 - 专业设计 */
         .quest-tracker {
@@ -3063,11 +3066,16 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.2.9';
+const GAME_VERSION = '1.3.0';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
 let lastErrorLogTime = 0;
+window.addEventListener('beforeunload', function() {
+    if (game && typeof saveGame === 'function') {
+        try { saveGame(); } catch(e) {}
+    }
+});
 window.addEventListener('error', function(e) {
     try {
         // 限制写入频率：每5秒最多写入一次，避免频繁I/O导致卡顿
@@ -9131,6 +9139,7 @@ function initGame(mode) {
     const cfg = configs[mode];
 
     game = {
+        saveVersion: 1,
         mode: mode,
         money: cfg.money,
         maxHealth: cfg.maxHealth,
@@ -11285,8 +11294,12 @@ function onNewDay() {
                 // 自动收割：收割成熟作物
                 const maxHarvest = level * 2; // Lv1=2块, Lv2=4块, Lv3=全部
                 let harvested = 0;
+                const storageCap = game.storageCapacity || 2000;
+                const currentStorage = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
+                let remainingStorage = Math.max(0, storageCap - currentStorage);
                 game.fields.forEach((field, idx) => {
                     if (harvested >= maxHarvest && level < 3) return;
+                    if (remainingStorage <= 0) return;
                     if (field.crop && field.stage === 'mature') {
                         // 执行收割逻辑
                         const cropData = CROP_DATA[field.crop];
@@ -20016,16 +20029,14 @@ function buySeed(seedKey) {
 
 // 购买道具
 function buyItem(itemKey) {
-    const prices = {
-        fertilizer: 50, pesticide: 80, bun: 20, medicine: 100,
-        snack: 10, liquor: 50, cloth: 30, sugar: 40, cigarette: 60
-    };
-    const names = {
-        fertilizer: '化肥', pesticide: '农药', bun: '肉包子', medicine: '感冒药',
-        snack: '粗点心', liquor: '散装白酒', cloth: '花布头', sugar: '红糖', cigarette: '香烟'
-    };
-    
-    const price = prices[itemKey];
+    const itemData = ITEM_DATA[itemKey];
+    if (!itemData) {
+        showToast('商品不存在', 'bad');
+        playErrorSound();
+        return;
+    }
+    const price = itemData.price || 0;
+    const name = itemData.name || itemKey;
     // 社区建设加成（村卫生站：药品购买半价）
     let finalPrice = price;
     if (itemKey === 'medicine' && game.medicineDiscount) {
@@ -20041,7 +20052,7 @@ function buyItem(itemKey) {
     game.money -= finalPrice;
     game.items[itemKey] = (game.items[itemKey] || 0) + 1;
     
-    addLog(`🛒 购买了${names[itemKey]}`, 'info');
+    addLog(`🛒 购买了${name}`, 'info');
     saveGame();
     if (currentMainTab === 'shop') {
         refreshShopContent();
@@ -22430,3 +22441,49 @@ function renderAchievementsPanel() {
 </script>
 </body>
 </html>
+
+
+// ========== 批量操作 ==========
+function batchWaterAll() {
+    if (!game || !game.fields) return;
+    let watered = 0;
+    game.fields.forEach((field, idx) => {
+        if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+            const daysSinceWater = game.day - field.lastWaterDay;
+            if (daysSinceWater >= 2) {
+                waterField(idx);
+                watered++;
+            }
+        }
+    });
+    if (watered > 0) showToast(`💧 已浇水 ${watered} 块地`, 'good');
+    else showToast('没有需要浇水的田地', 'warn');
+}
+function batchWeedAll() {
+    if (!game || !game.fields) return;
+    let weeded = 0;
+    game.fields.forEach((field, idx) => {
+        if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+            const daysSinceWeed = game.day - field.lastWeedDay;
+            if (daysSinceWeed >= 7) {
+                weedField(idx);
+                weeded++;
+            }
+        }
+    });
+    if (weeded > 0) showToast(`🌿 已除草 ${weeded} 块地`, 'good');
+    else showToast('没有需要除草的田地', 'warn');
+}
+function batchHarvestAll() {
+    if (!game || !game.fields) return;
+    let harvested = 0;
+    const fieldsCopy = [...game.fields];
+    fieldsCopy.forEach((field, idx) => {
+        if (field.stage === 'mature') {
+            harvestCrop(idx);
+            harvested++;
+        }
+    });
+    if (harvested > 0) showToast(`🌾 已收割 ${harvested} 块地`, 'good');
+    else showToast('没有成熟作物可收割', 'warn');
+}
