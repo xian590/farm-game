@@ -19,6 +19,7 @@
             height: 100vh;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+            -webkit-touch-callout: none;
         }
         body.select-open {
             overflow: auto;
@@ -1074,6 +1075,7 @@
             background: white;
             border-radius: 16px;
             padding: 30px;
+            will-change: transform, opacity;
             max-width: 420px;
             width: 90%;
             text-align: center;
@@ -1584,6 +1586,7 @@
         .toast {
             position: fixed;
             top: 80px;
+            will-change: transform, opacity;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0,0,0,0.8);
@@ -1952,7 +1955,7 @@
                 font-size: 10px;
             }
             .content-panel {
-                padding: 10px 10px 180px 10px;
+                padding: 10px 10px 250px 10px;
                 order: 1;
             }
             .mode-cards {
@@ -2109,6 +2112,87 @@
                 width: 44px;
                 height: 44px;
                 font-size: 20px;
+            }
+            /* 移动端禁用耗电无限循环动画 */
+            .game-clock {
+                animation: none;
+            }
+            .float-animation {
+                animation: none;
+            }
+            .field-progress-bar.active {
+                animation: none;
+            }
+            .action-btn.highlight {
+                animation: none;
+            }
+            .pause-btn-top.paused {
+                animation: none;
+            }
+            .float-countdown-btn {
+                animation: none;
+            }
+            /* 移动端简化box-shadow提升性能 */
+            .modal {
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            }
+            .float-countdown-btn {
+                box-shadow: 0 2px 6px rgba(230,126,34,0.3);
+            }
+            .float-countdown-btn:hover {
+                box-shadow: 0 2px 6px rgba(230,126,34,0.3);
+            }
+            .event-log {
+                box-shadow: inset 0 0 8px rgba(139, 115, 85, 0.08);
+            }
+        }
+        
+        /* 尊重系统减少动画偏好设置 */
+        @media (prefers-reduced-motion: reduce) {
+            .game-clock {
+                animation: none;
+            }
+            .float-animation {
+                animation: none;
+            }
+            .field-progress-bar.active {
+                animation: none;
+            }
+            .action-btn.highlight {
+                animation: none;
+            }
+            .pause-btn-top.paused {
+                animation: none;
+            }
+            .float-countdown-btn {
+                animation: none;
+            }
+            .modal {
+                animation: none;
+            }
+            .modal-content {
+                animation: none;
+            }
+            .harvest-animation {
+                animation: none;
+            }
+            .log-item {
+                animation: none;
+            }
+            .content-panel {
+                animation: none;
+            }
+            .stat-value.changed {
+                animation: none;
+            }
+            .shop-item:hover {
+                transform: none;
+            }
+            .field-card:hover {
+                transform: none;
+            }
+            .mode-card:hover {
+                transform: none;
             }
         }
     
@@ -2987,7 +3071,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.2.7';
+const GAME_VERSION = '1.2.8';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3657,7 +3741,7 @@ function startBgm(bgmName, fadeIn = true) {
             return;
         }
         
-        const note = bgm.notes[bgmNoteIndex % bgm.notes.length];
+        const note = bgm.notes && bgm.notes.length > 0 ? bgm.notes[bgmNoteIndex % bgm.notes.length] : null;
         const noteDur = (bgm.tempo / 1000) * (bgm.noteLength || 0.8);
         playNote(note, noteDur, bgm.wave, bgm.volume);
         
@@ -3696,7 +3780,7 @@ function stopMusic() {
     stopRainSound();
 }
 
-// 页面可见性变化：后台时暂停BGM，前台时恢复，避免setTimeout堆积
+// 页面可见性变化：后台时暂停BGM和游戏循环，前台时恢复，避免setTimeout堆积和离线收益计算异常
 let bgmPausedByVisibility = false;
 let bgmResumeName = null;
 document.addEventListener('visibilitychange', function() {
@@ -3707,6 +3791,11 @@ document.addEventListener('visibilitychange', function() {
             bgmResumeName = currentBgm;
             stopMusic();
         }
+        // 页面进入后台：暂停游戏循环（但保持gamePaused状态，避免UI显示暂停）
+        if (gameLoopInterval && !gamePaused) {
+            clearInterval(gameLoopInterval);
+            gameLoopInterval = null;
+        }
     } else {
         // 页面回到前台：恢复BGM
         if (bgmPausedByVisibility && bgmResumeName && musicEnabled) {
@@ -3714,18 +3803,10 @@ document.addEventListener('visibilitychange', function() {
             startBgm(bgmResumeName, false);
             bgmResumeName = null;
         }
-    }
-});
-
-// 页面可见性变化：后台暂停游戏循环，前台恢复，节省电量并避免离线收益计算异常
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden && gameLoopInterval && !gamePaused) {
-        // 页面进入后台：暂停游戏循环（但保持gamePaused状态，避免UI显示暂停）
-        clearInterval(gameLoopInterval);
-        gameLoopInterval = null;
-    } else if (!document.hidden && !gameLoopInterval && !gamePaused) {
         // 页面回到前台：恢复游戏循环
-        startGameLoop();
+        if (!gameLoopInterval && !gamePaused) {
+            startGameLoop();
+        }
     }
 });
 function switchBgm(bgmName) {
@@ -9847,6 +9928,7 @@ function calculateOfflineReward() {
 }
 
 function showOfflineReward(reward) {
+    if (!game) return;
     if (!reward) return;
     
     let content = `<div style="text-align: center; padding: 10px 0;">`;
@@ -10183,6 +10265,10 @@ function loadGameManual() {
 
 // 存档兼容处理：给旧存档补上缺失的字段
 function fixSaveData() {
+    if (!game || typeof game !== 'object') {
+        game = createDefaultGame ? createDefaultGame() : {};
+        return;
+    }
     if (!game) return;
     
     // 补全核心游戏状态（极旧存档可能缺少这些基础字段）
@@ -10491,7 +10577,7 @@ function fixSaveData() {
                     field.crop = newCropId;
                 } else {
                     // 尝试找到该作物类型的第一个可用季节
-                    const availableKeys = Object.keys(CROP_DATA).filter(k => k.startsWith(cropType + '_'));
+                    const availableKeys = if (!cropType) return []; Object.keys(CROP_DATA).filter(k => k.startsWith(cropType + '_'));
                     if (availableKeys.length > 0) {
                         field.crop = availableKeys[0];
                     } else {
@@ -10526,7 +10612,7 @@ function fixSaveData() {
     }
     
     // 补全事件
-    if (game.currentEvent === undefined) game.currentEvent = null;
+    if (game.currentEvent === undefined) if (game) game.currentEvent = null;
     if (!game.eventHistory) game.eventHistory = [];
     if (game.nextSeasonBonus === undefined) game.nextSeasonBonus = 0;
     if (game.currentSeasonBonus === undefined) game.currentSeasonBonus = 0;
@@ -10918,7 +11004,7 @@ function startGameLoop() {
     }
     // 2秒 = 2游戏小时，24秒 = 1游戏天（比原来120秒/天快5倍）
     const baseInterval = 2000;
-    const interval = baseInterval / (gameSpeed || 1);
+    const interval = baseInterval / Math.max(1, gameSpeed || 1);
     gameLoopInterval = setInterval(gameTick, interval);
     updateUI();
 }
@@ -11042,7 +11128,7 @@ function gameTick() {
         game._lastSaveTime = nowSave;
         saveGame();
     }
-    updateUI();
+    scheduleUpdateUI();
 }
 
 function getStaminaRegenRate() {
@@ -12882,7 +12968,7 @@ function showEventPopup(event) {
     const eventCopy = { ...event, id: eventId };
     if (!window.STORY_EVENTS_MAP) window.STORY_EVENTS_MAP = {};
     window.STORY_EVENTS_MAP[eventId] = eventCopy;
-    game.currentEvent = eventId;
+    if (game) game.currentEvent = eventId;
     showEventModal(eventCopy);
 }
 
@@ -13230,7 +13316,7 @@ function handleEventChoice(optionIdx) {
     addLog(`⚡ ${event.name}：${resultText}`, event.type === 'disaster' ? 'bad' : event.type === 'gain' ? 'good' : 'info');
     
     // 清除当前事件
-    game.currentEvent = null;
+    if (game) game.currentEvent = null;
     
     // 防止浮点数累积
     roundGameState();
@@ -13361,6 +13447,23 @@ function growCrops() {
 function safeSetText(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
+}
+
+// 安全设置元素HTML，防止null错误
+function safeSetHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+}
+
+// updateUI 的 requestAnimationFrame 节流
+let _uiUpdatePending = false;
+function scheduleUpdateUI() {
+    if (_uiUpdatePending) return;
+    _uiUpdatePending = true;
+    requestAnimationFrame(function() {
+        _uiUpdatePending = false;
+        updateUI();
+    });
 }
 
 // ==================== UI更新 ====================
@@ -13500,6 +13603,7 @@ function showGame() {
 // ==================== 面板渲染 ====================
 function renderPanel(tab) {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     switch(tab) {
         case 'fields':
@@ -13600,6 +13704,7 @@ function renderPanel(tab) {
 // ===== 田地管理面板 =====
 function renderFieldsPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🌾 田地管理</div>';
     
@@ -14515,6 +14620,7 @@ function getStageFlavorText(stage, type) {
 // ===== 商店面板 =====
 function renderShopPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🏪 商店</div>';
     
@@ -14533,6 +14639,7 @@ function renderShopPanel() {
         case 'sell': html += renderSellTab(); break;
         case 'processed': html += renderProcessedSellTab(); break;
         case 'gifts': html += renderGiftsTab(); break;
+        default: html += '<div class="empty-state">页面加载出错</div>'; break;
     }
     html += '</div>';
     
@@ -14690,7 +14797,7 @@ function renderSeedsTab() {
         const sb = b[1].season;
         // 先按季节优先级排
         if (seasonPriority[sa] !== seasonPriority[sb]) {
-            return seasonPriority[sa] - seasonPriority[sb];
+            return (seasonPriority[sa] || 99) - (seasonPriority[sb] || 99);
         }
         // 同季节按类型顺序（rice, sweet, wheat, corn, soybean）
         const typeOrder = { rice: 1, sweet: 2, wheat: 3, corn: 4, soybean: 5, potato: 6, peanut: 7, pepper: 8, cabbage: 9, radish: 10, eggplant: 11, garlic: 12 };
@@ -14789,6 +14896,7 @@ function renderGiftsTab() {
 // ===== 其他面板（占位） =====
 function renderHousePanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🏠 房屋租赁</div>';
     
     // 当前房屋信息 + 睡觉按钮
@@ -14901,6 +15009,7 @@ function goSleep() {
 
 function renderToolsPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🔧 农具商店</div>';
     
     const toolTypes = [
@@ -14952,6 +15061,7 @@ function renderToolsPanel() {
 
 function renderCompostPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🌱 堆肥工坊</div>';
     
     // 堆肥说明
@@ -15105,6 +15215,7 @@ function goForaging() {
 
 function renderForagingPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🌿 后山采集</div>';
     html += '<p class="panel-desc">后山四季都有好东西，带上篮子去转转，说不定能采到宝贝。</p>';
@@ -15184,6 +15295,7 @@ function renderForagingPanel() {
 // ===== 钓鱼面板 =====
 function renderFishingPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🎣 河边钓鱼</div>';
     html += '<p class="panel-desc">村头小河边鱼虾不少，带上钓竿去碰碰运气。钓到的鱼会存入自家鱼塘，可以烹饪或出售。注意：晚上太黑没法钓鱼。</p>';
@@ -15431,6 +15543,7 @@ function getInputDesc(item) {
 
 function renderProcessingPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🏡 农家副业</div>';
     html += '<p class="panel-desc">农闲的时候做点副业，换点零花钱。都是农家自己的手艺，产量不高，但都是实打实的好东西。</p>';
@@ -15575,6 +15688,7 @@ function rerenderProcessing() {
 
 function renderPlayerPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">👤 角色属性</div>';
     
     // 基础属性
@@ -16174,6 +16288,7 @@ function studySkill() {
 
 function renderSkillsPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">📚 技能树</div>';
     
     const skillKeys = ['cropFamiliarity', 'fieldManagement', 'toolMastery', 'composting'];
@@ -16250,6 +16365,7 @@ function renderSkillsPanel() {
 // ===== 农技研究面板 =====
 function renderTechPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🔬 农技研究</div>';
     html += '<p class="panel-desc">研究农业技术，提高产量、节省体力。收获作物可以获得农技经验。</p>';
@@ -16317,6 +16433,7 @@ function rerenderTech() {
 // ===== 农家建筑面板 =====
 function renderBuildingPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🏡 农家设施</div>';
     html += '<p class="panel-desc">置办各种农家设施，提升生产效率。每个设施都可以加固升级。</p>';
@@ -16570,6 +16687,7 @@ function isNpcKnown(npcKey) {
 
 function renderNpcsPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">👥 村民</div>';
     
     // 所有NPC，按是否认识分组
@@ -17640,8 +17758,8 @@ function chatWithNpc(npcKey) {
     saveGame();
     if (currentMainTab === 'npcs') {
         renderNpcsPanel();
-    renderBackpack();
-    updateDailyButtons();
+        renderBackpack();
+        updateDailyButtons();
     }
     updateTopBar();
 }
@@ -17712,7 +17830,7 @@ function showGiftModal(npcKey) {
     if (modalSecondary) modalSecondary.textContent = '关闭';
     closeAllModals(); // 打开弹窗前关闭其他弹窗
     const modalOverlay2 = document.getElementById('modal-overlay');
-    if (modalOverlay) modalOverlay.style.display = 'flex';
+    if (modalOverlay2) modalOverlay2.style.display = 'flex';
 }
 
 // 送礼
@@ -17994,6 +18112,7 @@ function getPetEffectText(petKey) {
 
 function renderPetsPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🐱 宠物</div>';
     
     const petKeys = ['ahua', 'dahuang'];
@@ -18303,6 +18422,7 @@ function collectPoop() {
 
 function renderAutomationPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🤖 自动化设备</div>';
     html += '<p class="panel-desc">花钱买个省心，设备自动干活，你只管数钱。</p>';
     
@@ -18393,6 +18513,7 @@ function upgradeAutomation(deviceId) {
 
 function renderBankPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🏦 农村信用社</div>';
     html += '<p class="panel-desc">钱多了放银行，利滚利。日利率0.5%，利滚利。</p>';
     
@@ -18454,6 +18575,7 @@ function bankWithdrawAll() {
 
 function renderNeighborPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🤝 邻里互助</div>';
     html += '<p class="panel-desc">远亲不如近邻。跟村里人处好了，农忙时邻居都会来搭把手。</p>';
     
@@ -18524,6 +18646,7 @@ function unlockNeighborHelp(helpId) {
 
 function renderMarketPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     const isMarketDay = MARKET_DATA.openDay.includes(game.day);
     
     let html = '<div class="panel-title">🏪 集市</div>';
@@ -18614,6 +18737,7 @@ function sellMarketCrop(cropId, price) {
 
 function renderAgriTechPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🔬 农业科技</div>';
     html += '<p class="panel-desc">科技是第一生产力。投资农业科技，一次投入永久受益。</p>';
     
@@ -18683,6 +18807,7 @@ function upgradeAgriTech() {
 
 function renderAnimalsPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🐷 畜牧养殖</div>';
     html += '<p class="panel-desc">养点畜生，积少成多。猪牛羊鸡鸭鹅，想养什么养什么。</p>';
     
@@ -18765,6 +18890,7 @@ function renderAnimalsPanel() {
 
 function renderOrchardPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🌳 果园种植</div>';
     html += '<p class="panel-desc">果树种下去，年年有收成。一次种植，多年收获。</p>';
     
@@ -18843,6 +18969,7 @@ function renderOrchardPanel() {
 
 function renderVillagePanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🤝 村长合作</div>';
     html += '<p class="panel-desc">跟村长搞好关系，一起干大事。声望越高，能做的事越大。</p>';
     
@@ -18902,6 +19029,7 @@ function renderVillagePanel() {
 
 function renderFarmStayPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     let html = '<div class="panel-title">🏡 农家乐</div>';
     html += '<p class="panel-desc">利用自家产的食材招待客人，城里人就爱这一口农家味儿。</p>';
     
@@ -19201,6 +19329,7 @@ function removeTree(treeIdx) {
 
 function renderLogPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     panel.innerHTML = `
         <div class="panel-title">📜 事件日志</div>
         <p style="color: #999; text-align: center; padding: 40px;">完整日志请查看底部滚动栏</p>
@@ -20715,7 +20844,7 @@ function closeEventModal() {
     playClickSound();
     const overlay = document.getElementById('modal-overlay');
     if (overlay) overlay.style.display = 'none';
-    game.currentEvent = null;
+    if (game) game.currentEvent = null;
     modalCallback = null;
     // 恢复原始按钮结构
     const buttonsContainer = document.querySelector('.modal-buttons');
@@ -20793,6 +20922,12 @@ function confirmModal() {
         initialLeft = parseFloat(modal.style.left) || 0;
         initialTop = parseFloat(modal.style.top) || 0;
         
+        // 注册全局移动/结束事件，拖拽结束后自动移除
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchend', onEnd);
+        
         e.preventDefault();
     }
     
@@ -20812,6 +20947,11 @@ function confirmModal() {
         }
         isDragging = false;
         currentModal = null;
+        // 移除全局移动/结束事件，避免事件泄漏和冲突
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('touchmove', onMove, { passive: false });
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchend', onEnd);
     }
     
     // 为所有弹窗标题栏添加拖拽事件
@@ -20830,11 +20970,6 @@ function confirmModal() {
             if (modal) startDrag(e, modal);
         }
     }, { passive: false });
-    
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('mouseup', onEnd);
-    document.addEventListener('touchend', onEnd);
 })();
 
 // ==================== 倒计时弹窗 ====================
@@ -21405,6 +21540,7 @@ function claimQuestReward() {
 // ==================== 探索/矿洞系统 ====================
 function renderExplorePanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">⛏️ 后山矿洞</div>';
     html += '<p class="panel-desc">后山上有矿洞，挖点石头、煤炭、矿石回来，能卖钱也能做农具。</p>';
@@ -21571,6 +21707,7 @@ function sellOres() {
 // ==================== 烹饪系统 ====================
 function renderCookingPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🍳 农家烹饪</div>';
     html += '<p class="panel-desc">用自家种的菜、钓的鱼、采的野菜做顿饭，吃饱了才有力气干活。</p>';
@@ -21801,6 +21938,7 @@ function sellFood(foodKey) {
 // ==================== 社区建设系统 ====================
 function renderCommunityPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     let html = '<div class="panel-title">🏛️ 村公共建设</div>';
     html += '<p class="panel-desc">村里的大事，大家出力。捐点材料、出点钱，把村子建设得更好。</p>';
@@ -22017,6 +22155,7 @@ function unlockCollectionItem(category, itemId) {
 
 function renderCollectionPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     
     if (!game.collection) game.collection = {};
     
@@ -22191,6 +22330,7 @@ function unlockAchievement(achKey) {
 
 function renderAchievementsPanel() {
     const panel = document.getElementById('content-panel');
+    if (!panel) return;
     if (!game.achievements) game.achievements = {};
     
     let html = '<div class="panel-title">🏆 成就殿堂</div>';
