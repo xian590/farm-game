@@ -1058,13 +1058,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.5);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 3500;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
             animation: fadeIn 0.2s ease;
         }
 
@@ -1072,11 +1072,19 @@
             background: white;
             border-radius: 16px;
             padding: 30px;
-            max-width: 400px;
+            max-width: 420px;
             width: 90%;
             text-align: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.05);
             animation: popIn 0.3s ease;
+            position: relative;
+            cursor: grab;
+            user-select: none;
+        }
+        
+        .modal.dragging {
+            cursor: grabbing;
+            transition: none;
         }
 
         .modal-title {
@@ -1084,6 +1092,15 @@
             font-weight: bold;
             margin-bottom: 15px;
             color: #5d4e37;
+            cursor: grab;
+            user-select: none;
+            padding: 4px 20px;
+            margin: -10px -20px 15px -20px;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .modal-title:active {
+            cursor: grabbing;
         }
 
         .modal-content {
@@ -9101,26 +9118,44 @@ function calculateOfflineReward() {
         // 重置每日操作
         game.dailyActions = {exercise: 0, chat: 0, fish: 0, read: 0, foraging: 0, sideHustle: 0};
         game.dailyProcessed = {};
-        // 村民每天帮你干活（浇水除草）
+        // 村民每天帮你干活（浇水除草）并扣日薪
         if (game.hiredWorker && NPC_DATA[game.hiredWorker]) {
             const npc = NPC_DATA[game.hiredWorker];
-            const workerDays = game.day - (game.lastWorkerWaterDay || game.day - 1);
-            if (npc.skills && npc.skills.includes('water') && workerDays >= 1) {
-                game.fields.forEach(field => {
-                    if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-                        field.lastWaterDay = game.day;
-                    }
-                });
-                game.lastWorkerWaterDay = game.day;
+            // 扣日薪
+            let actualWage = npc.dailyWage;
+            const workerDiscount = (typeof getTechBonus === 'function') ? getTechBonus('workerDiscount') : 0;
+            if (workerDiscount > 0) {
+                actualWage = Math.floor(npc.dailyWage * (1 - workerDiscount));
             }
-            const weedDays = game.day - (game.lastWorkerWeedDay || game.day - 3);
-            if (npc.skills && npc.skills.includes('weed') && weedDays >= 3) {
-                game.fields.forEach(field => {
-                    if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-                        field.lastWeedDay = game.day;
-                    }
-                });
-                game.lastWorkerWeedDay = game.day;
+            if (game.money >= actualWage) {
+                game.money -= actualWage;
+            } else {
+                // 钱不够发工资，自动解雇
+                game.hiredWorker = null;
+                game.hireStartDay = 0;
+                game.lastWorkerWaterDay = 0;
+                game.lastWorkerWeedDay = 0;
+            }
+            // 只有没解雇才干活
+            if (game.hiredWorker) {
+                const workerDays = game.day - (game.lastWorkerWaterDay || game.day - 1);
+                if (npc.skills && npc.skills.includes('water') && workerDays >= 1) {
+                    game.fields.forEach(field => {
+                        if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                            field.lastWaterDay = game.day;
+                        }
+                    });
+                    game.lastWorkerWaterDay = game.day;
+                }
+                const weedDays = game.day - (game.lastWorkerWeedDay || game.day - 3);
+                if (npc.skills && npc.skills.includes('weed') && weedDays >= 3) {
+                    game.fields.forEach(field => {
+                        if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                            field.lastWeedDay = game.day;
+                        }
+                    });
+                    game.lastWorkerWeedDay = game.day;
+                }
             }
         }
         // 每天吃饭扣钱（低保机制：没钱时不扣健康体力）
@@ -9132,6 +9167,22 @@ function calculateOfflineReward() {
         } else {
             // 完全没钱时，村里给救济粮
             game.money += 15;
+        }
+        // 宠物每日饲料消耗（离线期间也要扣）
+        if (game.pets) {
+            for (const [petId, pet] of Object.entries(game.pets)) {
+                if (!pet || !pet.owned) continue;
+                const petData = PET_DATA[petId];
+                if (!petData) continue;
+                const foodCost = petData.dailyFoodCost || 0;
+                if (foodCost > 0) {
+                    if (game.money >= foodCost) {
+                        game.money -= foodCost;
+                    } else {
+                        game.money = 0;
+                    }
+                }
+            }
         }
         // 自动化设备离线运行
         if (game.automation) {
@@ -9295,14 +9346,14 @@ function calculateOfflineReward() {
             } else {
                 game.money += 15; // 低保救济粮
             }
-            // 每天扣日租
-            const houseData = HOUSE_DATA[game.house];
-            if (houseData && houseData.rent > 0) {
-                const dailyRent = Math.ceil(houseData.rent / 7);
-                if (game.money >= dailyRent) {
-                    game.money -= dailyRent;
-                }
-            }
+            // 每天扣日租（已改为季租，由advanceSeason统一扣除）
+            // const houseData = HOUSE_DATA[game.house];
+            // if (houseData && houseData.rent > 0) {
+            //     const dailyRent = Math.ceil(houseData.rent / 7);
+            //     if (game.money >= dailyRent) {
+            //         game.money -= dailyRent;
+            //     }
+            // }
             // 季节变化检查
             if (game.day > 28) {
                 advanceSeason();
@@ -9374,7 +9425,7 @@ function calculateOfflineReward() {
         }
     }
     
-    // 计算房租扣除（已在补偿循环中按日扣除，不再重复扣除）
+    // 计算房租扣除（季租在advanceSeason中自动扣除）
     let rentDeducted = 0;
     
     // 计算加工坊离线产出
@@ -10611,14 +10662,25 @@ function advanceSeason() {
         }, 300);
     }
     
+    // 季租扣除（每28天扣一次整季租金）
+    const houseData = HOUSE_DATA[game.house];
+    if (houseData && houseData.rent > 0) {
+        const seasonRent = houseData.rent;
+        if (game.money >= seasonRent) {
+            game.money -= seasonRent;
+            addLog(`🏠 换季交租-${seasonRent}元（${houseData.name}整季租金）`, 'info');
+        } else {
+            game.money = 0;
+            addLog(`🏠 换季交租！钱不够，房东发了好大的火...`, 'bad');
+        }
+    }
+    
     game.currentSeasonBonus = game.nextSeasonBonus || 0;
     game.nextSeasonBonus = 0;
     if (game.currentSeasonBonus > 0) {
         addLog(`🌟 本季产量加成+${Math.floor(game.currentSeasonBonus * 100)}%！`, 'good');
     }
     addLog(`${SEASON_ICONS[game.season]} ${SEASON_NAMES[game.season]}来了。${getRandomFlavor('season')}`, 'info');
-    
-    // 注意：租金在 onNewDay 中已扣除，此处不再重复扣除
 }
 
 function gameTick() {
@@ -10862,18 +10924,18 @@ function onNewDay() {
         }
     }
     
-    // 房屋租金每日扣除（已租房）
-    const houseData = HOUSE_DATA[game.house];
-    if (houseData && houseData.rent > 0) {
-        const dailyRent = Math.ceil(houseData.rent / 7);
-        if (game.money >= dailyRent) {
-            game.money -= dailyRent;
-            addLog(`🏠 房屋租金-${dailyRent}元`, 'info');
-        } else {
-            game.money = 0;
-            addLog(`🏠 没钱交房租了！房东很不高兴...`, 'bad');
-        }
-    }
+    // 房屋租金每日扣除（已租房）——改为季租，在advanceSeason中扣除
+    // const houseData = HOUSE_DATA[game.house];
+    // if (houseData && houseData.rent > 0) {
+    //     const dailyRent = Math.ceil(houseData.rent / 7);
+    //     if (game.money >= dailyRent) {
+    //         game.money -= dailyRent;
+    //         addLog(`🏠 房屋租金-${dailyRent}元`, 'info');
+    //     } else {
+    //         game.money = 0;
+    //         addLog(`🏠 没钱交房租了！房东很不高兴...`, 'bad');
+    //     }
+    // }
     
     // 农业科技效果应用
     if (game.agriTechEffects && game.agriTechEffects.autoGrowth) {
@@ -13195,6 +13257,24 @@ function renderFieldsPanel() {
     
     let html = '<div class="panel-title">🌾 田地管理</div>';
     
+    // 当前季节提示
+    const seasonLabels = { spring: '🌸 春季', summer: '☀️ 夏季', autumn: '🍂 秋季', winter: '❄️ 冬季' };
+    const seasonColors = { spring: '#27ae60', summer: '#e67e22', autumn: '#d35400', winter: '#3498db' };
+    const currentSeason = game.season || 'spring';
+    const seasonLabel = seasonLabels[currentSeason] || currentSeason;
+    const seasonColor = seasonColors[currentSeason] || '#666';
+    
+    // 获取当前季节可种植的作物
+    const availableCrops = Object.entries(CROP_DATA)
+        .filter(([k, v]) => v.season === currentSeason)
+        .map(([k, v]) => v.name)
+        .slice(0, 4);
+    
+    html += `<div style="background: linear-gradient(135deg, ${seasonColor}10, ${seasonColor}05); border: 1px solid ${seasonColor}30; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #555;">`;
+    html += `<span style="font-weight: bold; color: ${seasonColor};">${seasonLabel}</span> — 适合种植：`;
+    html += availableCrops.join('、');
+    html += `</div>`;
+    
     // 新手任务
     html += renderQuestBox();
     
@@ -14241,6 +14321,16 @@ function renderProcessedSellTab() {
 function renderSeedsTab() {
     let html = '';
     
+    // 当前季节提示
+    const seasonLabels = { spring: '🌸 春季', summer: '☀️ 夏季', autumn: '🍂 秋季', winter: '❄️ 冬季' };
+    const seasonColors = { spring: '#27ae60', summer: '#e67e22', autumn: '#d35400', winter: '#3498db' };
+    const currentSeasonLabel = seasonLabels[game.season] || game.season;
+    const currentSeasonColor = seasonColors[game.season] || '#666';
+    html += `<div style="background: linear-gradient(135deg, ${currentSeasonColor}15, ${currentSeasonColor}08); border: 2px solid ${currentSeasonColor}40; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; text-align: center;">`;
+    html += `<div style="font-size: 18px; font-weight: bold; color: ${currentSeasonColor}; margin-bottom: 4px;">${currentSeasonLabel} — 当前季节</div>`;
+    html += `<div style="font-size: 13px; color: #666;">请购买当季作物种子，非当季种子无法种植</div>`;
+    html += `</div>`;
+    
     // 按季节分组排序：当前季节优先，然后春夏秋冬顺序
     const seasonOrder = { spring: 1, summer: 2, autumn: 3, winter: 4 };
     const currentSeason = game.season || 'spring';
@@ -14270,17 +14360,17 @@ function renderSeedsTab() {
             lastSeason = data.season;
         }
         
-        html += `<div class="shop-item">
+        html += `<div class="shop-item" style="${!inSeason ? 'opacity: 0.6; background: #f8f9fa;' : ''}">
                     <div class="shop-item-info">
                         <div class="shop-item-icon">${data.emoji}</div>
                         <div>
-                            <div class="shop-item-name">${data.name}种子 ${!inSeason ? '（非种植季节）' : ''}</div>
+                            <div class="shop-item-name">${data.name}种子 ${!inSeason ? '<span style="color: #e74c3c; font-size: 12px;">❌ 非' + ({spring:'春',summer:'夏',autumn:'秋',winter:'冬'}[data.season] || data.season) + '季作物</span>' : '<span style="color: #27ae60; font-size: 12px;">✅ 当前可种</span>'}</div>
                             <div class="shop-item-desc">生长周期：${data.growDays}天 | 基础亩产：${data.baseYield}kg | 已拥有：${owned}亩</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span class="shop-item-price">${getSeedPrice(data.seedPrice)}元/亩</span>
-                        <button class="buy-btn" onclick="buySeed('${key}')" ${game.money < data.seedPrice ? 'disabled' : ''}>购买1亩</button>
+                        <button class="buy-btn" onclick="buySeed('${key}')" ${(game.money < data.seedPrice || !inSeason) ? 'disabled' : ''}>${!inSeason ? '非当季' : '购买1亩'}</button>
                     </div>
                  </div>`;
     });
@@ -17575,6 +17665,9 @@ function renderPetsPanel() {
                         <div>
                             <div class="shop-item-name">${pet.name} 🔒</div>
                             <div class="shop-item-desc">${pet.breed} · ${pet.desc}</div>
+                            <div class="shop-item-desc" style="color: #e67e22; margin-top: 4px; font-size: 12px;">
+                                💰 每日饲料费：${pet.dailyFoodCost}元
+                            </div>
                             <div class="shop-item-desc" style="color: #999; margin-top: 4px;">
                                 ${unlockText}
                             </div>
@@ -17613,6 +17706,9 @@ function renderPetsPanel() {
                                 <div style="font-size: 13px; color: #666; margin-top: 4px;">${pet.desc}</div>
                                 <div style="font-size: 13px; color: #27ae60; margin-top: 4px; font-weight: bold;">
                                     ✨ 当前效果：${typeof getPetEffectText === 'function' ? getPetEffectText(petKey) : ''}
+                                </div>
+                                <div style="font-size: 12px; color: #e67e22; margin-top: 4px;">
+                                    💰 每日自动扣除饲料费：${pet.dailyFoodCost}元
                                 </div>
                                 <div class="field-progress" style="margin-top: 8px;">
                                     <div class="field-progress-bar" style="width: ${friendship}%; background: #e67e22;"></div>
@@ -17707,6 +17803,7 @@ function adoptPet(petKey) {
     }
     
     addLog(`🎉 ${pet.name}来到了你家！以后就是一家人啦~`, 'good');
+    addLog(`💡 提示：${pet.name}每天需要${pet.dailyFoodCost}元饲料费，钱不够时好感度会下降。`, 'info');
     saveGame();
     renderPetsPanel();
     if (typeof updateUI === 'function') {
@@ -18801,6 +18898,13 @@ function plantCrop(fieldIdx, cropKey) {
     
     if (!field.prepared) {
         showToast('需要先整地！', 'bad');
+        return;
+    }
+    
+    // 季节检查
+    if (cropData && cropData.season !== game.season) {
+        const seasonNames = { spring: '春季', summer: '夏季', autumn: '秋季', winter: '冬季' };
+        showToast(`${cropData.name}是${seasonNames[cropData.season] || cropData.season}作物，现在不是种植季节！`, 'bad');
         return;
     }
     
@@ -20196,6 +20300,83 @@ function confirmModal() {
     }
     closeModal();
 }
+
+// ==================== 弹窗拖拽功能 ====================
+(function initModalDrag() {
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+    let currentModal = null;
+    
+    function getModalFromOverlay(overlay) {
+        return overlay ? overlay.querySelector('.modal') : null;
+    }
+    
+    function startDrag(e, modal) {
+        if (!modal) return;
+        isDragging = true;
+        currentModal = modal;
+        modal.classList.add('dragging');
+        
+        // 获取当前位置
+        const rect = modal.getBoundingClientRect();
+        const overlay = modal.closest('.modal-overlay');
+        const overlayRect = overlay ? overlay.getBoundingClientRect() : { left: 0, top: 0 };
+        
+        // 切换到绝对定位
+        modal.style.position = 'absolute';
+        modal.style.left = (rect.left - overlayRect.left) + 'px';
+        modal.style.top = (rect.top - overlayRect.top) + 'px';
+        modal.style.margin = '0';
+        modal.style.transform = 'none';
+        
+        startX = e.clientX || e.touches[0].clientX;
+        startY = e.clientY || e.touches[0].clientY;
+        initialLeft = parseFloat(modal.style.left) || 0;
+        initialTop = parseFloat(modal.style.top) || 0;
+        
+        e.preventDefault();
+    }
+    
+    function onMove(e) {
+        if (!isDragging || !currentModal) return;
+        const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+        const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+        currentModal.style.left = (initialLeft + dx) + 'px';
+        currentModal.style.top = (initialTop + dy) + 'px';
+    }
+    
+    function onEnd() {
+        if (currentModal) {
+            currentModal.classList.remove('dragging');
+        }
+        isDragging = false;
+        currentModal = null;
+    }
+    
+    // 为所有弹窗标题栏添加拖拽事件
+    document.addEventListener('mousedown', function(e) {
+        const title = e.target.closest('.modal-title');
+        if (title) {
+            const modal = title.closest('.modal');
+            if (modal) startDrag(e, modal);
+        }
+    });
+    
+    document.addEventListener('touchstart', function(e) {
+        const title = e.target.closest('.modal-title');
+        if (title) {
+            const modal = title.closest('.modal');
+            if (modal) startDrag(e, modal);
+        }
+    }, { passive: false });
+    
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+})();
 
 // ==================== 倒计时弹窗 ====================
 function openCountdownModal() {
