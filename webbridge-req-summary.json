@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{const ls=localStorage.getItem('farm_game_save_v1');const parsed=ls?JSON.parse(ls):null;const d=parsed||{};return JSON.stringify({day:d.day,season:d.season,time:d.time,money:d.money,health:d.health,maxHealth:d.maxHealth,stamina:d.stamina,maxStamina:d.maxStamina,fieldsCount:d.fields?d.fields.length:0,fieldLevel:d.fields&&d.fields[0]?d.fields[0].level:null,fieldCrop:d.fields&&d.fields[0]?d.fields[0].crop:null,fieldStage:d.fields&&d.fields[0]?d.fields[0].stage:null,skills:d.skills,reputation:d.reputation,mood:d.mood,npcCount:d.npcs?Object.keys(d.npcs).length:0,npcs:d.npcs,researchPoints:d.researchPoints,items:d.items,crops:d.crops,events:d.npcMilestones?Object.keys(d.npcMilestones).filter(k=>d.npcMilestones[k].length>0):[],pets:d.pets?Object.keys(d.pets):[]});})()"
+  },
+  "session": "farm-game"
+}

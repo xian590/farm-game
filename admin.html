@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>李家村 - 开发者后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; color: #eee; padding: 20px; }
+        h1 { color: #f39c12; margin-bottom: 8px; }
+        .version { color: #888; font-size: 13px; margin-bottom: 20px; }
+        h2 { color: #27ae60; margin: 20px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 16px; }
+        .card { background: #16213e; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+        .stat-item { background: #0f3460; padding: 10px; border-radius: 6px; }
+        .stat-label { font-size: 11px; color: #888; }
+        .stat-value { font-size: 16px; font-weight: bold; color: #f39c12; }
+        .stat-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #f39c12; background: #0f3460; }
+        .log-text { font-family: monospace; font-size: 11px; background: #0a0a1a; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; color: #ccc; }
+        .btn { padding: 6px 14px; background: #e94560; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 8px; font-size: 13px; }
+        .btn:hover { background: #c73e54; }
+        .btn-green { background: #27ae60; }
+        .btn-green:hover { background: #219a52; }
+        .btn-blue { background: #3498db; }
+        .btn-blue:hover { background: #2980b9; }
+        .btn-purple { background: #9b59b6; }
+        .btn-purple:hover { background: #8e44ad; }
+        .empty { color: #888; font-style: italic; }
+        .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; background: #0f3460; color: #aaa; margin-right: 4px; }
+        .tag-error { background: #e74c3c; color: #fff; }
+        .tag-good { background: #27ae60; color: #fff; }
+        .section-row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .section-row .card { flex: 1; min-width: 300px; }
+        .code-block { font-family: monospace; font-size: 11px; background: #0a0a1a; padding: 8px; border-radius: 4px; color: #aaa; overflow-x: auto; }
+        .scroll-box { max-height: 250px; overflow-y: auto; border: 1px solid #333; border-radius: 4px; }
+        .scroll-box table { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>🏡 李家村 - 开发者后台</h1>
+    <div class="version" id="version-info">版本: 加载中...</div>
+    
+    <div class="section-row">
+        <div class="card">
+            <h2>📊 玩家活跃统计</h2>
+            <div class="stat-grid" id="stats-grid">
+                <div class="stat-item"><div class="stat-label">总访问次数</div><div class="stat-value" id="visit-count">0</div></div>
+                <div class="stat-item"><div class="stat-label">反馈数量</div><div class="stat-value" id="feedback-count">0</div></div>
+                <div class="stat-item"><div class="stat-label">存档玩家</div><div class="stat-value" id="save-count">0</div></div>
+                <div class="stat-item"><div class="stat-label">JS错误</div><div class="stat-value" id="error-count">0</div></div>
+                <div class="stat-item"><div class="stat-label">平均游戏天数</div><div class="stat-value" id="avg-day">0</div><div class="stat-sub" id="max-day">最高: 0天</div></div>
+                <div class="stat-item"><div class="stat-label">平均资金</div><div class="stat-value" id="avg-money">0</div><div class="stat-sub" id="max-money">最高: 0</div></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>🐛 玩家反馈列表</h2>
+            <div id="feedback-list"><div class="empty">暂无反馈</div></div>
+        </div>
+    </div>
+    
+    <div class="section-row">
+        <div class="card">
+            <h2>⚠️ JS错误日志</h2>
+            <div class="scroll-box" id="error-list"><div class="empty" style="padding: 10px;">暂无错误</div></div>
+        </div>
+        <div class="card">
+            <h2>🎮 玩家行为统计</h2>
+            <div class="stat-grid" id="behavior-stats">
+                <div class="stat-item"><div class="stat-label">最高天数</div><div class="stat-value" id="stat-max-day">0</div></div>
+                <div class="stat-item"><div class="stat-label">最高资金</div><div class="stat-value" id="stat-max-money">0</div></div>
+                <div class="stat-item"><div class="stat-label">田地块数</div><div class="stat-value" id="stat-fields">0</div></div>
+                <div class="stat-item"><div class="stat-label">NPC互动</div><div class="stat-value" id="stat-npc">0</div></div>
+                <div class="stat-item"><div class="stat-label">技能等级</div><div class="stat-value" id="stat-skills">0</div></div>
+                <div class="stat-item"><div class="stat-label">加工建筑</div><div class="stat-value" id="stat-buildings">0</div></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>📜 系统日志</h2>
+        <div class="log-text" id="system-log">等待数据...</div>
+        <div style="margin-top: 10px;">
+            <button class="btn" onclick="clearAllData()">🗑️ 清空所有数据</button>
+            <button class="btn btn-blue" onclick="exportFeedback()">📥 导出反馈</button>
+            <button class="btn btn-purple" onclick="exportBugReport()">🐛 一键导出Bug报告</button>
+            <button class="btn btn-green" onclick="loadData()">🔄 刷新数据</button>
+        </div>
+    </div>
+
+<script>
+const FEEDBACK_KEY = 'farm_game_feedback_v1';
+const VISIT_KEY = 'farm_game_visit_count';
+const SAVE_KEY = 'farm_game_save_v1';
+const LOG_KEY = 'farm_game_system_log';
+const ERROR_KEY = 'farm_game_error_log';
+
+function loadData() {
+    // 版本号
+    const saveData = localStorage.getItem(SAVE_KEY);
+    let version = '未检测到存档';
+    if (saveData) {
+        try {
+            const game = JSON.parse(saveData);
+            version = game.version || 'v1.0.0';
+        } catch(e) {}
+    }
+    document.getElementById('version-info').textContent = '游戏版本: ' + version + ' | 后台版本: v1.0.0';
+    
+    // 访问次数
+    const visits = parseInt(localStorage.getItem(VISIT_KEY) || '0');
+    document.getElementById('visit-count').textContent = visits;
+    
+    // 反馈列表
+    const feedback = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]');
+    document.getElementById('feedback-count').textContent = feedback.length;
+    
+    const feedbackList = document.getElementById('feedback-list');
+    if (feedback.length === 0) {
+        feedbackList.innerHTML = '<div class="empty">暂无反馈</div>';
+    } else {
+        let html = '<table><tr><th>时间</th><th>天数</th><th>问题</th><th>资金</th></tr>';
+        feedback.slice().reverse().forEach(f => {
+            html += `<tr><td>${(f.time || '').split(' ')[0]}</td><td>第${f.day || '?'}天</td><td>${(f.text || '').substring(0, 60)}...</td><td>${f.money || 0}元</td></tr>`;
+        });
+        html += '</table>';
+        feedbackList.innerHTML = html;
+    }
+    
+    // 存档数据 - 统计
+    let saveCount = saveData ? 1 : 0;
+    document.getElementById('save-count').textContent = saveCount;
+    
+    if (saveData) {
+        try {
+            const game = JSON.parse(saveData);
+            document.getElementById('stat-max-day').textContent = game.day || 0;
+            document.getElementById('stat-max-money').textContent = (game.money || 0) + '元';
+            document.getElementById('stat-fields').textContent = (game.fields || []).length;
+            document.getElementById('stat-npc').textContent = Object.keys(game.npcs || {}).length;
+            const skillLevels = Object.values(game.skills || {}).reduce((sum, s) => sum + (s.level || 0), 0);
+            document.getElementById('stat-skills').textContent = skillLevels;
+            document.getElementById('stat-buildings').textContent = Object.keys(game.builtProcessing || {}).length;
+            document.getElementById('avg-day').textContent = game.day || 0;
+            document.getElementById('max-day').textContent = '最高: ' + (game.day || 0) + '天';
+            document.getElementById('avg-money').textContent = (game.money || 0) + '元';
+            document.getElementById('max-money').textContent = '最高: ' + (game.money || 0) + '元';
+        } catch(e) {}
+    }
+    
+    // 错误日志
+    const errors = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]');
+    document.getElementById('error-count').textContent = errors.length;
+    
+    const errorList = document.getElementById('error-list');
+    if (errors.length === 0) {
+        errorList.innerHTML = '<div class="empty" style="padding: 10px;">暂无错误</div>';
+    } else {
+        let html = '<table><tr><th>时间</th><th>错误</th><th>位置</th></tr>';
+        errors.slice().reverse().forEach(e => {
+            html += `<tr><td>${(e.time || '').split(' ')[1] || e.time}</td><td style="color:#e74c3c">${(e.message || '').substring(0, 50)}</td><td>${e.file || ''}:${e.line || ''}</td></tr>`;
+        });
+        html += '</table>';
+        errorList.innerHTML = html;
+    }
+    
+    // 系统日志
+    const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+    document.getElementById('system-log').textContent = logs.join('\n') || '暂无日志';
+}
+
+function clearAllData() {
+    if (confirm('确定要清空所有数据吗？\n\n这将删除：\n- 所有玩家反馈\n- 所有错误日志\n- 系统日志\n- 访问计数\n\n⚠️ 游戏存档不会被删除')) {
+        localStorage.removeItem(FEEDBACK_KEY);
+        localStorage.removeItem(ERROR_KEY);
+        localStorage.removeItem(LOG_KEY);
+        localStorage.removeItem(VISIT_KEY);
+        alert('数据已清空（游戏存档保留）');
+        loadData();
+    }
+}
+
+function exportFeedback() {
+    const feedback = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]');
+    if (feedback.length === 0) {
+        alert('没有反馈可导出');
+        return;
+    }
+    let text = '===== 李家村 - 玩家反馈 =====\n\n';
+    feedback.forEach(f => {
+        text += `[${f.time}] 第${f.day}天 | ${f.money}元\n`;
+        text += `问题: ${f.text}\n\n`;
+    });
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `feedback_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// 一键导出Bug报告（包含反馈+错误日志+系统日志）
+function exportBugReport() {
+    const feedback = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]');
+    const errors = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]');
+    const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+    const saveData = localStorage.getItem(SAVE_KEY);
+    
+    let report = '===== 李家村 - Bug报告 =====\n';
+    report += `导出时间: ${new Date().toLocaleString()}\n`;
+    report += `游戏版本: v1.0.0\n\n`;
+    
+    report += '===== 玩家反馈 =====\n\n';
+    if (feedback.length === 0) {
+        report += '暂无反馈\n\n';
+    } else {
+        feedback.forEach(f => {
+            report += `[${f.time}] 第${f.day}天 | ${f.money}元\n`;
+            report += `问题: ${f.text}\n\n`;
+        });
+    }
+    
+    report += '===== JS错误日志 =====\n\n';
+    if (errors.length === 0) {
+        report += '暂无错误\n\n';
+    } else {
+        errors.forEach(e => {
+            report += `[${e.time}] ${e.message}\n`;
+            report += `  文件: ${e.file || 'N/A'}:${e.line || 'N/A'}\n\n`;
+        });
+    }
+    
+    report += '===== 系统日志 =====\n\n';
+    if (logs.length === 0) {
+        report += '暂无日志\n\n';
+    } else {
+        logs.forEach(l => {
+            report += l + '\n';
+        });
+    }
+    
+    report += '===== 存档数据快照 =====\n\n';
+    if (saveData) {
+        try {
+            const game = JSON.parse(saveData);
+            report += `天数: ${game.day}\n`;
+            report += `资金: ${game.money}元\n`;
+            report += `健康: ${game.health}/${game.maxHealth}\n`;
+            report += `体力: ${game.stamina}/${game.maxStamina}\n`;
+            report += `季节: ${game.season}\n`;
+            report += `田地块数: ${(game.fields || []).length}\n`;
+        } catch(e) {
+            report += '存档解析失败\n';
+        }
+    } else {
+        report += '无存档\n';
+    }
+    
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bug_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert('Bug报告已导出！请将下载的文件发送给开发者。');
+}
+
+// 记录页面访问
+let visits = parseInt(localStorage.getItem(VISIT_KEY) || '0');
+visits++;
+localStorage.setItem(VISIT_KEY, visits.toString());
+
+// 加载数据
+loadData();
+
+// 每3秒刷新
+setInterval(loadData, 3000);
+</script>
+</body>
+</html>

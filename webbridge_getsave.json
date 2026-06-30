@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"localStorage.getItem('farm_game_save_v1')"},"session":"farm-game"}

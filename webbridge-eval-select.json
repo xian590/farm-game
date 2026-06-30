@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { const el = document.getElementById('select-container'); return el ? el.innerText.substring(0, 800) : 'not found'; })()"},"session":"farm-game"}

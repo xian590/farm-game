@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(function(){try{var result={};var spans=document.querySelectorAll('span,div');spans.forEach(function(el){var t=el.textContent.trim();if(t.match(/^[\d]+元$/))result.money=parseInt(t);if(t.match(/^[\d]+\/[\d]+$/)){var parts=t.split('/');if(parts[1]=='200'){if(!result.stamina&&parseInt(parts[0])<200)result.stamina=parseInt(parts[0]);else if(!result.health)result.health=parseInt(parts[0]);}}if(t.match(/^第[\d]+天$/))result.day=parseInt(t.replace(/[^\d]/g,''));if(t.match(/^(春季|夏季|秋季|冬季)$/))result.season=t;if(t.match(/^水稻[：:]/))result.rice=parseInt(t.replace(/[^\d]/g,''));if(t.match(/^红薯[：:]/))result.sweet=parseInt(t.replace(/[^\d]/g,''));if(t.match(/(雨|晴|阴|多云|雪|雾)$/))result.weather=t;});result.maxStamina=200;result.maxHealth=200;return JSON.stringify(result);}catch(e){return JSON.stringify({error:e.message});}})()"
+  },
+  "session": "farm-game"
+}

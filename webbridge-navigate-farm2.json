@@ -1,0 +1,9 @@
+{
+  "action": "navigate",
+  "args": {
+    "url": "http://localhost:8888/",
+    "newTab": true,
+    "group_title": "农场游戏测试"
+  },
+  "session": "farm-game"
+}

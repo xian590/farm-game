@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { window.scrollTo(0, 0); return 'scrolled'; })()"},"session":"farm-game-test"}

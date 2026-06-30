@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{const el=document.querySelector('.sidebar-tab');const allTabs=Array.from(document.querySelectorAll('.sidebar-tab'));const roleTab=allTabs.find(e=>e.textContent.includes('角色属性'));if(roleTab){roleTab.click();return 'clicked_sidebar_tab:'+roleTab.textContent.trim();}return 'not_found:'+allTabs.length;})()"
+  },
+  "session": "farm-game"
+}

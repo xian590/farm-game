@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"document.querySelector('.story-skip')?.click() || document.querySelector('#story-container')?.click() || 'no element'"},"session":"farm-game"}

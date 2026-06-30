@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{try{const raw=localStorage.getItem('farm_game_save_v1');const d=JSON.parse(raw||'{}');const sk=d.skills||{};return JSON.stringify({ok:true,skillsType:typeof sk,keys:Object.keys(sk),cropFamiliarity:sk.cropFamiliarity,fieldManagement:sk.fieldManagement,toolMastery:sk.toolMastery,composting:sk.composting,fishingMastery:sk.fishingMastery,rawSkills:JSON.stringify(sk).slice(0,200)})}catch(e){return JSON.stringify({ok:false,error:e.message})}})()"
+  },
+  "session": "farm-game"
+}

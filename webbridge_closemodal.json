@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { try { closeModal(); return 'closed'; } catch(e) { return e.message; } })()"},"session":"farm-game"}

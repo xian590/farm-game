@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{const raw=localStorage.getItem('farm_game_save_v1');if(!raw)return {error:'no save'};try{const s=JSON.parse(raw);return {day:s.day,season:s.season,money:s.money,energy:s.energy,maxEnergy:s.maxEnergy,health:s.health,maxHealth:s.maxHealth,fieldCount:s.fields?s.fields.length:0,fields:s.fields?s.fields.map(f=>{return {status:f.status,crop:f.cropName||f.crop,progress:f.progress,stage:f.growthStage};}):[],events:(s.eventHistory||[]).length,skills:s.skills?Object.entries(s.skills).map(([k,v])=>k+':'+(v.level||0)):[],npc:s.npcs?Object.entries(s.npcs).map(([k,v])=>k+':'+(v.friendship||v.heartCount||0)):[],mood:s.mood,reputation:s.reputation,difficulty:s.difficulty||s.mode,weather:s.weather,gameSpeed:s.gameSpeed||1,disasterRate:s.disasterRate,research:s.researchPoints,storageCap:s.storageCapacity,totalHarvest:s.totalHarvest,totalSales:s.totalSales,daysPlayed:s.daysPlayed,saveVersion:s.version,house:s.house,achievements:(s.achievements||[]).length,pets:s.pets?Object.keys(s.pets).length:0,workers:s.workers?Object.keys(s.workers).length:0,questCount:(s.quests||[]).length,milestoneCount:(s.milestones||[]).length,unlockedTabs:(s.unlockedTabs||[]).length,warehouse:s.warehouse||s.storage||{},size:raw.length};}catch(e){return {error:e.message};}})()"
+  },
+  "session": "farm-game"
+}

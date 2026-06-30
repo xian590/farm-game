@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { try { const save = localStorage.getItem('farm_game_save_v1'); if (save) return {hasSave:true, length:save.length, preview:save.substring(0,200)}; return {hasSave:false, keys:Object.keys(localStorage)}; } catch(e) { return {error:e.message}; } })()"},"session":"farm-game"}

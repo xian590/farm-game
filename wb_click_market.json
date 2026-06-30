@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const tabs = document.querySelectorAll('.sidebar-tab'); for (let tab of tabs) { if (tab.textContent.includes('集市')) { tab.click(); return 'clicked market tab'; } } return 'market tab not found'; })()"
+  },
+  "session": "farm-game"
+}

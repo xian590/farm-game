@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { try { return { gameExists: typeof game !== 'undefined', gameType: typeof game, keys: typeof game !== 'undefined' ? Object.keys(game).slice(0, 20) : [] }; } catch(e) { return { error: e.message }; } })()"},"session":"farm-game"}

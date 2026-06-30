@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { try { if (typeof game !== 'undefined' && game) { return JSON.stringify({ day: game.day, season: game.season, time: game.time, money: game.money, stamina: game.stamina, maxStamina: game.maxStamina, health: game.health, maxHealth: game.maxHealth, rice: game.rice, sweet: game.sweet, fieldsCount: game.fields.length, fields: game.fields.map(f => ({stage: f.stage, crop: f.crop, progress: f.growProgress, prepared: f.prepared})), eventsToday: game.eventsToday, totalEventsTriggered: game.totalEventsTriggered, dailyActions: game.dailyActions, npcs: game.npcs ? Object.fromEntries(Object.entries(game.npcs).map(([k,v]) => [k, typeof v === 'object' ? v.favor : v])) : null, skills: game.skills ? Object.fromEntries(Object.entries(game.skills).map(([k,v]) => [k, {level: v.level, exp: v.exp}])) : null, autoPlayEnabled: game.autoPlayEnabled, gameSpeed: game.gameSpeed, currentEvent: game.currentEvent, mode: game.mode, eventCount: typeof EVENT_DATA !== 'undefined' ? Object.keys(EVENT_DATA).length : null }); } return JSON.stringify({ error: 'game object not found' }); } catch(e) { return JSON.stringify({ error: e.message, stack: e.stack }); } })()"
+  },
+  "session": "farm-game"
+}

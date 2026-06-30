@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { const cards = document.querySelectorAll('.mode-card'); const result = []; cards.forEach((c, i) => { const btn = c.querySelector('.mode-select-btn, button, .select-btn'); result.push({index: i, text: c.innerText.substring(0, 60), hasBtn: !!btn, btnText: btn?.innerText}); }); return result; })()"},"session":"farm-game"}

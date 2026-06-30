@@ -1,0 +1,24 @@
+[2026-06-28 03:56:28] CURRENT_STATUS | WebBridge session: farm-game | 定时状态检查
+  day=14 season=spring time=19 money=295 stamina=200/200 health=199/200 maxHealth=200 maxStamina=200
+  fieldsCount=7 | fields=[mature rice_spring x2, growing sweet_spring 82.9% x2, mature rice_spring x2, growing sweet_spring 75.7% x1]
+  eventsToday=0 eventHistoryCount=5
+  skills={cropFamiliarity:L0(21exp), fieldManagement:L0(14exp), toolMastery:L0(0exp), composting:L0(0exp)}
+  npcs={wangcunzhang:1, lilaonong:3, zhangshen:3, wangerdan:1, zhaolaoban:0, laoyufu:3, linxiaoyu:2, suxiao:3, chenyang:1}
+  items={fertilizer:0, pesticide:0, bun:0, medicine:0, organicFertilizer:0}
+  seeds={rice_spring:0, rice_summer:0, sweet_spring:1, sweet_autumn:0}
+  buildings={} (空对象) | house=进阶房 | weather=lightRain
+  reputation=2 mood=73 researchPoints=10
+  stats={totalHarvest:1020, totalSell:0, daysPlayed:15}
+  pets={dahuang(大黄, 狗, friendship:0), ahua(阿花, 猫, friendship:0)}
+  quests={q0,q1,q2,q4,q6,q7,q9,q13:true} | milestones={m1,m2,m4,m6,m7:true}
+  hiredWorker=null | composting=false | fishPond={built:false, waterQuality:100, level:0}
+  mode=normal | disasterRate=1.0 | currentEvent=null | localSave=farm_game_save_v1 (exists)
+  [NOTE] 与上次日志记录(03:39:45)相比: 存档已完全不同, 本存档为normal模式day=14, 7块田有作物, 资金295
+  [NOTE] 之前的easy模式存档(day=28, money=3400, 1块田)已被覆盖或替换
+  [NOTE] 本存档有4块水稻已成熟待收割, 2块红薯生长中82.9%, 1块红薯75.7%
+  [WARNING] buildings仍为空对象, 持久化结构问题持续
+  [WARNING] 4块水稻已成熟但资金仅295, 可能需要收割后出售或继续种植
+  [STATUS] WebBridge连接正常 | 浏览器页面活跃 | 游戏循环运行中
+
+============================================================
+

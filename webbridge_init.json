@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { try { initGame('normal'); showGame(); startGameLoop(); return JSON.stringify({init: true, day: game.day, season: game.season}); } catch(e) { return JSON.stringify({error: e.message, stack: e.stack}); } })()"},"session":"farm-game"}

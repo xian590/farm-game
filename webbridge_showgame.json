@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { try { document.getElementById('select-container').style.display = 'none'; showGame(); return 'done'; } catch(e) { return e.message; } })()"},"session":"farm-game"}

@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(()=>{const btn=document.querySelector('.sidebar-tab[data-tab=\"fields\"]');if(btn){btn.click();return 'CLICKED_FIELDS';}else{return 'NOT_FOUND';}})()"},"session":"farm-game"}

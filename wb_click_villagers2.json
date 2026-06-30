@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const btns = document.querySelectorAll('button'); for (let b of btns) { if (b.textContent.includes('知道了') || b.textContent.includes('确定')) { b.click(); } } const tabs = document.querySelectorAll('.sidebar-tab'); for (let tab of tabs) { if (tab.textContent.includes('村民')) { tab.click(); return 'clicked villagers'; } } return 'villagers not found'; })()"
+  },
+  "session": "farm-game"
+}

@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const all = document.querySelectorAll('*'); let results = []; for (let el of all) { const text = el.textContent.trim(); if (text && text.length < 80 && text.length > 2 && (text.includes('薯片') || text.includes('花生油') || text.includes('辣椒酱') || text.includes('加工') || text.includes('作坊') || text.includes('工坊') || text.includes('制作'))) { if (!results.includes(text)) { results.push(text); } } } return JSON.stringify(results.slice(0, 30)); })()"
+  },
+  "session": "farm-game"
+}

@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const tabs = document.querySelectorAll('.sidebar-tab'); for (let tab of tabs) { if (tab.textContent.includes('邻里')) { tab.click(); return 'clicked neighbors'; } } return 'neighbors not found'; })()"
+  },
+  "session": "farm-game"
+}

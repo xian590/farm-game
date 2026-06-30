@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { if (typeof selectMode === 'function') { selectMode('normal'); return 'selectMode(normal) called'; } return 'selectMode not found'; })()"
+  },
+  "session": "farm-game"
+}

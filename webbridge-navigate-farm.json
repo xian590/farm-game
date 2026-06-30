@@ -1,0 +1,9 @@
+{
+  "action": "navigate",
+  "args": {
+    "url": "file:///C:/Users/Administrator/Documents/kimi/workspace/farm_game.html",
+    "newTab": true,
+    "group_title": "农场游戏测试"
+  },
+  "session": "farm-game"
+}

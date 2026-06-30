@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { const continueBtn = Array.from(document.querySelectorAll(\"*\")).find(el => el.textContent.includes(\"点击继续\")); if (continueBtn) { continueBtn.click(); return \"clicked_continue\"; } else { return \"continue_not_found\"; } })()"},"session":"farm-game"}

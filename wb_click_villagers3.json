@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const all = document.querySelectorAll('*'); for (let el of all) { const text = el.textContent.trim(); if (text === '👥 村民') { let clickable = el; while (clickable && !clickable.onclick && clickable.tagName !== 'BUTTON' && clickable.tagName !== 'A' && clickable.tagName !== 'LI' && clickable.tagName !== 'DIV') { clickable = clickable.parentElement; } if (clickable) { clickable.click(); return 'clicked parent: ' + clickable.tagName + ' class=' + clickable.className; } } } return 'not found'; })()"
+  },
+  "session": "farm-game"
+}

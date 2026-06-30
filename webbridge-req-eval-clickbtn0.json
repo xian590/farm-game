@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(function() { try { var btns = document.querySelectorAll('button'); if (btns.length > 0) { btns[0].click(); return {clicked: true, text: btns[0].textContent, totalButtons: btns.length}; } return {error: 'no buttons'}; } catch(e) { return {error: e.message}; } })()"},"session":"farm-game"}

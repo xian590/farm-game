@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(()=>{const btns=document.querySelectorAll('.field-actions button, .field-card button');for(let b of btns){if(b.textContent.includes('早稻')){b.click();return 'CLICKED_PLANT_RICE';}}return 'NOT_FOUND';})()"},"session":"farm-game"}

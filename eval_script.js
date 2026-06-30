@@ -1,0 +1,1 @@
+localStorage.clear(); game = null; selectMode('normal'); updateUI(); JSON.stringify({mode:game.mode, money:game.money, stamina:game.stamina, maxStamina:game.maxStamina, storage:game.storageCapacity, processed:Object.keys(game.processedItems)})

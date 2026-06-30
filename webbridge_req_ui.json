@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{const dayEl=document.querySelector('.day-display, #day-display, [class*=\"day\"], [id*=\"day\"]');const moneyEl=document.querySelector('.money-display, #money-display, [class*=\"money\"], [id*=\"money\"]');const energyEl=document.querySelector('.energy-display, #energy-display, [class*=\"energy\"], [id*=\"energy\"]');const seasonEl=document.querySelector('.season-display, #season-display, [class*=\"season\"], [id*=\"season\"]');const healthEl=document.querySelector('.health-display, #health-display, [class*=\"health\"], [id*=\"health\"]');return {dayText:dayEl?dayEl.innerText:null,moneyText:moneyEl?moneyEl.innerText:null,energyText:energyEl?energyEl.innerText:null,seasonText:seasonEl?seasonEl.innerText:null,healthText:healthEl?healthEl.innerText:null,bodyText:document.body.innerText.slice(0,500)};})()"
+  },
+  "session": "farm-game"
+}

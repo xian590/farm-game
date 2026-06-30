@@ -1,0 +1,50 @@
+(() => {
+  const raw = localStorage.getItem('farm_game_save_v1');
+  if (!raw) return JSON.stringify({error: 'no save'});
+  const d = JSON.parse(raw);
+  const safeArr = (x) => Array.isArray(x) ? x : [];
+  const safeObj = (x) => (x && typeof x === 'object' && !Array.isArray(x)) ? x : {};
+  const fields = safeArr(d.fields);
+  const npc = safeObj(d.npcMilestones || d.npcFavor);
+  const skills = safeObj(d.skills);
+  const pets = safeObj(d.pets);
+  const milestones = safeObj(d.milestones || d.unlockedMilestones);
+  const quests = safeObj(d.quests || d.questData);
+  const highestNpc = Object.entries(safeObj(d.npcFavor || {}))
+    .sort((a,b)=>b[1]-a[1])[0];
+  const skillTotal = Object.values(skills).reduce((s,v)=>s+(v.level||0),0);
+  const result = {
+    day: d.day,
+    season: d.season,
+    weather: d.currentWeather || d.weather,
+    money: d.money,
+    stamina: d.stamina,
+    maxStamina: d.maxStamina,
+    health: d.health,
+    maxHealth: d.maxHealth,
+    fieldsCount: fields.length,
+    fieldSummary: fields.map(f => f.crop ? (f.crop.type || f.crop) + ':' + (f.stage||'idle') : 'idle').join('; '),
+    eventCount: safeArr(d.eventHistory).length,
+    skillTotal: skillTotal,
+    skillSummary: Object.entries(skills).map(([k,v])=>k+':'+(v.level||0)).join('+'),
+    highestNpc: highestNpc ? highestNpc[0]+':'+highestNpc[1] : '无',
+    reputation: d.reputation || 0,
+    mood: d.mood || 50,
+    mode: d.mode,
+    house: d.house,
+    pets: Object.keys(pets).join('+') || '无',
+    researchPoints: d.researchPoints || 0,
+    storageLimit: d.storageCapacity || d.storageLimit || 2000,
+    disasterRate: d.disasterRate,
+    gameSpeed: d.gameSpeed || 1,
+    daysPlayed: d.daysPlayed || d.day,
+    totalHarvest: d.totalHarvest || d.totalHarvested || 0,
+    totalSales: d.totalSales || d.totalSold || 0,
+    milestoneCount: Object.keys(milestones).length,
+    questCount: Object.keys(quests).length,
+    saveSize: raw.length,
+    saveVersion: d.version || 'v1',
+    time: d.time
+  };
+  return JSON.stringify(result);
+})()

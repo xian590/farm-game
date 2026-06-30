@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { const btns = document.querySelectorAll('.modal-btn, .btn, button'); for (const b of btns) { if (b.innerText.includes('确定') || b.innerText.includes('确认')) { b.click(); return 'clicked-ok'; } } return 'not-found'; })()"},"session":"farm-game"}

@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const tabs = document.querySelectorAll('.sidebar-tab'); for (let tab of tabs) { if (tab.textContent.includes('农家图鉴')) { tab.click(); return 'clicked album tab'; } } return 'album tab not found'; })()"
+  },
+  "session": "farm-game"
+}

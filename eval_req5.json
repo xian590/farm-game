@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(()=>{try{return{speed:localStorage.getItem('farm_game_speed'),saveSize:localStorage.getItem('farm_game_save_v1').length};}catch(e){return{error:e.message};}})()"},"session":"farm-game"}

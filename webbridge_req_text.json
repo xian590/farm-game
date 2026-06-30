@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(()=>{try{var t=document.body.innerText;var lines=t.split('\n').filter(function(l){return l.trim().length>0;});var relevant=lines.slice(0,120);return{text:relevant.join('\n'),length:lines.length};}catch(e){return{error:e.message};}})()"},"session":"farm-game"}

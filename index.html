@@ -8837,9 +8837,9 @@ function getModeName(mode) {
 // ==================== 游戏初始化 ====================
 function initGame(mode) {
     const configs = {
-        easy: { money: 3000, maxHealth: 120, maxStamina: 120, disasterRate: 0.6, startHealth: 80, startStamina: 70 },
-        normal: { money: 1500, maxHealth: 100, maxStamina: 100, disasterRate: 1.0, startHealth: 60, startStamina: 45 },
-        hard: { money: 5000, maxHealth: 80, maxStamina: 80, disasterRate: 1.5, startHealth: 40, startStamina: 30 }
+        easy: { money: 3000, maxHealth: 200, maxStamina: 200, disasterRate: 0.6, startHealth: 120, startStamina: 100 },
+        normal: { money: 1500, maxHealth: 200, maxStamina: 200, disasterRate: 1.0, startHealth: 100, startStamina: 80 },
+        hard: { money: 5000, maxHealth: 200, maxStamina: 200, disasterRate: 1.5, startHealth: 80, startStamina: 60 }
     };
     const cfg = configs[mode];
 
@@ -9117,14 +9117,15 @@ function calculateOfflineReward() {
                 game.lastWorkerWeedDay = game.day;
             }
         }
-        // 每天吃饭扣钱
+        // 每天吃饭扣钱（低保机制：没钱时不扣健康体力）
         const mealCost = 15; // 与在线一致
         if (game.money >= mealCost) {
             game.money -= mealCost;
+        } else if (game.money > 0) {
+            game.money = 0; // 钱不够，全部用来吃饭
         } else {
-            game.money = 0;
-            game.stamina = Math.max(0, game.stamina - 10);
-            game.health = Math.max(0, game.health - 2);
+            // 完全没钱时，村里给救济粮
+            game.money += 15;
         }
         // 自动化设备离线运行
         if (game.automation) {
@@ -9274,6 +9275,42 @@ function calculateOfflineReward() {
         }
     }
     
+    // 修复P0-4：处理gameDays的剩余天数（之前被完全跳过，导致离线多天时吃饭、季节变化、作物生长等不执行）
+    if (gameDays > 0) {
+        for (let d = 0; d < gameDays; d++) {
+            game.day++;
+            game.totalDay = (game.totalDay || game.day) + 1;
+            // 每天吃饭
+            const mealCost = 15;
+            if (game.money >= mealCost) {
+                game.money -= mealCost;
+            } else if (game.money > 0) {
+                game.money = 0;
+            } else {
+                game.money += 15; // 低保救济粮
+            }
+            // 每天扣日租
+            const houseData = HOUSE_DATA[game.house];
+            if (houseData && houseData.rent > 0) {
+                const dailyRent = Math.ceil(houseData.rent / 7);
+                if (game.money >= dailyRent) {
+                    game.money -= dailyRent;
+                }
+            }
+            // 季节变化检查
+            if (game.day > 28) {
+                advanceSeason();
+            }
+            // 作物生长
+            if (typeof growCrops === 'function') {
+                growCrops();
+            }
+            // 体力恢复
+            const regenRate = getStaminaRegenRate();
+            game.stamina = Math.min(game.maxStamina, game.stamina + regenRate * 8);
+        }
+    }
+    
     // 处理季节变化（28天/季）
     while (game.day > 28) {
         advanceSeason();
@@ -9331,14 +9368,8 @@ function calculateOfflineReward() {
         }
     }
     
-    // 计算房租扣除（季节变化时）
+    // 计算房租扣除（已在补偿循环中按日扣除，不再重复扣除）
     let rentDeducted = 0;
-    if (beforeSeason !== game.season) {
-        const houseData = HOUSE_DATA[game.house];
-        if (houseData && houseData.rent > 0) {
-            rentDeducted = houseData.rent;
-        }
-    }
     
     // 计算加工坊离线产出
     const processingOutput = [];
@@ -9809,15 +9840,25 @@ function fixSaveData() {
     // 补全核心游戏状态（极旧存档可能缺少这些基础字段）
     if (game.mode === undefined) game.mode = 'normal';
     if (game.money === undefined) game.money = 1500;
-    if (game.maxHealth === undefined) game.maxHealth = 100;
+    if (game.maxHealth === undefined) game.maxHealth = 200;
     if (game.health === undefined) game.health = Math.floor(game.maxHealth * 0.6);
-    if (game.maxStamina === undefined) game.maxStamina = 100;
+    if (game.maxStamina === undefined) game.maxStamina = 200;
     if (game.stamina === undefined) game.stamina = Math.floor(game.maxStamina * 0.5);
     if (game.day === undefined) game.day = 1;
     if (game.totalDay === undefined) game.totalDay = game.day || 1;
     if (game.season === undefined) game.season = 'spring';
     if (game.time === undefined) game.time = 6;
     if (game.disasterRate === undefined) game.disasterRate = 1.0;
+    
+    // 升级旧存档：将旧版100上限升级到200
+    if (game.maxHealth < 200) {
+        game.maxHealth = 200;
+        if (game.health < 100) game.health = 100; // 健康值也相应提升
+    }
+    if (game.maxStamina < 200) {
+        game.maxStamina = 200;
+        if (game.stamina < 80) game.stamina = 80; // 体力值也相应提升
+    }
     
     // 补全items和dailyActions（只补全缺失字段，不覆盖当天数据）
     if (!game.items) game.items = {};
@@ -10166,6 +10207,11 @@ function fixSaveData() {
     // 补全库存
     if (!game.crops) game.crops = { rice: 0, sweet: 0, wheat: 0, corn: 0, soybean: 0, potato: 0, peanut: 0, pepper: 0, cabbage: 0, radish: 0, eggplant: 0, garlic: 0 };
     if (!game.seeds) game.seeds = { rice_spring: 0, rice_summer: 0, sweet_spring: 0, sweet_autumn: 0, wheat_spring: 0, wheat_autumn: 0, corn_summer: 0, soybean_spring: 0, soybean_summer: 0, potato_spring: 0, potato_autumn: 0, peanut_summer: 0, pepper_summer: 0, pepper_autumn: 0, cabbage_autumn: 0, cabbage_winter: 0, radish_autumn: 0, radish_winter: 0, eggplant_summer: 0, eggplant_autumn: 0, garlic_autumn: 0, garlic_spring: 0 };
+    // 补全旧存档中缺失的种子键（避免 undefined 导致种植失败）
+    const defaultSeeds = { rice_spring: 0, rice_summer: 0, sweet_spring: 0, sweet_autumn: 0, wheat_spring: 0, wheat_autumn: 0, corn_summer: 0, soybean_spring: 0, soybean_summer: 0, potato_spring: 0, potato_autumn: 0, peanut_summer: 0, pepper_summer: 0, pepper_autumn: 0, cabbage_autumn: 0, cabbage_winter: 0, radish_autumn: 0, radish_winter: 0, eggplant_summer: 0, eggplant_autumn: 0, garlic_autumn: 0, garlic_spring: 0 };
+    for (const [key, val] of Object.entries(defaultSeeds)) {
+        if (game.seeds[key] === undefined) game.seeds[key] = val;
+    }
     if (!game.items) game.items = { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0 };
     
     // 补全锻炼相关
@@ -10254,6 +10300,7 @@ function loadGame() {
     const saved = localStorage.getItem(SAVE_KEY);
     if (saved) {
         game = JSON.parse(saved);
+        fixSaveData(); // 加载后修复存档兼容性
         return true;
     }
     // 尝试从备份恢复
@@ -10262,12 +10309,13 @@ function loadGame() {
         if (backup) {
             try {
                 game = JSON.parse(backup);
+                fixSaveData(); // 加载后修复存档兼容性
                 localStorage.setItem(SAVE_KEY, backup);
                 if (typeof showToast === 'function') {
                     showToast('📂 已从备份' + i + '恢复存档', 'warn');
                 }
                 return true;
-            } catch(e) { console.error('存档导出失败', e); }
+            } catch(e) { console.error('备份恢复失败', e); }
         }
     }
     return false;
@@ -10539,7 +10587,7 @@ function advanceSeason() {
                 field.stage = 'idle';
                 field.growProgress = 0;
                 field.step = 0;
-                field.prepared = false;
+                field.prepared = true;  // 季节变化后保持已整地，方便立即再种
                 field.fertilized = false;
                 field.fertilizerType = null;
                 field.yieldLoss = 0;
@@ -10564,20 +10612,7 @@ function advanceSeason() {
     }
     addLog(`${SEASON_ICONS[game.season]} ${SEASON_NAMES[game.season]}来了。${getRandomFlavor('season')}`, 'info');
     
-    // 租金扣除（改为按天扣除，降低前期压力）
-    const houseData = HOUSE_DATA[game.house];
-    if (houseData && houseData.rent > 0) {
-        const dailyRent = Math.ceil(houseData.rent / 7); // 按周折算为日租
-        if (game.money >= dailyRent) {
-            game.money -= dailyRent;
-            addLog(`🏠 今日房租${dailyRent}元已扣除。`, 'info');
-        } else {
-            game.money = 0;
-            game.stamina = Math.max(0, game.stamina - 15);
-            game.health = Math.max(0, game.health - 3);
-            addLog(`🏠 拖欠房租！房东来催了，体力-15，健康-3。`, 'bad');
-        }
-    }
+    // 注意：租金在 onNewDay 中已扣除，此处不再重复扣除
 }
 
 function gameTick() {
@@ -10604,11 +10639,9 @@ function gameTick() {
         game.time = 6;
         game.day++;
         game.totalDay = (game.totalDay || game.day) + 1;
-        onNewDay();
+        advanceSeason(); // 先检查季节变化
+        onNewDay();      // 然后执行新的一天逻辑
     }
-
-    // 季节变化
-    advanceSeason();
 
     // 作物生长
     growCrops();
@@ -10792,11 +10825,15 @@ function onNewDay() {
     if (game.money >= mealCost) {
         game.money -= mealCost;
         addLog(`🍚 吃饭花了${mealCost}元，体力恢复了一些`, 'info');
-    } else {
+    } else if (game.money > 0) {
+        // 钱不够但还有一点，全部用来吃饭
         game.money = 0;
-        game.stamina = Math.max(0, game.stamina - 10);
-        game.health = Math.max(0, game.health - 2);
-        addLog('😰 没钱吃饭了，今天饿了一整天，体力-10，健康-2', 'bad');
+        addLog('🍚 钱不够，将就着吃了一顿，勉强填饱肚子', 'warn');
+    } else {
+        // 低保机制：完全没钱时，村里给基本生活费，不扣健康体力
+        const welfare = 15;
+        game.money += welfare;
+        addLog('🏘️ 村里看你实在揭不开锅，送来了救济粮。领取了基本生活费+' + welfare + '元', 'good');
     }
     
     // 宠物每日饲料消耗
@@ -10822,10 +10859,10 @@ function onNewDay() {
     // 房屋租金每日扣除（已租房）
     const houseData = HOUSE_DATA[game.house];
     if (houseData && houseData.rent > 0) {
-        const rent = houseData.rent;
-        if (game.money >= rent) {
-            game.money -= rent;
-            addLog(`🏠 房屋租金-${rent}元`, 'info');
+        const dailyRent = Math.ceil(houseData.rent / 7);
+        if (game.money >= dailyRent) {
+            game.money -= dailyRent;
+            addLog(`🏠 房屋租金-${dailyRent}元`, 'info');
         } else {
             game.money = 0;
             addLog(`🏠 没钱交房租了！房东很不高兴...`, 'bad');
@@ -11089,17 +11126,22 @@ function checkHealthDeath() {
     if (game.health <= 0) {
         // 健康归零——累倒了，不是死亡
         game.health = 1; // 健康值不会低于1
-        game.stamina = Math.min(game.maxStamina, game.stamina + 30); // 强制休息恢复体力
+        game.stamina = Math.min(game.maxStamina, game.stamina + 20); // 强制休息恢复体力（从30降到20）
         
-        // 扣除医药费
-        const medicalCost = 50;
+        // 扣除医药费（降低惩罚，从50降到30）
+        const medicalCost = 30;
+        let actualCost = 0;
         if (game.money >= medicalCost) {
             game.money -= medicalCost;
-        } else {
+            actualCost = medicalCost;
+        } else if (game.money > 0) {
+            actualCost = game.money;
             game.money = 0;
+        } else {
+            actualCost = 0; // 没钱就不扣了，避免死亡螺旋
         }
         
-        addLog('🏥 你累倒了！乡亲们把你送到村卫生所，休息了一天。医药费' + medicalCost + '元，体力恢复了一些。', 'warn');
+        addLog('🏥 你累倒了！乡亲们把你送到村卫生所，休息了一天。医药费' + actualCost + '元，体力恢复了一些。', 'warn');
         showToast('🏥 累倒了！注意休息，健康值已恢复。', 'warn');
         
         // 显示休息弹窗
@@ -11111,7 +11153,7 @@ function checkHealthDeath() {
                     你太拼了，身体发出了警报。乡亲们发现你昏倒在田里，赶紧把你送到村卫生所。<br><br>
                     王大夫给你输了液，叮嘱你注意劳逸结合。健康值已恢复，但记得多休息！
                 </div>
-                <div style="font-size:12px;color:#999;margin-bottom:10px;">医药费：${medicalCost}元 | 体力恢复：+30</div>
+                <div style="font-size:12px;color:#999;margin-bottom:10px;">医药费：${actualCost}元 | 体力恢复：+20</div>
             </div>
         `;
         showModal('注意身体', restHtml, () => {
@@ -19092,8 +19134,6 @@ function harvestCrop(fieldIdx) {
     
     yield_ = Math.max(0, Math.floor(yield_));
     
-    yield_ = Math.max(0, Math.floor(yield_));
-    
     // 入库（检查仓库容量限制）
     const storageCap = game.storageCapacity || 2000;
     const currentStorage = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
@@ -19157,12 +19197,12 @@ function harvestCrop(fieldIdx) {
     
     playHarvestSound();
     
-    // 重置田地
+    // 重置田地（收割后保持已整地状态，方便立即再种）
     field.crop = null;
     field.stage = 'idle';
     field.step = 0;
     field.growProgress = 0;
-    field.prepared = false;
+    field.prepared = true;  // 收割后田地保持已整地
     field.fertilized = false;
     field.fertilizerType = null;
     field.turnedVine1 = false;
@@ -20101,9 +20141,12 @@ function closeEventModal() {
     playClickSound();
     document.getElementById('modal-overlay').style.display = 'none';
     game.currentEvent = null;
+    modalCallback = null; // 修复：重置回调
     // 重置弹窗按钮状态
     document.querySelector('.modal-buttons').style.display = 'flex';
     document.getElementById('modal-confirm').style.display = 'inline-block';
+    const secondaryBtn = document.querySelector('.modal-btn.secondary');
+    if (secondaryBtn) secondaryBtn.textContent = '取消'; // 修复：重置二级按钮文字
 }
 
 function closeModal() {

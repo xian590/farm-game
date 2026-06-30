@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { try { const result = saveGame(); return JSON.stringify({source: 'saveGame()', data: result}); } catch(e) { return JSON.stringify({error: e.message}); } })()"},"session":"farm-game"}

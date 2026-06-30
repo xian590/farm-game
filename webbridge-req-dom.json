@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{const texts=[];document.querySelectorAll('span,div').forEach(el=>{const t=el.textContent.trim();if(t.length>0&&t.length<50)texts.push(t);});const stateBar=texts.filter(t=>/\\d+元|第\\d+天|体力|健康|水稻|红薯|春季|夏季|秋季|冬季/.test(t)).slice(0,20);const events=[];document.querySelectorAll('*').forEach(el=>{const t=el.textContent;if(/\\[第\\d+天\\].*(?:干旱|锻炼|串门|灾害|事件|开始)/.test(t)){const m=t.match(/\\[第\\d+天\\][^\\n]+/g);if(m)events.push(...m);}});return JSON.stringify({stateBar,eventCount:events.length,eventsToday:events.filter(e=>e.includes('[第')).slice(-10)});})()"
+  },
+  "session": "farm-game"
+}

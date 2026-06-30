@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{const el=Array.from(document.querySelectorAll('*')).find(e=>e.textContent.includes('角色属性')&&e.tagName!=='SCRIPT'&&e.tagName!=='STYLE');if(el){el.click();return 'clicked_role_attr';}return 'not_found';})()"
+  },
+  "session": "farm-game"
+}

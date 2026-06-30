@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { game.money = -50; updateUI(); const result = {money: game.money, uiMoney: document.getElementById('stat-money').textContent}; game.money = 1900; updateUI(); return JSON.stringify(result); })()"},"session":"farm-game-test"}

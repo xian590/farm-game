@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const btns = document.querySelectorAll('button'); for (let b of btns) { if (b.textContent.includes('解锁')) { b.click(); return 'clicked unlock'; } } return 'unlock button not found'; })()"
+  },
+  "session": "farm-game"
+}

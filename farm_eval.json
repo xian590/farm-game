@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { var save = localStorage.getItem('farmSave'); if (!save) return 'NO_SAVE'; var data = JSON.parse(save); var fields = (data.fields || []).map(function(f){return {stage: f.stage, crop: f.crop, progress: f.progress || 0, plantedDay: f.plantedDay, lastWaterDay: f.lastWaterDay, lastWeedDay: f.lastWeedDay};}); var result = {day: data.day, season: data.season, time: data.time, money: data.money, stamina: data.stamina, health: data.health, maxStamina: data.maxStamina, maxHealth: data.maxHealth, rice: (data.storage && data.storage.rice) || 0, sweet: (data.storage && data.storage.sweet) || 0, fieldsCount: (data.fields && data.fields.length) || 0, fields: fields, eventsToday: data.eventsToday || 0, eventHistory: (data.eventHistory && data.eventHistory.length) || 0, dailyActions: data.dailyActions, npcs: data.npcFavor, npcMilestones: data.npcMilestones, skills: data.skills, items: data.items, seeds: data.seeds, buildings: data.buildings, house: data.house, weather: data.weather, weatherDuration: data.weatherDuration, reputation: data.reputation, mood: data.mood, researchPoints: data.researchPoints, pets: data.pets, tools: data.tools, processed: data.processed, storageCapacity: data.storageCapacity, stats: data.stats, speed: data.gameSpeed, autoPlay: data.autoPlayEnabled, lastSave: data.lastSave, totalEvents: data.totalEvents || 0, disasterRate: data.disasterRate || 1, version: data.version}; return JSON.stringify(result); })()"
+  },
+  "session": "farm-game"
+}

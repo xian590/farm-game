@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"typeof selectMode === 'function' ? (selectMode('easy'), 'called') : 'not found'"},"session":"farm-game"}

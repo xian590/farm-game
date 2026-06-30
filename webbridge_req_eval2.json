@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{const keys=Object.keys(window).filter(k=>/game|farm|player|state|stats|npc|event|skill|field|storage|save/i.test(k)).sort();const ls=Object.keys(localStorage).filter(k=>/farm|save|game/i.test(k));return {windowKeys:keys.slice(0,50),localStorageKeys:ls,localStorageSize:ls.map(k=>({key:k,size:(localStorage.getItem(k)||'').length})),title:document.title};})()"
+  },
+  "session": "farm-game"
+}

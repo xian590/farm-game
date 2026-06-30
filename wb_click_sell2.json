@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const all = document.querySelectorAll('*'); for (let el of all) { const text = el.textContent.trim(); if (text === '💰 出售作物' || text === '出售作物') { el.click(); return 'clicked: ' + text; } } return 'not found'; })()"
+  },
+  "session": "farm-game"
+}

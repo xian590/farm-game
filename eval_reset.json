@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"game.money=1500; game.stamina=100; game.day=1; game.time=6; updateUI(); JSON.stringify({money:game.money, stamina:game.stamina, day:game.day, time:game.time})"},"session":"farm-test"}

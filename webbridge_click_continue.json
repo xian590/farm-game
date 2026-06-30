@@ -1,0 +1,1 @@
+{"action": "evaluate", "args": {"code": "(() => { const el = Array.from(document.querySelectorAll('*')).find(e => e.textContent && e.textContent.includes('点击继续')); if (el) { el.click(); return 'clicked continue: ' + el.tagName + ' class=' + el.className; } return 'not found'; })()" }, "session": "farm-game"}

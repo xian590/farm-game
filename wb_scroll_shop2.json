@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { const container = document.querySelector('.shop-content') || document.querySelector('.main-content') || document.body; container.scrollTop = container.scrollHeight; return 'scrolled'; })()"},"session":"farm-game"}

@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(()=>{const btns=document.querySelectorAll('.seed-item button, .shop-item button, [class*=seed] button, [class*=shop] button');return JSON.stringify({count:btns.length,texts:Array.from(btns).slice(0,10).map(b=>b.textContent.trim())})})()"},"session":"farm-game"}

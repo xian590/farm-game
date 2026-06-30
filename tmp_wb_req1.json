@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"localStorage.removeItem('farmGameSave'); return '存档已清除';"},"session":"farm-test"}

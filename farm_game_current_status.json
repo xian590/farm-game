@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-06-28 18:37:18",
+  "day": 22,
+  "season": "spring",
+  "time": 19,
+  "money_ui": 1118,
+  "money_save": 1118,
+  "stamina": 200,
+  "maxStamina": 200,
+  "health": 81,
+  "maxHealth": 200,
+  "fieldsCount": 4,
+  "fieldsStatus": "idle",
+  "eventsToday": 0,
+  "eventHistoryCount": 0,
+  "skills": {
+    "cropFamiliarity": {
+      "level": 0,
+      "exp": 12
+    },
+    "fieldManagement": {
+      "level": 0,
+      "exp": 14
+    },
+    "toolMastery": {
+      "level": 0,
+      "exp": 0
+    },
+    "composting": {
+      "level": 0,
+      "exp": 0
+    },
+    "fishingMastery": {
+      "level": 0,
+      "exp": 0
+    }
+  },
+  "npcs": {},
+  "npcMilestones": {},
+  "reputation": 0,
+  "mood": 50,
+  "weather": "lightRain",
+  "weatherDuration": 1,
+  "mode": "normal",
+  "disasterRate": 1.0,
+  "house": "进阶房",
+  "questsCompleted": 8,
+  "totalQuests": 21,
+  "pets": 0,
+  "workers": 0,
+  "fishPond": false,
+  "milestonesCount": 3,
+  "unlockedTabsCount": 10,
+  "stats": {
+    "totalHarvest": 0,
+    "totalSell": 0,
+    "daysPlayed": 21
+  },
+  "items": {
+    "fertilizer": 0,
+    "pesticide": 0,
+    "bun": 0,
+    "medicine": 0,
+    "organicFertilizer": 0
+  },
+  "seeds": {
+    "rice_spring": 0,
+    "rice_summer": 0,
+    "sweet_spring": 0,
+    "sweet_autumn": 0
+  },
+  "crops": {
+    "rice": 0,
+    "sweet": 0
+  },
+  "researchPoints": 0,
+  "storageCapacity": 5000,
+  "saveSize": 3516,
+  "lastSaveTimestamp": 1782644026514,
+  "notes": [
+    "页面通过WebBridge重新加载并隐藏故事容器后进入主游戏界面",
+    "game变量为let声明，非window属性，需直接访问game对象",
+    "localStorage中无存档键farm_game_save_v1，仅有error_log/speed/visit_count",
+    "资金从页面加载时的1398元持续下降到1118元，说明游戏自动推进中",
+    "健康值81/200偏低，需要关注",
+    "田地4块但全部空闲，无作物种植",
+    "NPC好感度全部为空，声望为0",
+    "总收获和总销售均为0，经济尚未启动"
+  ]
+}

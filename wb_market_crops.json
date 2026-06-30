@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const all = document.querySelectorAll('*'); let results = []; for (let el of all) { const text = el.textContent.trim(); if (text && text.length < 80 && text.length > 5 && (text.includes('土豆') || text.includes('花生') || text.includes('辣椒') || text.includes('茄子') || text.includes('白菜') || text.includes('萝卜') || text.includes('大蒜') || text.includes('水稻') || text.includes('红薯') || text.includes('小麦') || text.includes('玉米') || text.includes('大豆'))) { if (!results.includes(text)) { results.push(text); } } } return JSON.stringify(results.slice(0, 30)); })()"
+  },
+  "session": "farm-game"
+}

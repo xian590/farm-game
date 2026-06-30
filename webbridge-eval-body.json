@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"document.body.innerHTML.substring(0, 500)"},"session":"farm-game"}

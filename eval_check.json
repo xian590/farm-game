@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{try{const ls=localStorage;const errLog=ls.getItem('error_log')||'无';const errCount=ls.getItem('error_count')||0;const modal=document.querySelector('.modal-overlay, .modal, .dialog-overlay, [class*=modal]');const modalText=modal?modal.textContent.slice(0,100):'无';return JSON.stringify({ok:true,errorLog:errLog.slice(0,300),errorCount:errCount,modalExists:!!modal,modalText,gameLoopRunning:typeof window.gameLoop!=='undefined'||typeof window.startGameLoop!=='undefined',isPaused:window.game?.isPaused||window.game?.paused||false})}catch(e){return JSON.stringify({ok:false,error:e.message})}})()"
+  },
+  "session": "farm-game"
+}

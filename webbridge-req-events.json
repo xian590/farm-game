@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(()=>{const allText=document.body.innerText;const events=allText.match(/\\[第\\d+天\\][^\\n]+/g)||[];const todayEvents=events.filter(e=>e.includes('[第88天]')||e.includes('[第')&&e.match(/\\[第(\\d+)天\\]/)&&parseInt(e.match(/\\[第(\\d+)天\\]/)[1])>=88);const skillMatch=allText.match(/技能[\\s\\S]*?等级|作物熟悉度|田地管理|工具精通|堆肥/);const npcMatch=allText.match(/村民[\\s\\S]*?好感|张婶|周珠珠|赵老板|老渔夫|王村长|林小雨|王二蛋|陈阳|李老农|孙妙青/);return JSON.stringify({eventTotal:events.length,todayEvents:todayEvents.slice(-10),lastEvent:events.slice(-5),hasSkills:!!skillMatch,hasNpcs:!!npcMatch});})()"
+  },
+  "session": "farm-game"
+}

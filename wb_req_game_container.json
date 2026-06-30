@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(()=>{try{const g=document.getElementById('game-container');const s=document.getElementById('select-container');return JSON.stringify({gDisplay:g?g.style.display:'null',gChildren:g?g.children.length:0,gChildIds:g?Array.from(g.children).map(c=>c.id||c.className).slice(0,5):[]})}catch(e){return e.message;}})()"},"session":"farm-game"}

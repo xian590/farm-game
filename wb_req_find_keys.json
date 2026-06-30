@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { const keys = Object.keys(window).filter(k => /state|game|field|npc|skill|event|weather|time/i.test(k)).slice(0,30); return JSON.stringify(keys); })()"},"session":"farm-game"}

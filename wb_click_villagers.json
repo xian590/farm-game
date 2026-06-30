@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(() => { const tabs = document.querySelectorAll('.sidebar-tab'); for (let tab of tabs) { if (tab.textContent.includes('村民')) { tab.click(); return 'clicked villagers tab'; } } return 'villagers tab not found'; })()"
+  },
+  "session": "farm-game"
+}

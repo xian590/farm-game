@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(()=>{try{const keys=[];for(let i=0;i<localStorage.length;i++){keys.push(localStorage.key(i));}return{keys:keys.filter(k=>k.includes('farm')||k.includes('save')||k.includes('game')),currentKey:'farm_game_save_v1'};}catch(e){return{error:e.message};}})()"},"session":"farm-game"}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>农场存档读取器</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        h1 { color: #4ec9b0; }
+        pre { background: #252526; padding: 15px; border-radius: 8px; overflow: auto; max-height: 90vh; }
+        .missing { color: #ce9178; }
+        .error { color: #f44747; }
+    </style>
+</head>
+<body>
+    <h1>🌾 农场游戏存档数据读取器</h1>
+    <pre id="output">正在读取...</pre>
+    <script>
+        const SAVE_KEY = 'farm_game_save_v1';
+        const output = document.getElementById('output');
+        try {
+            const data = localStorage.getItem(SAVE_KEY);
+            if (data) {
+                const game = JSON.parse(data);
+                output.textContent = JSON.stringify(game, null, 2);
+            } else {
+                output.innerHTML = '<span class="missing">没有找到存档数据（localStorage 中不存在 ' + SAVE_KEY + '）</span>';
+            }
+        } catch(e) {
+            output.innerHTML = '<span class="error">错误: ' + e.message + '</span>';
+        }
+    </script>
+</body>
+</html>

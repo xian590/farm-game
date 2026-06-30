@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { const ids = ['select-container', 'game-container', 'story-container', 'main-screen']; const result = {}; ids.forEach(id => { const el = document.getElementById(id); if (el) result[id] = window.getComputedStyle(el).display; }); return result; })()"},"session":"farm-game"}

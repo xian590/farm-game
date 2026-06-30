@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"(() => { if (typeof skipStory === 'function') { skipStory(); return 'skipStory called'; } else if (typeof showGame === 'function') { showGame(); return 'showGame called'; } else { return 'functions not found'; } })()"},"session":"farm-game"}

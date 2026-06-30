@@ -1,0 +1,7 @@
+{
+  "action": "evaluate",
+  "args": {
+    "code": "(function(){try{var s=window.gameState||window.roundGameState||window.state||window._state||window.$state;if(!s){for(var k in window){if(window.hasOwnProperty(k)){try{var v=window[k];if(v&&typeof v==='object'&&v!==window&&v!==document&&v.day!==undefined&&v.money!==undefined){s=v;break;}}catch(e){}}}}if(!s)return JSON.stringify({error:'state not found'});var f=s.fields?s.fields.map(function(x,i){return {index:i,stage:x.stage,crop:x.crop?x.crop.id:null,progress:Math.round(x.progress||0)};}):[];var npcs=s.npcs||{};var skills=s.skills||{};var daily=s.dailyActions||{};var items=s.items||{};var seeds=s.seeds||{};var stats=s.stats||{};var milestones=s.npcMilestones||{};var result={day:s.day,season:s.season,time:s.time,money:s.money,stamina:s.stamina,maxStamina:s.maxStamina,health:s.health,maxHealth:s.maxHealth,fieldsCount:f.length,fields:f,eventsToday:s.eventsToday,eventHistory:s.eventHistory?s.eventHistory.length:0,totalEvents:window.EVENT_POOL?window.EVENT_POOL.length:0,dailyActions:daily,npcs:npcs,npcMilestones:milestones,skills:skills,items:items,seeds:seeds,house:s.house,tools:s.tools,buildings:s.buildings,reputation:s.reputation,mood:s.mood,weather:s.weather,storageCapacity:s.storageCapacity,researchPoints:s.researchPoints,processed:s.processed,pets:s.pets,speed:s.gameSpeed,autoPlay:s.autoPlayEnabled,lastSave:s.lastSaveTime,stats:stats,rice:s.rice||0,sweet:s.sweet||0};return JSON.stringify(result);}catch(e){return JSON.stringify({error:e.message});}})()"
+  },
+  "session": "farm-game"
+}

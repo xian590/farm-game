@@ -1,0 +1,3309 @@
+{
+  "ok": true,
+  "data": {
+    "url": "http://localhost:8080/farm_game.html",
+    "title": "李家村 - 农耕模拟器",
+    "tree": [
+      [
+        {
+          "role": "StaticText",
+          "name": "跳过故事",
+          "children": [
+            {
+              "role": "InlineTextBox",
+              "name": "跳过故事"
+            }
+          ]
+        },
+        [
+          {
+            "role": "StaticText",
+            "name": "🌃",
+            "children": [
+              {
+                "role": "InlineTextBox",
+                "name": "🌃"
+              }
+            ]
+          },
+          {
+            "role": "StaticText",
+            "name": "凌晨2:47",
+            "children": [
+              {
+                "role": "InlineTextBox",
+                "name": "凌晨2:47"
+              }
+            ]
+          },
+          [
+            {
+              "role": "StaticText",
+              "name": "写字楼还亮着半层楼的灯",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "写字楼还亮着半层楼的灯"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "第三杯美式，苦得像人生",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "第三杯美式，苦得像人生"
+                }
+              ]
+            }
+          ]
+        ],
+        {
+          "role": "StaticText",
+          "name": "点击继续 ▶",
+          "children": [
+            {
+              "role": "InlineTextBox",
+              "name": "点击继续 ▶"
+            }
+          ]
+        }
+      ],
+      [
+        [
+          [
+            [
+              {
+                "role": "StaticText",
+                "name": "💰",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "💰"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "23428",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "23428"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "元",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "元"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "role": "StaticText",
+                "name": "⚡",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "⚡"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "11",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "11"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "/",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "/"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "200",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "200"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "role": "StaticText",
+                "name": "❤️",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "❤️"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "200",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "200"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "/",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "/"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "200",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "200"
+                  }
+                ]
+              }
+            ]
+          ],
+          [
+            [
+              {
+                "role": "StaticText",
+                "name": "🌾",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🌾"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "水稻：",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "水稻："
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "211",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "211"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "kg",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "kg"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "role": "StaticText",
+                "name": "🍠",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🍠"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "红薯：",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "红薯："
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "397",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "397"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "kg",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "kg"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "role": "StaticText",
+                "name": "🌸",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🌸"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "春季",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "春季"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "第",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "第"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "37",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "37"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "天",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "天"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "role": "StaticText",
+                "name": "🌧️",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🌧️"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "中雨",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "中雨"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "role": "button",
+                "name": "1x",
+                "ref": "@e1",
+                "children": [
+                  {
+                    "role": "StaticText",
+                    "name": "1x",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "1x"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "role": "button",
+                "name": "2x",
+                "ref": "@e2",
+                "children": [
+                  {
+                    "role": "StaticText",
+                    "name": "2x",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "2x"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "role": "button",
+                "name": "3x",
+                "ref": "@e3",
+                "children": [
+                  {
+                    "role": "StaticText",
+                    "name": "3x",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "3x"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "role": "button",
+                "name": "5x",
+                "ref": "@e4",
+                "children": [
+                  {
+                    "role": "StaticText",
+                    "name": "5x",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "5x"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              {
+                "role": "StaticText",
+                "name": "🌾 田地管理",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🌾 田地管理"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🏪 商店",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🏪 商店"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🏠 房屋租赁",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🏠 房屋租赁"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🔧 农具商店",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🔧 农具商店"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🌱 堆肥工坊",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🌱 堆肥工坊"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🌿 后山采集",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🌿 后山采集"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🏡 农家副业",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🏡 农家副业"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "👤 角色属性",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "👤 角色属性"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🏡 农家设施",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🏡 农家设施"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "📚 技能树",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "📚 技能树"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🔬 农技研究",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🔬 农技研究"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "👥 村民",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "👥 村民"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🐱 宠物",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🐱 宠物"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "🔄 重新开始",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🔄 重新开始"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "role": "StaticText",
+                "name": "📋 当前任务",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "📋 当前任务"
+                  }
+                ]
+              },
+              [
+                [
+                  {
+                    "role": "StaticText",
+                    "name": "🔧",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "🔧"
+                      }
+                    ]
+                  },
+                  {
+                    "role": "StaticText",
+                    "name": "添置农具",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "添置农具"
+                      }
+                    ]
+                  }
+                ],
+                [
+                  {
+                    "role": "StaticText",
+                    "name": "💩",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "💩"
+                      }
+                    ]
+                  },
+                  {
+                    "role": "StaticText",
+                    "name": "堆肥入门",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "堆肥入门"
+                      }
+                    ]
+                  }
+                ]
+              ]
+            ]
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "🌾 田地管理",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌾 田地管理"
+                }
+              ]
+            },
+            [
+              [
+                {
+                  "role": "StaticText",
+                  "name": "📋 任务追踪",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "📋 任务追踪"
+                    }
+                  ]
+                },
+                {
+                  "role": "StaticText",
+                  "name": "9 个待完成",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "9 个待完成"
+                    }
+                  ]
+                }
+              ],
+              [
+                {
+                  "role": "StaticText",
+                  "name": "⬜",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "⬜"
+                    }
+                  ]
+                },
+                {
+                  "role": "StaticText",
+                  "name": "🔧",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "🔧"
+                    }
+                  ]
+                },
+                [
+                  [
+                    {
+                      "role": "StaticText",
+                      "name": "添置农具",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "添置农具"
+                        }
+                      ]
+                    },
+                    {
+                      "role": "StaticText",
+                      "name": "当前",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "当前"
+                        }
+                      ]
+                    }
+                  ],
+                  {
+                    "role": "StaticText",
+                    "name": "第五步：去【农具商店】买锄头，干活更省力",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "第五步：去【农具商店】买锄头，干活更省力"
+                      }
+                    ]
+                  },
+                  [
+                    {
+                      "role": "StaticText",
+                      "name": "🎁 100元+效率提升",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "🎁 100元+效率提升"
+                        }
+                      ]
+                    },
+                    {
+                      "role": "StaticText",
+                      "name": "未开始",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "未开始"
+                        }
+                      ]
+                    }
+                  ]
+                ]
+              ],
+              [
+                {
+                  "role": "StaticText",
+                  "name": "⬜",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "⬜"
+                    }
+                  ]
+                },
+                {
+                  "role": "StaticText",
+                  "name": "💩",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "💩"
+                    }
+                  ]
+                },
+                [
+                  [
+                    {
+                      "role": "StaticText",
+                      "name": "堆肥入门",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "堆肥入门"
+                        }
+                      ]
+                    },
+                    {
+                      "role": "StaticText",
+                      "name": "待办",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "待办"
+                        }
+                      ]
+                    }
+                  ],
+                  {
+                    "role": "StaticText",
+                    "name": "第六步：去【堆肥工坊】做堆肥，增加产量",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "第六步：去【堆肥工坊】做堆肥，增加产量"
+                      }
+                    ]
+                  },
+                  [
+                    {
+                      "role": "StaticText",
+                      "name": "🎁 150元+肥力提升",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "🎁 150元+肥力提升"
+                        }
+                      ]
+                    },
+                    {
+                      "role": "StaticText",
+                      "name": "未开始",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "未开始"
+                        }
+                      ]
+                    }
+                  ]
+                ]
+              ],
+              [
+                {
+                  "role": "StaticText",
+                  "name": "⬜",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "⬜"
+                    }
+                  ]
+                },
+                {
+                  "role": "StaticText",
+                  "name": "🏠",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "🏠"
+                    }
+                  ]
+                },
+                [
+                  [
+                    {
+                      "role": "StaticText",
+                      "name": "乔迁之喜",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "乔迁之喜"
+                        }
+                      ]
+                    },
+                    {
+                      "role": "StaticText",
+                      "name": "待办",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "待办"
+                        }
+                      ]
+                    }
+                  ],
+                  {
+                    "role": "StaticText",
+                    "name": "把房屋升级到进阶房",
+                    "children": [
+                      {
+                        "role": "InlineTextBox",
+                        "name": "把房屋升级到进阶房"
+                      }
+                    ]
+                  },
+                  [
+                    {
+                      "role": "StaticText",
+                      "name": "🎁 300元",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "🎁 300元"
+                        }
+                      ]
+                    },
+                    {
+                      "role": "StaticText",
+                      "name": "进行中",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "进行中"
+                        }
+                      ]
+                    }
+                  ]
+                ]
+              ],
+              {
+                "role": "StaticText",
+                "name": "还有 6 个任务待完成 →",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "还有 6 个任务待完成 →"
+                  }
+                ]
+              },
+              [
+                {
+                  "role": "StaticText",
+                  "name": "🏆 里程碑成就",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "🏆 里程碑成就"
+                    }
+                  ]
+                },
+                {
+                  "role": "StaticText",
+                  "name": "已达成 6 / 10 个",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "已达成 6 / 10 个"
+                    }
+                  ]
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "role": "StaticText",
+                  "name": "第1块田",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "第1块田"
+                    }
+                  ]
+                },
+                {
+                  "role": "StaticText",
+                  "name": "新手档",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "新手档"
+                    }
+                  ]
+                }
+              ],
+              {
+                "role": "StaticText",
+                "name": "🌱",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "🌱"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "已整地，等待播种",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "已整地，等待播种"
+                  }
+                ]
+              },
+              {
+                "role": "StaticText",
+                "name": "选择作物种植：",
+                "children": [
+                  {
+                    "role": "InlineTextBox",
+                    "name": "选择作物种植："
+                  }
+                ]
+              },
+              [
+                {
+                  "role": "StaticText",
+                  "name": "本季剩余 23 天",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "本季剩余 23 天"
+                    }
+                  ]
+                },
+                {
+                  "role": "button",
+                  "name": "🌾 早稻 5天成熟",
+                  "ref": "@e5",
+                  "children": [
+                    {
+                      "role": "StaticText",
+                      "name": "🌾 早稻",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "🌾 早稻"
+                        }
+                      ]
+                    },
+                    {
+                      "role": "StaticText",
+                      "name": "5天成熟",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "5天成熟"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "role": "button",
+                  "name": "🍠 春薯 10天成熟",
+                  "ref": "@e6",
+                  "children": [
+                    {
+                      "role": "StaticText",
+                      "name": "🍠 春薯",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "🍠 春薯"
+                        }
+                      ]
+                    },
+                    {
+                      "role": "StaticText",
+                      "name": "10天成熟",
+                      "children": [
+                        {
+                          "role": "InlineTextBox",
+                          "name": "10天成熟"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            ],
+            {
+              "role": "button",
+              "name": "🔓 租用新田地（236元/季）",
+              "ref": "@e7",
+              "children": [
+                {
+                  "role": "StaticText",
+                  "name": "🔓 租用新田地（236元/季）",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "🔓 租用新田地（236元/季）"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ],
+        [
+          [
+            {
+              "role": "StaticText",
+              "name": "📜 事件日志",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "📜 事件日志"
+                }
+              ]
+            },
+            {
+              "role": "button",
+              "name": "🔍 展开查看",
+              "ref": "@e8",
+              "children": [
+                {
+                  "role": "StaticText",
+                  "name": "🔍 展开查看",
+                  "children": [
+                    {
+                      "role": "InlineTextBox",
+                      "name": "🔍 展开查看"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第1天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第1天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": " ",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": " "
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "欢迎来到李家村！从今天开始，这里就是你的家了~",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "欢迎来到李家村！从今天开始，这里就是你的家了~"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第25天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第25天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌙 📖 夜读：点着台灯看了会儿书，学到了不少种地的知识，就是有点费眼睛。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌙 📖 夜读：点着台灯看了会儿书，学到了不少种地的知识，就是有点费眼睛。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第25天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第25天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第25天 - 公鸡打鸣了，新的一天开始了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第25天 - 公鸡打鸣了，新的一天开始了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第25天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第25天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+2（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+2（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第25天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第25天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：王二蛋好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：王二蛋好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第25天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第25天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：陈阳好感+3",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：陈阳好感+3"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第25天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第25天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌱 完成了早稻的移栽。你弓着腰，把秧苗一棵一棵插进水里。腰酸背痛，但看着整整齐齐的秧苗，心里很踏实。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌱 完成了早稻的移栽。你弓着腰，把秧苗一棵一棵插进水里。腰酸背痛，但看着整整齐齐的秧苗，心里很踏实。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第26天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第26天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第26天 - 清晨的露水打湿了裤脚，新的一天开始了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第26天 - 清晨的露水打湿了裤脚，新的一天开始了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第26天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第26天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌧️ 天气变为：中雨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌧️ 天气变为：中雨"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第26天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第26天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨ 今天锻炼状态特别好！",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨ 今天锻炼状态特别好！"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第26天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第26天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+6，今天状态特别好（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+6，今天状态特别好（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第26天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第26天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：陈阳好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：陈阳好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第26天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第26天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：陈阳好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：陈阳好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第27天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第27天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第27天 - 公鸡打鸣了，新的一天开始了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第27天 - 公鸡打鸣了，新的一天开始了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第27天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第27天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+2（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+2（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第27天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第27天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：孙妙青好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：孙妙青好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第27天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第27天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：王二蛋好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：王二蛋好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第28天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第28天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "⚠️",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "⚠️"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌙 🐕 狗叫：半夜村里的狗叫个不停，不知道出啥事了，吓得没睡好。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌙 🐕 狗叫：半夜村里的狗叫个不停，不知道出啥事了，吓得没睡好。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第28天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第28天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第28天 - 天蒙蒙亮，该起床干活了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第28天 - 天蒙蒙亮，该起床干活了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第28天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第28天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+3（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+3（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第28天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第28天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：林晓雨好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：林晓雨好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第28天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第28天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：王二蛋好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：王二蛋好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第29天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第29天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌙 🌙 赏月：今晚的月亮又大又圆，坐在院子里看了会儿月亮，心情舒畅，睡得特别香。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌙 🌙 赏月：今晚的月亮又大又圆，坐在院子里看了会儿月亮，心情舒畅，睡得特别香。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第29天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第29天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第29天 - 又是元气满满的一天！",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第29天 - 又是元气满满的一天！"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第29天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第29天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌾 收割了早稻，收获216斤！镰刀挥下去，稻穗刷刷地倒。阳光洒在金黄的稻穗上，这就是丰收的味道。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌾 收割了早稻，收获216斤！镰刀挥下去，稻穗刷刷地倒。阳光洒在金黄的稻穗上，这就是丰收的味道。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第29天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第29天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+3（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+3（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第29天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第29天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：吴大柱好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：吴大柱好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第29天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第29天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：王二蛋好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：王二蛋好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第30天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第30天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "⚠️",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "⚠️"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌙 🐭 老鼠：半夜听见窸窸窣窣的声音，起来一看是老鼠在偷粮食！赶走了，但还是被啃了一点。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌙 🐭 老鼠：半夜听见窸窸窣窣的声音，起来一看是老鼠在偷粮食！赶走了，但还是被啃了一点。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第30天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第30天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第30天 - 清晨的露水打湿了裤脚，新的一天开始了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第30天 - 清晨的露水打湿了裤脚，新的一天开始了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第30天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第30天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "⛅ 天气变为：多云",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "⛅ 天气变为：多云"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第30天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第30天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+2（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+2（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第30天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第30天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：张桂兰好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：张桂兰好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第30天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第30天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：吴大柱好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：吴大柱好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第31天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第31天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌙 🌙 赏月：今晚的月亮又大又圆，坐在院子里看了会儿月亮，心情舒畅，睡得特别香。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌙 🌙 赏月：今晚的月亮又大又圆，坐在院子里看了会儿月亮，心情舒畅，睡得特别香。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第31天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第31天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第31天 - 又是元气满满的一天！",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第31天 - 又是元气满满的一天！"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第31天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第31天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "⛏️ 给第1块田整了地。你弯着腰，一锄头一锄头地翻着地。泥土翻过来，带着潮湿的腥气。嗯，这块地肥得很。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "⛏️ 给第1块田整了地。你弯着腰，一锄头一锄头地翻着地。泥土翻过来，带着潮湿的腥气。嗯，这块地肥得很。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第31天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第31天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+4（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+4（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第31天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第31天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：周大柱好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：周大柱好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第31天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第31天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：王保国好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：王保国好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第32天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第32天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第32天 - 天蒙蒙亮，该起床干活了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第32天 - 天蒙蒙亮，该起床干活了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第32天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第32天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+4（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+4（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第32天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第32天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：孙妙青好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：孙妙青好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第32天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第32天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：王保国好感+3",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：王保国好感+3"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第33天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第33天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第33天 - 太阳升起来了，今天也是个好天气。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第33天 - 太阳升起来了，今天也是个好天气。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第33天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第33天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨ 今天锻炼状态特别好！",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨ 今天锻炼状态特别好！"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第33天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第33天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+6，今天状态特别好（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+6，今天状态特别好（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第33天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第33天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：吴大柱好感+3",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：吴大柱好感+3"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第33天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第33天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：张桂兰好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：张桂兰好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第34天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第34天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第34天 - 又是元气满满的一天！",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第34天 - 又是元气满满的一天！"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第34天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第34天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌧️ 天气变为：中雨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌧️ 天气变为：中雨"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第34天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第34天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+2（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+2（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第34天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第34天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：张桂兰好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：张桂兰好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第34天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第34天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：李德根好感+1",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：李德根好感+1"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第35天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第35天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第35天 - 天蒙蒙亮，该起床干活了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第35天 - 天蒙蒙亮，该起床干活了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第35天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第35天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+2（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+2（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第35天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第35天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：陈阳好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：陈阳好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第35天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第35天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：孙妙青好感+3",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：孙妙青好感+3"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第36天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第36天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第36天 - 太阳升起来了，今天也是个好天气。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第36天 - 太阳升起来了，今天也是个好天气。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第36天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第36天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+2（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+2（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第36天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第36天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：王二蛋好感+2",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：王二蛋好感+2"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第36天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第36天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：周大柱好感+3",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：周大柱好感+3"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第37天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第37天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌙 ⭐ 满天星：今晚的星星特别多，躺在竹椅上看了半天，感觉整个人都静下来了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌙 ⭐ 满天星：今晚的星星特别多，躺在竹椅上看了半天，感觉整个人都静下来了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第37天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第37天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🌅 第37天 - 天蒙蒙亮，该起床干活了。",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🌅 第37天 - 天蒙蒙亮，该起床干活了。"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第37天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第37天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "⚠️",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "⚠️"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "⚠️ 锻炼过度",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "⚠️ 锻炼过度"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第37天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第37天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "✨",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "✨"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🏃 自动锻炼：健康+1，但有点过度了（消耗5体力）",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🏃 自动锻炼：健康+1，但有点过度了（消耗5体力）"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第37天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第37天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：王保国好感+3",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：王保国好感+3"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "role": "StaticText",
+              "name": "[第37天]",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "[第37天]"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "💡",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "💡"
+                }
+              ]
+            },
+            {
+              "role": "StaticText",
+              "name": "🤝 自动串门：张桂兰好感+3",
+              "children": [
+                {
+                  "role": "InlineTextBox",
+                  "name": "🤝 自动串门：张桂兰好感+3"
+                }
+              ]
+            }
+          ]
+        ]
+      ],
+      [
+        {
+          "role": "StaticText",
+          "name": "⚙️",
+          "children": [
+            {
+              "role": "InlineTextBox",
+              "name": "⚙️"
+            }
+          ]
+        },
+        {
+          "role": "StaticText",
+          "name": "📝",
+          "children": [
+            {
+              "role": "InlineTextBox",
+              "name": "📝"
+            }
+          ]
+        }
+      ],
+      {
+        "role": "StaticText",
+        "name": "整地完成！",
+        "children": [
+          {
+            "role": "InlineTextBox",
+            "name": "整地完成！"
+          }
+        ]
+      }
+    ]
+  }
+}

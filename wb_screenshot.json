@@ -1,0 +1,8 @@
+{
+  "action": "screenshot",
+  "args": {
+    "format": "png",
+    "path": "farm_status_2026-06-29_0917.png"
+  },
+  "session": "farm-game"
+}
