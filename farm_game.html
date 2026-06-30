@@ -3083,7 +3083,8 @@ const BGM_DATA = {
 
 // 初始化音频（必须用户交互后调用）
 function initAudio() {
-    if (!audioCtx) {
+    // 手机浏览器会自动关闭音频上下文，需要重新创建
+    if (!audioCtx || audioCtx.state === 'closed') {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         musicGainNode = audioCtx.createGain();
         musicGainNode.gain.value = musicVolume;
@@ -3094,66 +3095,89 @@ function initAudio() {
         sfxGainNode.connect(audioCtx.destination);
     }
     if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
+        audioCtx.resume().catch(() => {});
     }
 }
 
 // 播放单个音符
 function playNote(frequency, duration, wave = 'sine', volume = 0.06, targetNode = null) {
-    if (!audioCtx) return;
+    if (!audioCtx || audioCtx.state === 'closed') return;
+    
+    // 安全检查：防止传入NaN/Infinity/负数
+    if (!isFinite(frequency) || frequency <= 0) return;
+    if (!isFinite(duration) || duration <= 0) return;
+    if (!isFinite(volume) || volume < 0) volume = 0;
+    
     const target = targetNode || musicGainNode;
+    if (!target) return;
     
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(target);
-    
-    osc.type = wave;
-    osc.frequency.value = frequency;
-    
-    // 更柔和的ADSR包络
-    const now = audioCtx.currentTime;
-    const attack = duration * 0.15;
-    const decay = duration * 0.1;
-    const sustain = duration * 0.6;
-    const release = duration * 0.15;
-    
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(volume, now + attack); // Attack
-    gain.gain.linearRampToValueAtTime(volume * 0.8, now + attack + decay); // Decay
-    gain.gain.setValueAtTime(volume * 0.8, now + attack + decay + sustain); // Sustain
-    gain.gain.exponentialRampToValueAtTime(0.001, now + duration); // Release
-    
-    osc.start(now);
-    osc.stop(now + duration + 0.05);
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(target);
+        
+        osc.type = wave;
+        osc.frequency.value = frequency;
+        
+        // 更柔和的ADSR包络
+        const now = audioCtx.currentTime;
+        const attack = duration * 0.15;
+        const decay = duration * 0.1;
+        const sustain = duration * 0.6;
+        const release = duration * 0.15;
+        
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(volume, now + attack); // Attack
+        gain.gain.linearRampToValueAtTime(volume * 0.8, now + attack + decay); // Decay
+        gain.gain.setValueAtTime(volume * 0.8, now + attack + decay + sustain); // Sustain
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration); // Release
+        
+        osc.start(now);
+        osc.stop(now + duration + 0.05);
+    } catch (e) {
+        // 音频错误静默处理，避免卡死页面
+        console.warn('音频播放失败:', e.message);
+    }
 }
 
 // 播放白噪声
 function playNoise(duration, volume = 0.03, filterFreq = 1000) {
-    if (!audioCtx) return;
+    if (!audioCtx || audioCtx.state === 'closed') return;
     
-    const bufferSize = audioCtx.sampleRate * duration;
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    // 安全检查
+    if (!isFinite(duration) || duration <= 0) return;
+    if (!isFinite(volume) || volume < 0) volume = 0;
+    if (!isFinite(filterFreq) || filterFreq <= 0) filterFreq = 1000;
+    
+    try {
+        const bufferSize = Math.floor(audioCtx.sampleRate * duration);
+        if (bufferSize <= 0) return;
+        
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+        }
+        
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = filterFreq;
+        
+        const gain = audioCtx.createGain();
+        gain.gain.value = volume;
+        
+        source.connect(filter);
+        filter.connect(gain);
+        if (sfxGainNode) gain.connect(sfxGainNode);
+        
+        source.start();
+    } catch (e) {
+        console.warn('音效播放失败:', e.message);
     }
-    
-    const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
-    
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = filterFreq;
-    
-    const gain = audioCtx.createGain();
-    gain.gain.value = volume;
-    
-    source.connect(filter);
-    filter.connect(gain);
-    gain.connect(sfxGainNode);
-    
-    source.start();
 }
 
 // ========== 各种音效 ==========
@@ -3162,22 +3186,27 @@ function playNoise(duration, volume = 0.03, filterFreq = 1000) {
 function playClickSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(sfxGainNode);
-    
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.08);
-    
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.12);
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(sfxGainNode);
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.08);
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12);
+    } catch (e) {
+        console.warn('点击音效失败:', e.message);
+    }
 }
 
 // ==================== NPC呢喃音效系统 ====================
@@ -3301,6 +3330,7 @@ function playPageFlipSound() {
 function playHarvestSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     const notes = [523, 659, 784, 1047];
     notes.forEach((note, i) => {
@@ -3314,6 +3344,7 @@ function playHarvestSound() {
 function playCoinSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     playNote(1319, 0.1, 'square', 0.04, sfxGainNode);
     setTimeout(() => {
@@ -3328,6 +3359,7 @@ function playCoinSound() {
 function playEventSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     playNote(880, 0.15, 'triangle', 0.06, sfxGainNode);
     setTimeout(() => {
@@ -3339,6 +3371,7 @@ function playEventSound() {
 function playDisasterSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     playNoise(0.5, 0.15, 300);
     playNote(80, 0.4, 'sawtooth', 0.1, sfxGainNode);
@@ -3348,6 +3381,7 @@ function playDisasterSound() {
 function playBonusSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     const notes = [523, 659, 784, 880, 1047];
     notes.forEach((note, i) => {
@@ -3361,23 +3395,28 @@ function playBonusSound() {
 function playErrorSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(sfxGainNode);
-    
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-    osc.frequency.setValueAtTime(150, audioCtx.currentTime + 0.1);
-    osc.frequency.setValueAtTime(200, audioCtx.currentTime + 0.2);
-    
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.075, audioCtx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.3);
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(sfxGainNode);
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime + 0.2);
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.075, audioCtx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    } catch (e) {
+        console.warn('错误音效失败:', e.message);
+    }
 }
 
 // 通用音效分发函数
@@ -3394,6 +3433,7 @@ function playSound(type) {
 function playWaterSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     const bufferSize = audioCtx.sampleRate * 0.4;
     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -3424,6 +3464,7 @@ function playWaterSound() {
 function playWeedSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     for (let i = 0; i < 3; i++) {
         setTimeout(() => {
@@ -3457,6 +3498,7 @@ function playWeedSound() {
 function playDirtSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -3493,6 +3535,7 @@ function playFertilizerSound() {
 function playTabSound() {
     if (!sfxEnabled) return;
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -3523,6 +3566,7 @@ function startBgm(bgmName, fadeIn = true) {
     
     stopMusic();
     initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !musicGainNode) return;
     
     const bgm = BGM_DATA[bgmName];
     if (!bgm) return;
@@ -3532,11 +3576,15 @@ function startBgm(bgmName, fadeIn = true) {
     bgmNoteIndex = 0;
     
     // 淡入效果
-    if (fadeIn && musicGainNode) {
-        musicGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        musicGainNode.gain.linearRampToValueAtTime(musicVolume, audioCtx.currentTime + 1.5);
-    } else if (musicGainNode) {
-        musicGainNode.gain.value = musicVolume;
+    try {
+        if (fadeIn && musicGainNode) {
+            musicGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            musicGainNode.gain.linearRampToValueAtTime(musicVolume, audioCtx.currentTime + 1.5);
+        } else if (musicGainNode) {
+            musicGainNode.gain.value = musicVolume;
+        }
+    } catch (e) {
+        console.warn('BGM淡入失败:', e.message);
     }
     
     // 雨天BGM加雨声
@@ -3546,6 +3594,10 @@ function startBgm(bgmName, fadeIn = true) {
     
     function playNextNote() {
         if (!musicIsPlaying || currentBgm !== bgmName) return;
+        if (!audioCtx || audioCtx.state === 'closed') {
+            stopMusic();
+            return;
+        }
         
         const note = bgm.notes[bgmNoteIndex % bgm.notes.length];
         const noteDur = (bgm.tempo / 1000) * (bgm.noteLength || 0.8);
@@ -20273,24 +20325,31 @@ function showModal(title, content, onConfirm) {
 
 function closeEventModal() {
     playClickSound();
-    document.getElementById('modal-overlay').style.display = 'none';
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) overlay.style.display = 'none';
     game.currentEvent = null;
-    modalCallback = null; // 修复：重置回调
-    // 重置弹窗按钮状态
-    document.querySelector('.modal-buttons').style.display = 'flex';
-    document.getElementById('modal-confirm').style.display = 'inline-block';
+    modalCallback = null;
+    // 重置弹窗按钮状态（安全处理）
+    const buttonsContainer = document.querySelector('.modal-buttons');
+    if (buttonsContainer) buttonsContainer.style.display = 'flex';
+    const confirmBtn = document.getElementById('modal-confirm');
+    if (confirmBtn) confirmBtn.style.display = 'inline-block';
     const secondaryBtn = document.querySelector('.modal-btn.secondary');
-    if (secondaryBtn) secondaryBtn.textContent = '取消'; // 修复：重置二级按钮文字
+    if (secondaryBtn) secondaryBtn.textContent = '取消';
 }
 
 function closeModal() {
     playClickSound();
-    document.getElementById('modal-overlay').style.display = 'none';
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) overlay.style.display = 'none';
     modalCallback = null;
-    // 重置弹窗按钮状态
-    document.querySelector('.modal-buttons').style.display = 'flex';
-    document.getElementById('modal-confirm').style.display = 'inline-block';
-    document.querySelector('.modal-btn.secondary').textContent = '取消';
+    // 重置弹窗按钮状态（安全处理，避免null错误）
+    const buttonsContainer = document.querySelector('.modal-buttons');
+    if (buttonsContainer) buttonsContainer.style.display = 'flex';
+    const confirmBtn = document.getElementById('modal-confirm');
+    if (confirmBtn) confirmBtn.style.display = 'inline-block';
+    const secondaryBtn = document.querySelector('.modal-btn.secondary');
+    if (secondaryBtn) secondaryBtn.textContent = '取消';
 }
 
 function confirmModal() {
