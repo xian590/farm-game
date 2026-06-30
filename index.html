@@ -1597,18 +1597,21 @@
             border: 1px solid #e9ecef;
             border-radius: 16px;
             padding: 0;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
             overflow: hidden;
+            max-height: 220px;
+            display: flex;
+            flex-direction: column;
         }
 
         .quest-tracker-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
+            padding: 10px 14px;
             border-bottom: 1px solid rgba(255, 193, 7, 0.3);
+            flex-shrink: 0;
         }
 
         .quest-tracker-title {
@@ -1631,7 +1634,10 @@
         .quest-tracker-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            overflow-y: auto;
+            max-height: 160px;
+            padding: 0 12px 12px 12px;
         }
 
         .quest-track-item {
@@ -2047,8 +2053,8 @@
         /* 专业任务追踪器样式 */
         .quest-item {
             display: flex;
-            gap: 12px;
-            padding: 14px 18px;
+            gap: 10px;
+            padding: 10px 14px;
             border-bottom: 1px solid #f1f3f5;
             transition: all 0.2s ease;
         }
@@ -2063,14 +2069,14 @@
         }
         
         .quest-item-icon {
-            font-size: 28px;
-            width: 44px;
-            height: 44px;
+            font-size: 22px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: #f8f9fa;
-            border-radius: 12px;
+            border-radius: 10px;
             flex-shrink: 0;
         }
         
@@ -2114,15 +2120,15 @@
         .quest-item-desc {
             font-size: 12px;
             color: #868e96;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         
         .quest-item-progress {
-            height: 6px;
+            height: 4px;
             background: #e9ecef;
-            border-radius: 3px;
+            border-radius: 2px;
             overflow: hidden;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         
         .quest-item-progress-bar {
@@ -5870,7 +5876,7 @@ const NPC_DATA = {
         name: '李小芳',
         title: '小芳',
         emoji: '👧',
-        desc: '村里最勤快的姑娘，心灵手巧，做的刺绣在镇上很受欢迎。',
+        desc: '村里最勤快的年轻人，心灵手巧，做的刺绣在镇上很受欢迎。',
         likes: { cloth: 9, sugar: 8, snack: 6, liquor: 2, cigarette: 1 },
         canHire: true,
         hireFriendship: 35,
@@ -6902,7 +6908,7 @@ const NPC_DIALOGUE = {
         0: [
             '走过路过不要错过！新鲜玩意儿，便宜卖啦！',
             '我是刘货郎，走村串户的，啥新奇玩意儿都有。',
-            '小伙子，看看这个，城里来的新种子，产量高得很！',
+            '年轻人，看看这个，城里来的新种子，产量高得很！',
             '我这担子虽沉，但里面的东西都是宝。',
             '你要买啥？种子、工具、日用品，应有尽有。',
             '今天刚到的新货，别的地方买不着。',
@@ -6915,7 +6921,7 @@ const NPC_DIALOGUE = {
             '你要买啥跟我说，我下回给你带。',
         ],
         1: [
-            '小伙子，你越来越会过日子了。',
+            '年轻人，你越来越会过日子了。',
             '你这地种得好，我挑的货准没错。',
             '最近镇上粮价涨了，你的收成能卖个好价钱。',
             '我这担子虽轻了，但给你的东西都是最好的。',
@@ -7207,7 +7213,7 @@ const NPC_DIALOGUE = {
             '你要是想寄信，找我，我帮你带。',
         ],
         1: [
-            '小伙子，你又收到信了。',
+            '年轻人，你又收到信了。',
             '你家里人挺关心你的，经常写信来。',
             '我骑车路过你家，看见你田里庄稼长得好。',
             '最近镇上粮价涨了，你的收成能卖个好价钱。',
@@ -7280,7 +7286,7 @@ const NPC_DIALOGUE = {
             '有空来我家看看，有不少好木料。',
         ],
         1: [
-            '小伙子，你这院子要是能做个葡萄架，就更好看了。',
+            '年轻人，你这院子要是能做个葡萄架，就更好看了。',
             '我打的农具，村里人都说好用。',
             '最近我接了不少活，都是村里人介绍的。',
             '你这人，每次找我做活，都给足工钱。',
@@ -7353,7 +7359,7 @@ const NPC_DIALOGUE = {
             '有空来我家看看，有不少好铁料。',
         ],
         1: [
-            '小伙子，你这把镰刀该磨了。',
+            '年轻人，你这把镰刀该磨了。',
             '我打的农具，村里人都说好用。',
             '最近我接了不少活，都是村里人介绍的。',
             '你这人，每次找我打铁，都给足工钱。',
@@ -7426,7 +7432,7 @@ const NPC_DIALOGUE = {
             '有空来卫生室坐坐，我给你量量血压。',
         ],
         1: [
-            '小伙子，你最近身体怎么样？',
+            '年轻人，你最近身体怎么样？',
             '你要是有个不舒服，早点来，别拖着。',
             '我巡回医疗的时候，看见你在地里干活，挺辛苦的。',
             '最近村里流感过去了，你没事就好。',
@@ -11190,6 +11196,28 @@ function changeWeather() {
 
 const STORY_EVENTS = [
     {
+        id: 'village_history',
+        name: '李家村的往事',
+        emoji: '📜',
+        description: '王村长坐在村口老槐树下，看你路过，招手让你过去坐会儿，给你讲讲村里的历史。',
+        options: [
+            { 
+                text: '坐下听听', 
+                effect: { npcs: {wangcunzhang: 5}, mood: 3 }, 
+                result: '王村长捋了捋胡子说："咱们村叫李家村，是因为三百年前李姓祖先在此开荒建村。但村长一职向来能者居之，不看姓氏。我王家祖上是外姓迁入，因治水有功，被乡亲们推举为村长，一代代传下来，就成了惯例。"你听得入神，对这片土地又多了几分敬意。王村长好感+5，心情+3' 
+            },
+            { 
+                text: '婉拒说还有活要干', 
+                effect: {}, 
+                result: '你说田里还有活要干，改天再听。王村长点点头："忙完这阵来家里喝茶。"' 
+            }
+        ],
+        minDay: 3,
+        maxDay: 15,
+        seasons: ['spring','summer','autumn','winter'],
+        probability: 0.08
+    },
+    {
         id: 'borrow_hoe',
         name: '隔壁借锄头',
         emoji: '🔧',
@@ -11730,7 +11758,7 @@ const STORY_EVENTS = [
         id: 'spring_plowing_help',
         name: '春耕帮忙',
         emoji: '🌾',
-        description: '村里张婶家男人去城里忙了，她一个人耕不完地，喊人帮忙。',
+        description: '村里张婶家那位去城里忙了，她一个人耕不完地，喊人帮忙。',
         options: [
             { text: '去帮忙', effect: { stamina: -30, npcs: {zhangshen: 10}, reputation: 3 }, result: '你帮张婶耕了一天地，她给你塞了一篮子鸡蛋，特别感谢你。体力-30，张婶好感+10，声望+3' },
             { text: '自己地还没耕完', effect: {}, result: '你说自己家地还没忙完，没去帮忙。' }
@@ -12010,7 +12038,7 @@ const STORY_EVENTS = [
         id: 'neighbor_build_house',
         name: '邻居盖房',
         emoji: '🧱',
-        description: '村西头老李家盖新房，喊村里人去帮忙，管饭还发烟。',
+        description: '村西头老李家盖新房，喊村里人去帮忙，管饭还有茶水点心。',
         options: [
             { text: '去帮忙', effect: { stamina: -30, money: 20, reputation: 5 }, result: '你去帮了一天忙，累的够呛，主家给了20块钱喜钱，还吃了顿好的，村里人都夸你实在。体力-30，钱+20，声望+5' },
             { text: '不去在家歇着', effect: { reputation: -3 }, result: '你没去，在家歇了一天，后来见了老李有点不好意思。声望-3' }
@@ -13610,7 +13638,8 @@ function renderQuestBox() {
         html += `<div class="quest-more">还有 ${pendingQuests.length - 3} 个任务待完成 →</div>`;
     }
     
-    // 里程碑进度
+    // 里程碑进度（已移除，避免占用过多空间）
+    /*
     if (typeof MILESTONE_DATA !== 'undefined' && game.milestones) {
         const totalMilestones = Object.keys(MILESTONE_DATA).length;
         const completedMilestones = Object.keys(game.milestones).filter(k => game.milestones[k]).length;
@@ -13629,6 +13658,7 @@ function renderQuestBox() {
             </div>
         `;
     }
+    */
     
     html += '</div>';
     return html;
@@ -14293,7 +14323,7 @@ function renderGiftsTab() {
         { key: 'liquor', name: '散装白酒', emoji: '🍶', price: 50, desc: '村里常见的酒，老头喜欢' },
         { key: 'cloth', name: '花布头', emoji: '🧵', price: 30, desc: '做衣服剩下的布，妇女喜欢' },
         { key: 'sugar', name: '红糖', emoji: '🍯', price: 40, desc: '补身子的好东西，人人爱' },
-        { key: 'cigarette', name: '香烟', emoji: '🚬', price: 60, desc: '农村常见的烟，男人喜欢' }
+        { key: 'cigarette', name: '香烟', emoji: '🚬', price: 60, desc: '农村常见的烟，少抽为好' }
     ];
     
     let html = '';
