@@ -22438,11 +22438,6 @@ function renderAchievementsPanel() {
     panel.innerHTML = html;
 }
 
-</script>
-</body>
-</html>
-
-
 // ========== 批量操作 ==========
 function batchWaterAll() {
     if (!game || !game.fields) return;
@@ -22487,3 +22482,7 @@ function batchHarvestAll() {
     if (harvested > 0) showToast(`🌾 已收割 ${harvested} 块地`, 'good');
     else showToast('没有成熟作物可收割', 'warn');
 }
+
+</script>
+</body>
+</html>
