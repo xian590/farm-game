@@ -2006,7 +2006,7 @@
                 padding-bottom: 60px;
             }
             body {
-                overflow: hidden;
+                overflow: auto;
                 -webkit-overflow-scrolling: touch;
             }
             /* 移动端顶部状态栏精简 */
@@ -2069,7 +2069,7 @@
             }
             .event-log {
                 position: fixed;
-                bottom: 50px;
+                bottom: 120px;
                 left: 0;
                 right: 0;
                 z-index: 1001;
@@ -2106,8 +2106,8 @@
                 z-index: 2002;
             }
             .quick-btn {
-                width: 40px;
-                height: 40px;
+                width: 44px;
+                height: 44px;
                 font-size: 20px;
             }
         }
@@ -2987,7 +2987,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.2.6';
+const GAME_VERSION = '1.2.7';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -2999,7 +2999,7 @@ window.addEventListener('error', function(e) {
         if (now - lastErrorLogTime < 5000) return;
         lastErrorLogTime = now;
         
-        const logs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        const logs = (function() { try { return JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]'); } catch(e) { return []; } })();
         logs.push({
             time: new Date().toLocaleString(),
             message: e.message,
@@ -8849,7 +8849,8 @@ function showMigrationNotice() {
     document.body.appendChild(banner);
     
     // 给页面顶部留出空间，避免内容被遮挡
-    document.body.style.paddingTop = '48px';
+    const bannerEl = document.getElementById('migration-banner');
+    if (bannerEl) document.body.style.paddingTop = bannerEl.offsetHeight + 'px';
 }
 
 // ==================== 初始化 ====================
@@ -8874,7 +8875,8 @@ window.onload = function() {
     }
     
     // 检查存档
-    const saved = localStorage.getItem(SAVE_KEY);
+    let saved = null;
+    try { saved = localStorage.getItem(SAVE_KEY); } catch(e) { console.warn('读档失败:', e); }
     if (saved) {
         try {
             game = JSON.parse(saved);
@@ -9265,7 +9267,9 @@ function calculateOfflineReward() {
     
     // 处理跨天
     let daysPassed = 0;
+    let _maxIterations = 0;
     while (game.time >= 24) {
+        if (++_maxIterations > 1000) break;
         game.time -= 24;
         game.day += 1;
         game.totalDay += 1;
@@ -9721,7 +9725,9 @@ function calculateOfflineReward() {
     }
     
     // 处理季节变化（兜底，确保game.day不超过28）
+    let _seasonIterations = 0;
     while (game.day > 28) {
+        if (++_seasonIterations > 10) break;
         advanceSeason(true);
     }
     
@@ -9972,10 +9978,14 @@ function updateDailyButtons() {
     if (!game.fishToday) game.fishToday = { day: 0, count: 0 };
     if (game.fishToday.day !== game.day) game.fishToday = { day: game.day, count: 0 };
     
-    document.getElementById('btn-exercise').disabled = (game.exerciseToday.count >= 3) || game.stamina < 20;
-    document.getElementById('btn-chat').disabled = (game.visitToday.count >= 3) || game.stamina < 10;
-    document.getElementById('btn-fish').disabled = (game.fishToday.count >= 2) || game.stamina < 15;
-    document.getElementById('btn-foraging').disabled = game.dailyActions.foraging >= 1 || game.stamina < 15;
+    const btnExercise = document.getElementById('btn-exercise');
+    if (btnExercise) btnExercise.disabled = (game.exerciseToday.count >= 3) || game.stamina < 20;
+    const btnChat = document.getElementById('btn-chat');
+    if (btnChat) btnChat.disabled = (game.visitToday.count >= 3) || game.stamina < 10;
+    const btnFish = document.getElementById('btn-fish');
+    if (btnFish) btnFish.disabled = (game.fishToday.count >= 2) || game.stamina < 15;
+    const btnForaging = document.getElementById('btn-foraging');
+    if (btnForaging) btnForaging.disabled = game.dailyActions.foraging >= 1 || game.stamina < 15;
 }
 
 function renderBackpack() {
@@ -10064,6 +10074,7 @@ function exportSaveFile() {
         a.download = `farm_save_${game.totalDay || game.day}day_${new Date().toISOString().slice(0,10)}.json`;
         document.body.appendChild(a);
         a.click();
+    URL.revokeObjectURL(url);
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         showToast('✅ 存档已导出！', 'good');
@@ -10131,7 +10142,8 @@ function saveGameManual() {
 
 // 手动读取
 function loadGameManual() {
-    const saved = localStorage.getItem(SAVE_KEY);
+    let saved = null;
+    try { saved = localStorage.getItem(SAVE_KEY); } catch(e) { console.warn('读档失败:', e); }
     if (!saved) {
         showToast('没有找到存档', 'bad');
         return;
@@ -10634,7 +10646,8 @@ function fixSaveData() {
 }
 
 function loadGame() {
-    const saved = localStorage.getItem(SAVE_KEY);
+    let saved = null;
+    try { saved = localStorage.getItem(SAVE_KEY); } catch(e) { console.warn('读档失败:', e); }
     if (saved) {
         try {
             game = JSON.parse(saved);
@@ -10670,7 +10683,7 @@ function restartGame() {
         '重新开始',
         '确定要重新开始吗？所有进度将丢失，无法恢复。',
         () => {
-            localStorage.removeItem(SAVE_KEY);
+            try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
             game = null;
             closeModal();
             location.reload();
@@ -10762,7 +10775,7 @@ function doImportSave() {
         }
         game = data;
         fixSaveData();
-        localStorage.setItem(SAVE_KEY, JSON.stringify(game));
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(game)); } catch(e) { console.warn('存档失败:', e); }
         const saveImportArea = document.getElementById('save-import-area'); if (saveImportArea) saveImportArea.style.display = 'none';
         showToast('✅ 存档导入成功！即将刷新...', 'good');
         // 刷新页面以应用新存档
@@ -10905,7 +10918,7 @@ function startGameLoop() {
     }
     // 2秒 = 2游戏小时，24秒 = 1游戏天（比原来120秒/天快5倍）
     const baseInterval = 2000;
-    const interval = baseInterval / gameSpeed;
+    const interval = baseInterval / (gameSpeed || 1);
     gameLoopInterval = setInterval(gameTick, interval);
     updateUI();
 }
@@ -11019,6 +11032,7 @@ function gameTick() {
     // tickCount 初始化（确保判断前存在）
     if (!game.tickCount) game.tickCount = 0;
     game.tickCount++;
+    if (game.tickCount > 1000000) game.tickCount = 0;
     
     // 每30秒保存一次（基于时间戳，不受游戏速度影响），或新的一天立即保存
     const nowSave = Date.now();
@@ -20469,7 +20483,7 @@ ${text}
         feedback += `【JS错误日志】
 `;
         const ERROR_LOG_KEY = 'farm_game_error_log';
-        const errorLogs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        const errorLogs = (function() { try { return JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]'); } catch(e) { return []; } })();
         if (errorLogs.length > 0) {
             errorLogs.forEach(err => {
                 feedback += `[${err.time}] ${err.message} (${err.file}:${err.line}:${err.col})\n`;
@@ -20488,13 +20502,14 @@ ${text}
         a.download = `farm_feedback_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
         document.body.appendChild(a);
         a.click();
+    URL.revokeObjectURL(url);
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
         // 同时存入localStorage供开发者后台查看
         const FEEDBACK_KEY = 'farm_game_feedback_v1';
         const LOG_KEY = 'farm_game_system_log';
-        const stored = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]');
+        const stored = (function() { try { return JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]'); } catch(e) { return []; } })();
         stored.push({
             time: new Date().toLocaleString(),
             text: text,
@@ -20508,7 +20523,7 @@ ${text}
         localStorage.setItem(FEEDBACK_KEY, JSON.stringify(stored));
         
         // 记录系统日志
-        const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+        const logs = (function() { try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch(e) { return []; } })();
         logs.push(`[${new Date().toLocaleString()}] 新反馈: ${text.substring(0, 50)}...`);
         if (logs.length > 100) logs.shift();
         localStorage.setItem(LOG_KEY, JSON.stringify(logs));
@@ -20560,7 +20575,7 @@ function submitFeedbackEmail() {
         
         feedbackBody += `【JS错误日志】\n`;
         const ERROR_LOG_KEY = 'farm_game_error_log';
-        const errorLogs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        const errorLogs = (function() { try { return JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]'); } catch(e) { return []; } })();
         if (errorLogs.length > 0) {
             errorLogs.forEach(err => {
                 feedbackBody += `[${err.time}] ${err.message} (${err.file}:${err.line}:${err.col})\n`;
@@ -20580,7 +20595,7 @@ function submitFeedbackEmail() {
     // 同时保存到本地记录
     try {
         const FEEDBACK_KEY = 'farm_game_feedback_v1';
-        const stored = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]');
+        const stored = (function() { try { return JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]'); } catch(e) { return []; } })();
         stored.push({
             time: new Date().toLocaleString(),
             text: text,
@@ -21228,7 +21243,7 @@ function showErrorLogs() {
     
     let logs = [];
     try {
-        logs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        logs = (function() { try { return JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]'); } catch(e) { return []; } })();
     } catch(e) {
         logs = [];
     }
@@ -21261,7 +21276,7 @@ function closeErrorLogModal() {
 function copyErrorLogs() {
     let logs = [];
     try {
-        logs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        logs = (function() { try { return JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]'); } catch(e) { return []; } })();
     } catch(e) {
         logs = [];
     }
