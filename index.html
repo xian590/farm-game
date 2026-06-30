@@ -10551,6 +10551,10 @@ function advanceSeason() {
     
     if (removedCount > 0) {
         addLog(`🍂 季节更替，${removedCount}块田里的作物因不适应新季节而枯萎了。`, 'bad');
+        // 显示弹窗提示玩家
+        setTimeout(() => {
+            showModal('🍂 季节更替', `随着${SEASON_NAMES[game.season]}的到来，${removedCount}块田里的作物因不适应新季节而枯萎了。<br><br><span style="color: #999; font-size: 13px;">💡 提示：不同季节适合种植不同作物，春天适合水稻、红薯、大豆、小麦等。</span>`, null);
+        }, 300);
     }
     
     game.currentSeasonBonus = game.nextSeasonBonus || 0;
