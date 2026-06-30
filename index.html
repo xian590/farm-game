@@ -2756,6 +2756,7 @@
 <div class="quick-actions">
     <div class="settings-btn" onclick="toggleSettings()" title="设置">⚙️</div>
     <div class="settings-btn" onclick="openFeedbackModal()" title="提交反馈" style="background: #4a7c59;">📋</div>
+    <div class="settings-btn" onclick="copyQQForFeedback()" title="联系开发者QQ" style="background: #12b7f5;">💬</div>
 </div>
 
 <!-- 设置面板 -->
@@ -2866,6 +2867,57 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ES6+ Polyfills for old browsers (WeChat/Android 4.4 compatibility)
+if (!Object.entries) {
+    Object.entries = function(obj) {
+        var keys = Object.keys(obj);
+        var result = new Array(keys.length);
+        for (var i = 0; i < keys.length; i++) {
+            result[i] = [keys[i], obj[keys[i]]];
+        }
+        return result;
+    };
+}
+if (!Object.values) {
+    Object.values = function(obj) {
+        var keys = Object.keys(obj);
+        var result = new Array(keys.length);
+        for (var i = 0; i < keys.length; i++) {
+            result[i] = obj[keys[i]];
+        }
+        return result;
+    };
+}
+
+// 安全localStorage封装（处理隐私模式/超配额/无权限）
+function safeStorageGet(key, defaultValue) {
+    try {
+        var value = localStorage.getItem(key);
+        return value !== null ? value : defaultValue;
+    } catch (e) {
+        console.error('localStorage读取失败', key, e);
+        return defaultValue;
+    }
+}
+function safeStorageSet(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (e) {
+        console.error('localStorage写入失败', key, e);
+        return false;
+    }
+}
+function safeStorageRemove(key) {
+    try {
+        localStorage.removeItem(key);
+        return true;
+    } catch (e) {
+        console.error('localStorage删除失败', key, e);
+        return false;
+    }
+}
+
 // 游戏版本号
 const GAME_VERSION = '1.0.0';
 
@@ -2884,7 +2936,7 @@ window.addEventListener('error', function(e) {
         // 最多保留50条
         if (logs.length > 50) logs.shift();
         localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(logs));
-    } catch(err) {}
+    } catch(err) { console.error('全局错误日志记录失败', err); }
 });
 
 const ITEM_EFFECTS = {
@@ -3588,7 +3640,7 @@ function setMusicVolume(value) {
     if (musicGainNode) {
         musicGainNode.gain.value = musicVolume;
     }
-    localStorage.setItem('farm_music_volume', musicVolume);
+    safeStorageSet('farm_music_volume', musicVolume);
 }
 
 function setSfxVolume(value) {
@@ -3596,13 +3648,13 @@ function setSfxVolume(value) {
     if (sfxGainNode) {
         sfxGainNode.gain.value = sfxVolume;
     }
-    localStorage.setItem('farm_sfx_volume', sfxVolume);
+    safeStorageSet('farm_sfx_volume', sfxVolume);
 }
 
 function toggleMusic(enabled) {
     playClickSound();
     musicEnabled = enabled;
-    localStorage.setItem('farm_music_enabled', musicEnabled);
+    safeStorageSet('farm_music_enabled', musicEnabled);
     if (enabled) {
         if (game && game.started) {
             startBgm('game');
@@ -3615,7 +3667,7 @@ function toggleMusic(enabled) {
 function toggleSfx(enabled) {
     playClickSound();
     sfxEnabled = enabled;
-    localStorage.setItem('farm_sfx_enabled', sfxEnabled);
+    safeStorageSet('farm_sfx_enabled', sfxEnabled);
 }
 
 // ========== 设置面板 ==========
@@ -3632,7 +3684,7 @@ function selectBgmStyle(styleName, clickedBtn) {
     if (clickedBtn) clickedBtn.classList.add('active');
     
     // 保存选择
-    localStorage.setItem('farm_bgm_style', styleName);
+    safeStorageSet('farm_bgm_style', styleName);
     
     // 切换音乐
     if (musicEnabled && musicIsPlaying) {
@@ -3654,7 +3706,7 @@ function toggleSettings() {
         document.getElementById('sfx-volume').value = sfxVolume;
         
         // 同步BGM风格选中状态
-        const savedStyle = localStorage.getItem('farm_bgm_style') || currentBgm || 'game';
+        const savedStyle = safeStorageGet('farm_bgm_style') || currentBgm || 'game';
         document.querySelectorAll('.bgm-btn').forEach(btn => {
             btn.classList.remove('active');
             if (btn.getAttribute('onclick').includes(savedStyle)) {
@@ -3672,28 +3724,28 @@ function closeSettings() {
 
 // 加载音频设置
 function loadAudioSettings() {
-    const savedMusicVol = localStorage.getItem('farm_music_volume');
+    const savedMusicVol = safeStorageGet('farm_music_volume');
     if (savedMusicVol !== null) {
         musicVolume = parseFloat(savedMusicVol);
     }
     
-    const savedSfxVol = localStorage.getItem('farm_sfx_volume');
+    const savedSfxVol = safeStorageGet('farm_sfx_volume');
     if (savedSfxVol !== null) {
         sfxVolume = parseFloat(savedSfxVol);
     }
     
-    const savedMusicEnabled = localStorage.getItem('farm_music_enabled');
+    const savedMusicEnabled = safeStorageGet('farm_music_enabled');
     if (savedMusicEnabled !== null) {
         musicEnabled = savedMusicEnabled === 'true';
     }
     
-    const savedSfxEnabled = localStorage.getItem('farm_sfx_enabled');
+    const savedSfxEnabled = safeStorageGet('farm_sfx_enabled');
     if (savedSfxEnabled !== null) {
         sfxEnabled = savedSfxEnabled === 'true';
     }
     
     // 加载保存的BGM风格
-    const savedBgmStyle = localStorage.getItem('farm_bgm_style');
+    const savedBgmStyle = safeStorageGet('farm_bgm_style');
     if (savedBgmStyle) {
         currentBgm = savedBgmStyle;
     }
@@ -8565,10 +8617,52 @@ const STORY_PAGES = [
     { emoji: '👆', title: '第一步：整地', texts: ['左边有一排功能按钮', '先点【田地管理】', '给第1块田整地开荒'], warm: true }
 ];
 
+// 临时链接迁移提示
+function showMigrationNotice() {
+    // 检查是否已显示过
+    if (localStorage.getItem('farm_migration_shown')) return;
+    
+    // 创建顶部横幅
+    const banner = document.createElement('div');
+    banner.id = 'migration-banner';
+    banner.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 99999;
+        background: linear-gradient(135deg, #e65100 0%, #f57c00 100%);
+        color: white;
+        padding: 12px 16px;
+        text-align: center;
+        font-size: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    `;
+    banner.innerHTML = `
+        <span>⚠️ 游戏已迁移到永久链接，此临时链接即将失效</span>
+        <a href="https://xian590.github.io/farm-game/" target="_blank" style="color: #fff; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 6px; text-decoration: none; font-weight: bold;">🚀 立即前往</a>
+        <button onclick="document.getElementById('migration-banner').style.display='none'; localStorage.setItem('farm_migration_shown', '1');" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">✕ 关闭</button>
+    `;
+    document.body.appendChild(banner);
+    
+    // 给页面顶部留出空间，避免内容被遮挡
+    document.body.style.paddingTop = '48px';
+}
+
 // ==================== 初始化 ====================
 window.onload = function() {
     loadAudioSettings();
     loadGameSpeed();
+    
+    // 检测临时链接，提示迁移到永久链接
+    if (window.location.hostname.includes('trycloudflare.com')) {
+        showMigrationNotice();
+    }
     
     // 检测是否通过 file:// 协议打开（会导致 localStorage 不稳定，存档丢失）
     if (window.location.protocol === 'file:') {
@@ -8786,7 +8880,7 @@ function initGame(mode) {
         tools: [],
         composting: false,
         compostStartDay: 0,
-        items: { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0 },
+        items: { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0, fish: 0 },
         seeds: { rice_spring: 0, rice_summer: 0, sweet_spring: 0, sweet_autumn: 0, wheat_spring: 0, wheat_autumn: 0, corn_summer: 0, soybean_spring: 0, soybean_summer: 0, potato_spring: 0, potato_autumn: 0, peanut_summer: 0, pepper_summer: 0, pepper_autumn: 0, cabbage_autumn: 0, cabbage_winter: 0, radish_autumn: 0, radish_winter: 0, eggplant_summer: 0, eggplant_autumn: 0, garlic_autumn: 0, garlic_spring: 0 },
         crops: { rice: 0, sweet: 0, wheat: 0, corn: 0, soybean: 0, potato: 0, peanut: 0, pepper: 0, cabbage: 0, radish: 0, eggplant: 0, garlic: 0 },
         npcMilestones: {},  // 已达成的NPC里程碑
@@ -8807,6 +8901,48 @@ function initGame(mode) {
         processingJobs: [], // 进行中的加工任务 [{buildingKey, startTime, duration, progress, inputAmount, outputAmount}]
         researchPoints: 0,
         unlockedTechs: {},
+        // ===== 新增：缺失字段补全 =====
+        started: false, // 游戏是否已开始
+        lastSaveTimestamp: Date.now(), // 上次保存时间
+        lastAutoWeedDay: 0, // 上次自动除草天数
+        lastGiftDay: {}, // 上次送礼日期 {npcKey: day}
+        lastDialogue: {}, // 上次对话日期 {npcKey: day}
+        lastChatDay: {}, // 上次聊天日期 {npcKey: day}
+        tutorialStep: 0, // 新手引导步骤
+        justStarted: true, // 标记刚进入游戏，跳过第一次事件
+        marketVisited: false, // 今日是否已赶集
+        pendingQuestRewards: [], // 待领取的任务奖励队列
+        currentSeasonBonus: 0, // 本季产量加成
+        nextSeasonBonus: 0, // 下季产量加成
+        sellBonus: 0, // 售价加成
+        pestReduction: 0, // 虫害减免
+        hasBookBonus: false, // 林老师借书加成
+        hasMedicineKit: false, // 药包加成
+        metChenyang: false, // 是否遇到过陈阳
+        metLinxiaoyu: false, // 是否遇到过林小雨
+        metSunmiaoqing: false, // 是否遇到过孙妙青
+        zhaoBonusNoticed: false, // 赵老板优惠已通知
+        farmStay: { level: 0, guests: 0, reputation: 0 }, // 农家乐
+        farmStayDishes: {}, // 农家乐招牌菜
+        hiredWorker: null, // 雇佣的村民
+        hireStartDay: 0, // 雇佣开始天数
+        lastWorkerWaterDay: 0, // 上次工人浇水天数
+        lastWorkerWeedDay: 0, // 上次工人除草天数
+        petPoop: 0, // 宠物粪便清理次数
+        animals: {}, // 畜牧
+        orchard: [], // 果园
+        fruits: {}, // 水果库存
+        villageProjects: {}, // 村长合作项目
+        unlockedTabs: {}, // 已解锁的页签
+        weather: 'sunny', // 天气
+        weatherDuration: 0, // 天气持续时间
+        currentEvent: null, // 当前事件
+        achievements: {}, // 成就进度
+        milestones: {}, // 里程碑进度
+        quests: {}, // 任务进度
+        eventHistory: [], // 事件历史
+        neighborHelp: {}, // 邻里互助
+        // ===== 结束新增 =====
         skills: {
             cropFamiliarity: { level: 0, exp: 0, name: '作物熟悉度', expNeeded: 3 },
             fieldManagement: { level: 0, exp: 0, name: '田间管理', expNeeded: 3 },
@@ -8920,12 +9056,13 @@ function calculateOfflineReward() {
     // 获取游戏速度
     const speed = gameSpeed || 1;
     
-    // 计算游戏内过去了多少小时 (与在线速度一致: 1秒=0.2游戏小时，5秒=1游戏小时)
-    const gameHours = offlineSeconds * 0.2 * speed;
+    // 计算游戏内过去了多少小时 (1秒=2游戏小时，与在线一致)
+    const gameHours = offlineSeconds * 2 * speed;
     
-    // 最多离线24小时真实时间（放置游戏标准：玩家可以安心睡觉/上班）
-    const maxOfflineSeconds = 24 * 3600; // 86400秒 = 24小时
-    const maxGameHours = maxOfflineSeconds * 0.2 * speed; // 8640游戏小时（1x速）
+    // 最多离线7天游戏时间（无论离线多久，最多推进7天）
+    // 避免玩家离线太久导致游戏内时间跳跃过大
+    const MAX_OFFLINE_DAYS = 7; // 最多7天
+    const maxGameHours = MAX_OFFLINE_DAYS * 24; // 168游戏小时
     const actualGameHours = Math.min(gameHours, maxGameHours);
     
     // 是否达到上限
@@ -9249,6 +9386,11 @@ function calculateOfflineReward() {
         }
     });
     
+    // 先保存游戏状态，避免竞态条件（弹窗期间刷新导致重复计算）
+    if (typeof saveGame === 'function') {
+        saveGame();
+    }
+    
     return {
         offlineText,
         gameTimeText,
@@ -9324,7 +9466,7 @@ function showOfflineReward(reward) {
     
     if (reward.capped) {
         content += `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef; color: #e67e22; font-size: 13px;">`;
-        content += `💡 离线最多攒12小时，记得常回村看看~`;
+        content += `💡 离线最多推进7天，记得常回村看看~`;
         content += `</div>`;
     }
     
@@ -9522,7 +9664,7 @@ function saveGame() {
             if (b1) localStorage.setItem(SAVE_KEY + '_backup_2', b1);
             const current = localStorage.getItem(SAVE_KEY);
             if (current) localStorage.setItem(SAVE_KEY + '_backup_1', current);
-        } catch(e) {}
+        } catch(e) { console.error('存档导出失败', e); }
         
         game.lastSaveTimestamp = Date.now();
         const saveData = JSON.stringify(game);
@@ -9532,11 +9674,11 @@ function saveGame() {
     }
     
     if (typeof checkMilestones === 'function' && game.day > 0) {
-        try { checkMilestones(); } catch(e) {}
+        try { checkMilestones(); } catch(e) { console.error('checkMilestones失败', e); }
     }
     
     if (typeof renderSidebarQuests === 'function') {
-        try { renderSidebarQuests(); } catch(e) {}
+        try { renderSidebarQuests(); } catch(e) { console.error('renderSidebarQuests失败', e); }
     }
 }
 
@@ -10077,6 +10219,35 @@ function fixSaveData() {
     // 补全农家乐
     if (!game.farmStay) game.farmStay = { level: 0, guests: 0, reputation: 0 };
     if (!game.farmStayDishes) game.farmStayDishes = {};
+    
+    // 补全：缺失字段（旧存档兼容）
+    if (game.lastAutoWeedDay === undefined) game.lastAutoWeedDay = 0;
+    if (!game.lastGiftDay) game.lastGiftDay = {};
+    if (!game.lastDialogue) game.lastDialogue = {};
+    if (!game.lastChatDay) game.lastChatDay = {};
+    if (game.marketVisited === undefined) game.marketVisited = false;
+    if (!game.pendingQuestRewards) game.pendingQuestRewards = [];
+    if (game.sellBonus === undefined) game.sellBonus = 0;
+    if (game.pestReduction === undefined) game.pestReduction = 0;
+    if (game.hasBookBonus === undefined) game.hasBookBonus = false;
+    if (game.hasMedicineKit === undefined) game.hasMedicineKit = false;
+    if (game.metChenyang === undefined) game.metChenyang = false;
+    if (game.metLinxiaoyu === undefined) game.metLinxiaoyu = false;
+    if (game.metSunmiaoqing === undefined) game.metSunmiaoqing = false;
+    if (game.zhaoBonusNoticed === undefined) game.zhaoBonusNoticed = false;
+    if (game.hiredWorker === undefined) game.hiredWorker = null;
+    if (game.hireStartDay === undefined) game.hireStartDay = 0;
+    if (game.lastWorkerWaterDay === undefined) game.lastWorkerWaterDay = 0;
+    if (game.lastWorkerWeedDay === undefined) game.lastWorkerWeedDay = 0;
+    if (game.petPoop === undefined) game.petPoop = 0;
+    if (!game.animals) game.animals = {};
+    if (!game.orchard) game.orchard = [];
+    if (!game.fruits) game.fruits = {};
+    if (!game.communityProjects) game.communityProjects = {};
+    if (!game.unlockedTabs) game.unlockedTabs = {};
+    if (!game.achievements) game.achievements = {};
+    if (!game.milestones) game.milestones = {};
+    if (!game.neighborHelp) game.neighborHelp = {};
 }
 
 function loadGame() {
@@ -10096,7 +10267,7 @@ function loadGame() {
                     showToast('📂 已从备份' + i + '恢复存档', 'warn');
                 }
                 return true;
-            } catch(e) {}
+            } catch(e) { console.error('存档导出失败', e); }
         }
     }
     return false;
@@ -10228,19 +10399,19 @@ let gameSpeed = 1; // 游戏速度倍率
 
 function setGameSpeed(speed) {
     gameSpeed = speed;
-    localStorage.setItem('farm_game_speed', speed);
+    safeStorageSet('farm_game_speed', speed);
     
     // 更新按钮选中状态（设置弹窗内的按钮）
     document.querySelectorAll('.speed-btn').forEach(btn => {
         btn.classList.remove('active');
-        if (parseInt(btn.textContent) === speed) {
+        if (parseInt(btn.textContent, 10) === speed) {
             btn.classList.add('active');
         }
     });
     // 更新顶部的时间流速按钮
     document.querySelectorAll('.speed-btn-top').forEach(btn => {
         btn.classList.remove('active');
-        if (parseInt(btn.textContent) === speed) {
+        if (parseInt(btn.textContent, 10) === speed) {
             btn.classList.add('active');
         }
     });
@@ -10266,15 +10437,15 @@ function setGameSpeed(speed) {
 }
 
 function loadGameSpeed() {
-    const saved = localStorage.getItem('farm_game_speed');
+    const saved = safeStorageGet('farm_game_speed');
     if (saved) {
-        gameSpeed = parseInt(saved) || 1;
+        gameSpeed = parseInt(saved, 10) || 1;
     }
     // 更新所有时间流速按钮的选中状态
     setTimeout(() => {
         // 设置弹窗内的按钮
         document.querySelectorAll('.speed-btn').forEach(btn => {
-            if (parseInt(btn.textContent) === gameSpeed) {
+            if (parseInt(btn.textContent, 10) === gameSpeed) {
                 btn.classList.add('active');
             } else {
                 btn.classList.remove('active');
@@ -10282,7 +10453,7 @@ function loadGameSpeed() {
         });
         // 顶部的时间流速按钮
         document.querySelectorAll('.speed-btn-top').forEach(btn => {
-            if (parseInt(btn.textContent) === gameSpeed) {
+            if (parseInt(btn.textContent, 10) === gameSpeed) {
                 btn.classList.add('active');
             } else {
                 btn.classList.remove('active');
@@ -10337,8 +10508,8 @@ function startGameLoop() {
         gameLoopInterval = null;
         return;
     }
-    // 1秒 = 12分钟游戏时间，所以5秒 = 1小时（1倍速）
-    const baseInterval = 5000;
+    // 2秒 = 2游戏小时，24秒 = 1游戏天（比原来120秒/天快5倍）
+    const baseInterval = 2000;
     const interval = baseInterval / gameSpeed;
     gameLoopInterval = setInterval(gameTick, interval);
     updateUI();
@@ -10409,9 +10580,9 @@ function gameTick() {
     // 游戏未正式开始时不执行
     if (!game || !gameLoopInterval) return;
 
-    game.time++;
+    game.time += 2;
     
-    // 体力恢复
+    // 体力恢复（每2小时恢复一次）
     const regenRate = getStaminaRegenRate();
     if (game.stamina < game.maxStamina) {
         game.stamina = Math.min(game.maxStamina, game.stamina + regenRate);
@@ -10645,8 +10816,9 @@ function onNewDay() {
     }
     
     // 房屋租金每日扣除（已租房）
-    if (game.house && game.house.rent > 0) {
-        const rent = game.house.rent;
+    const houseData = HOUSE_DATA[game.house];
+    if (houseData && houseData.rent > 0) {
+        const rent = houseData.rent;
         if (game.money >= rent) {
             game.money -= rent;
             addLog(`🏠 房屋租金-${rent}元`, 'info');
@@ -10911,43 +11083,36 @@ function onNewDay() {
 
 function checkHealthDeath() {
     if (game.health <= 0) {
-        // 停止游戏循环
-        if (typeof gameLoopInterval !== 'undefined' && gameLoopInterval) {
-            clearInterval(gameLoopInterval);
-            gameLoopInterval = null;
+        // 健康归零——累倒了，不是死亡
+        game.health = 1; // 健康值不会低于1
+        game.stamina = Math.min(game.maxStamina, game.stamina + 30); // 强制休息恢复体力
+        
+        // 扣除医药费
+        const medicalCost = 50;
+        if (game.money >= medicalCost) {
+            game.money -= medicalCost;
+        } else {
+            game.money = 0;
         }
-        // 显示死亡弹窗
-        const deathHtml = `
+        
+        addLog('🏥 你累倒了！乡亲们把你送到村卫生所，休息了一天。医药费' + medicalCost + '元，体力恢复了一些。', 'warn');
+        showToast('🏥 累倒了！注意休息，健康值已恢复。', 'warn');
+        
+        // 显示休息弹窗
+        const restHtml = `
             <div style="text-align:center;padding:20px;">
-                <div style="font-size:48px;margin-bottom:10px;">💔</div>
-                <div style="font-size:18px;font-weight:bold;color:#c0392b;margin-bottom:15px;">你倒下了...</div>
+                <div style="font-size:48px;margin-bottom:10px;">😵</div>
+                <div style="font-size:18px;font-weight:bold;color:#e67e22;margin-bottom:15px;">累倒了...</div>
                 <div style="font-size:14px;line-height:1.8;color:#555;margin-bottom:20px;text-align:left;">
-                    你虽然逃离了996，但是因为不擅长种地，还是没能找到属于自己的归园田居。<br><br>
-                    你放弃了种地的生活，回到老家考了个不太喜欢的公务员职位，并听从父母安排相亲，就这样度过了你的余生...
+                    你太拼了，身体发出了警报。乡亲们发现你昏倒在田里，赶紧把你送到村卫生所。<br><br>
+                    王大夫给你输了液，叮嘱你注意劳逸结合。健康值已恢复，但记得多休息！
                 </div>
-                <div style="font-size:12px;color:#999;margin-bottom:10px;">本次存活：第${game.totalDay || game.day}天</div>
+                <div style="font-size:12px;color:#999;margin-bottom:10px;">医药费：${medicalCost}元 | 体力恢复：+30</div>
             </div>
         `;
-        showModal('归途', deathHtml, () => {
-            localStorage.removeItem(SAVE_KEY);
-            game = null;
+        showModal('注意身体', restHtml, () => {
             closeModal();
-            location.reload();
         });
-        // 修改按钮文字
-        setTimeout(() => {
-            const primaryBtn = document.querySelector('.modal-btn.primary');
-            if (primaryBtn) primaryBtn.textContent = '重新开始';
-            const secondaryBtn = document.querySelector('.modal-btn.secondary');
-            if (secondaryBtn) secondaryBtn.style.display = 'none';
-            // 5秒后自动重新开始（放置挂机定时）
-            if (window._deathAutoClose) clearTimeout(window._deathAutoClose);
-            window._deathAutoClose = setTimeout(() => {
-                if (document.getElementById('modal-overlay').style.display === 'flex') {(primaryBtn && primaryBtn.click)();
-                }
-            }, 5000);
-        }, 50);
-        addLog('💀 健康值归零，你倒下了...', 'bad');
     }
 }
 
@@ -12797,7 +12962,7 @@ function updateUI() {
 }
 
 function showGame() {
-    const savedStyle = localStorage.getItem('farm_bgm_style') || 'game';
+    const savedStyle = safeStorageGet('farm_bgm_style') || 'game';
     switchBgm(savedStyle);
     document.getElementById('game-container').style.display = 'flex';
     
@@ -13357,8 +13522,8 @@ function renderQuestBox() {
                 progressText = q.q4 ? '进行中' : '未开始';
             } else {
                 // 其他任务简单估算
-                const questNum = parseInt(quest.id.slice(1));
-                const completedBefore = Object.keys(q).filter(k => k.startsWith('q') && parseInt(k.slice(1)) < questNum && q[k]).length;
+                const questNum = parseInt(quest.id.slice(1), 10);
+                const completedBefore = Object.keys(q).filter(k => k.startsWith('q') && parseInt(k.slice(1), 10) < questNum && q[k]).length;
                 const totalBefore = questNum;
                 progress = Math.min(95, (completedBefore / totalBefore) * 100);
                 progressText = '进行中';
@@ -15549,7 +15714,7 @@ function renderSkillsPanel() {
         
         skillInfo.effects.forEach(effect => {
             // 检查是否已解锁
-            const effectLevel = parseInt((effect.match(/Lv(\d+)/) && effect.match(/Lv(\d+)/)[1]) || 0);
+            const effectLevel = parseInt((effect.match(/Lv(\d+)/) && effect.match(/Lv(\d+)/)[1]) || 0, 10);
             const unlocked = level >= effectLevel;
             html += `<div style="color: ${unlocked ? '#4a7c59' : '#ccc'};">${unlocked ? '✅' : '🔒'} ${effect}</div>`;
         });
@@ -17228,6 +17393,15 @@ const PET_DATA = {
         dailyFoodCost: 30
     }
 };
+
+// 村民好感度等级
+const FRIENDSHIP_LEVELS = [
+    { name: '陌生', min: 0, color: '#999' },
+    { name: '熟悉', min: 20, color: '#3498db' },
+    { name: '友好', min: 40, color: '#2ecc71' },
+    { name: '亲密', min: 60, color: '#e67e22' },
+    { name: '挚友', min: 90, color: '#e74c3c' }
+];
 
 // 宠物好感度等级
 const PET_FRIENDSHIP_LEVELS = [
@@ -19633,6 +19807,19 @@ function addLog(text, type = 'normal') {
 }
 
 // ==================== 玩家反馈系统 ====================
+function copyQQForFeedback() {
+    const qq = '3679521262';
+    try {
+        navigator.clipboard.writeText(qq).then(() => {
+            showToast('QQ号已复制：' + qq + '，快加我反馈吧！', 'good');
+        }).catch(() => {
+            showToast('QQ号：' + qq + '，请手动复制添加', 'info');
+        });
+    } catch(e) {
+        showToast('QQ号：' + qq + '，请手动复制添加', 'info');
+    }
+}
+
 function openFeedbackModal() {
     const html = `
         <div style="text-align:center;padding:10px;">
@@ -19649,18 +19836,39 @@ function openFeedbackModal() {
             <div style="margin-bottom:12px;">
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;cursor:pointer;">
                     <input type="checkbox" id="feedback-include-log" checked style="width:14px;height:14px;">
-                    同时提交当前游戏日志（帮助更快定位问题）
+                    同时提交当前游戏日志和错误记录（帮助更快定位问题）
                 </label>
             </div>
             <div style="font-size:11px;color:#999;margin-bottom:12px;text-align:left;background:#f5f0e6;padding:8px;border-radius:4px;">
                 📊 当前游戏状态：第${(game && game.day) || '?'}天 | ${(game && game.money) || 0}元 | ${(game && game.season) || '?'} | ${(game && game.mode) || 'normal'}模式
             </div>
+            <div style="background:#fff8e1;border:1px solid #ffe0b2;border-radius:8px;padding:10px;margin-bottom:12px;text-align:left;">
+                <div style="font-size:12px;color:#e65100;margin-bottom:6px;"><strong>💡 如何反馈最方便？</strong></div>
+                <div style="font-size:11px;color:#666;">1. 填写问题描述 → 2. 点击"发送邮件" → 自动打开你的邮件客户端</div>
+                <div style="font-size:11px;color:#666;margin-top:4px;">3. 或直接加QQ反馈：<strong style="color:#12b7f5;">3679521262</strong>（李家村农耕模拟器）</div>
+            </div>
         </div>
     `;
-    showModal('提交反馈', html, submitFeedback, '取消');
+    showModal('提交反馈', html, submitFeedbackEmail, '取消');
     setTimeout(() => {
-        const primaryBtn = document.querySelector('.modal-btn.primary');
-        if (primaryBtn) primaryBtn.textContent = '📤 提交反馈';
+        const modal = document.getElementById('modal');
+        if (!modal) return;
+        const btnContainer = modal.querySelector('.modal-buttons');
+        if (!btnContainer) return;
+        
+        // 修改确认按钮为发送邮件
+        const confirmBtn = btnContainer.querySelector('.modal-btn.primary');
+        if (confirmBtn) {
+            confirmBtn.textContent = '📧 发送邮件反馈';
+            confirmBtn.style.background = '#e74c3c';
+            confirmBtn.onclick = submitFeedbackEmail;
+        }
+        
+        // 修改取消按钮文字
+        const cancelBtn = btnContainer.querySelector('.modal-btn.secondary');
+        if (cancelBtn) {
+            cancelBtn.textContent = '取消';
+        }
     }, 50);
 }
 
@@ -19713,6 +19921,20 @@ ${text}
             });
         }
         feedback += '\n';
+        
+        // 自动收集 JS 错误日志
+        feedback += `【JS错误日志】
+`;
+        const ERROR_LOG_KEY = 'farm_game_error_log';
+        const errorLogs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        if (errorLogs.length > 0) {
+            errorLogs.forEach(err => {
+                feedback += `[${err.time}] ${err.message} (${err.file}:${err.line}:${err.col})\n`;
+            });
+        } else {
+            feedback += '暂无错误记录\n';
+        }
+        feedback += '\n';
     }
     
     try {
@@ -19755,6 +19977,82 @@ ${text}
         console.error('保存反馈失败:', e);
         showToast('保存反馈失败: ' + e.message, 'bad');
     }
+}
+
+// 一键发送邮件反馈（直接打开邮件客户端）
+function submitFeedbackEmail() {
+    const feedbackEl = document.getElementById('feedback-text');
+    const text = (feedbackEl && feedbackEl.value || '').trim();
+    const includeLogEl = document.getElementById('feedback-include-log');
+    const includeLog = !!(includeLogEl && includeLogEl.checked);
+    
+    if (!text) {
+        showToast('请填写问题描述', 'bad');
+        return;
+    }
+    
+    let feedbackBody = `===== 李家村 - 农耕模拟器 玩家反馈 =====\n`;
+    feedbackBody += `提交时间: ${new Date().toLocaleString()}\n`;
+    feedbackBody += `=======================================\n\n`;
+    feedbackBody += `【问题描述】\n${text}\n\n`;
+    feedbackBody += `【游戏状态】\n`;
+    feedbackBody += `天数: 第${(game && game.day) || '?'}天\n`;
+    feedbackBody += `季节: ${(game && game.season) || '?'}\n`;
+    feedbackBody += `金钱: ${(game && game.money) || 0}元\n`;
+    feedbackBody += `体力: ${(game && game.stamina) || 0}/${(game && game.maxStamina) || 0}\n`;
+    feedbackBody += `健康: ${(game && game.health) || 0}/${(game && game.maxHealth) || 0}\n`;
+    feedbackBody += `模式: ${(game && game.mode) || 'normal'}\n`;
+    feedbackBody += `=======================================\n\n`;
+    
+    if (includeLog) {
+        feedbackBody += `【事件日志】\n`;
+        const logEl = document.getElementById('event-log');
+        if (logEl) {
+            const logItems = logEl.querySelectorAll('.log-item');
+            logItems.forEach(item => {
+                feedbackBody += item.textContent + '\n';
+            });
+        }
+        feedbackBody += '\n';
+        
+        feedbackBody += `【JS错误日志】\n`;
+        const ERROR_LOG_KEY = 'farm_game_error_log';
+        const errorLogs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        if (errorLogs.length > 0) {
+            errorLogs.forEach(err => {
+                feedbackBody += `[${err.time}] ${err.message} (${err.file}:${err.line}:${err.col})\n`;
+            });
+        } else {
+            feedbackBody += '暂无错误记录\n';
+        }
+    }
+    
+    // 编码邮件内容
+    const subject = encodeURIComponent('[李家村农耕模拟器] 玩家反馈 - ' + text.substring(0, 30));
+    const body = encodeURIComponent(feedbackBody);
+    
+    // 打开邮件客户端
+    window.location.href = `mailto:auburn2434@qq.com?subject=${subject}&body=${body}`;
+    
+    // 同时保存到本地记录
+    try {
+        const FEEDBACK_KEY = 'farm_game_feedback_v1';
+        const stored = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || '[]');
+        stored.push({
+            time: new Date().toLocaleString(),
+            text: text,
+            day: (game && game.day) || 0,
+            season: (game && game.season) || '?',
+            money: (game && game.money) || 0,
+            stamina: (game && game.stamina) || 0,
+            health: (game && game.health) || 0,
+            mode: (game && game.mode) || 'normal'
+        });
+        localStorage.setItem(FEEDBACK_KEY, JSON.stringify(stored));
+    } catch(e) {}
+    
+    showToast('📧 已打开邮件客户端，请发送反馈', 'good');
+    closeModal();
 }
 
 function saveFeedbackLog() {
@@ -21113,7 +21411,7 @@ function checkAchievements() {
         const parts = ach.condition.split('>=');
         if (parts.length === 2) {
             const condKey = parts[0].trim();
-            const condVal = parseInt(parts[1].trim());
+            const condVal = parseInt(parts[1].trim(), 10);
             if (conditions[condKey] !== undefined && conditions[condKey] >= condVal) {
                 unlockAchievement(key);
             }
