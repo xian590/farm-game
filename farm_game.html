@@ -256,6 +256,11 @@
             background: #229954;
         }
 
+        .mode-btn:active {
+            transform: scale(0.97);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         /* ========== 主游戏界面 ========== */
         #game-container {
             display: none;
@@ -881,7 +886,8 @@
         }
 
         .buy-btn:active {
-            transform: translateY(0);
+            transform: translateY(0) scale(0.97);
+            box-shadow: 0 1px 4px rgba(39, 174, 96, 0.3);
         }
 
         .buy-btn:disabled {
@@ -1450,6 +1456,10 @@
         .settings-btn:hover {
             background: #fff;
             transform: scale(1.05);
+        }
+
+        .settings-btn:active {
+            transform: scale(0.95);
         }
 
         .settings-btn:hover {
@@ -2792,6 +2802,14 @@
                 <span>kg</span>
             </div>
             <div class="stat-item">
+                <span class="stat-icon">📦</span>
+                <span>仓库：</span>
+                <span class="stat-value" id="stat-storage">0</span>
+                <span>/</span>
+                <span id="stat-storage-cap">2000</span>
+                <span>kg</span>
+            </div>
+            <div class="stat-item">
                 <span class="stat-icon" id="season-icon">🌸</span>
                 <span id="stat-season">春季</span>
                 <span>第</span>
@@ -3079,7 +3097,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.3';
+const GAME_VERSION = '1.3.4';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9660,6 +9678,7 @@ function calculateOfflineReward() {
                             game.money -= foodCost;
                         } else {
                             game.money = 0;
+                            pet.affection = Math.max(0, (pet.affection || 0) - 2);
                         }
                     }
                 }
@@ -10172,6 +10191,7 @@ function exportSaveFile() {
         showToast('没有游戏进度可导出', 'bad');
         return;
     }
+    showToast('正在导出存档...', 'info');
     try {
         const saveData = JSON.stringify(game, null, 2);
         const blob = new Blob([saveData], { type: 'application/json' });
@@ -10181,9 +10201,8 @@ function exportSaveFile() {
         a.download = `farm_save_${game.totalDay || game.day}day_${new Date().toISOString().slice(0,10)}.json`;
         document.body.appendChild(a);
         a.click();
-    URL.revokeObjectURL(url);
-        document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        document.body.removeChild(a);
         showToast('✅ 存档已导出！', 'good');
     } catch(e) {
         console.error('导出失败', e);
@@ -13562,6 +13581,12 @@ function updateUI() {
     safeSetText('stat-wheat', Math.floor(game.crops.wheat || 0));
     safeSetText('stat-corn', Math.floor(game.crops.corn || 0));
     safeSetText('stat-soybean', Math.floor(game.crops.soybean || 0));
+    
+    // 仓库容量显示
+    const storageCap = game.storageCapacity || 2000;
+    const currentStorage = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
+    safeSetText('stat-storage', Math.floor(currentStorage));
+    safeSetText('stat-storage-cap', storageCap);
     safeSetText('stat-day', game.totalDay || game.day);
     safeSetText('stat-season', SEASON_NAMES[game.season]);
     safeSetText('season-icon', SEASON_ICONS[game.season]);
@@ -15083,6 +15108,7 @@ function goSleep() {
     
     // 恢复体力，溢出部分转健康
     const oldStamina = game.stamina;
+    const oldHealth = game.health;
     game.stamina = Math.min(game.maxStamina, game.stamina + staminaRecovery);
     const staminaOverflow = oldStamina + staminaRecovery - game.stamina; // 溢出的体力恢复
     
@@ -15107,7 +15133,10 @@ function goSleep() {
         onNewDay();
     }
     
-    addLog(`💤 你睡了一觉。体力恢复+${staminaRecovery}，健康恢复+${totalHealthRecovery}${healthFromOverflow > 0 ? '（含' + healthFromOverflow + '点溢出体力转健康）' : ''}。新的一天开始了！`, 'good');
+    const actualStaminaRecovered = game.stamina - oldStamina;
+    const actualHealthRecovered = game.health - oldHealth;
+    
+    addLog(`💤 你睡了一觉。体力恢复+${actualStaminaRecovered}，健康恢复+${actualHealthRecovered}${healthFromOverflow > 0 ? '（含' + healthFromOverflow + '点溢出体力转健康）' : ''}。新的一天开始了！`, 'good');
     
     saveGame();
     updateUI();
@@ -15977,7 +16006,7 @@ function renderPlayerPanel() {
                 </div>
             </div>
             <div class="shop-item-price">
-                <button class="buy-btn" onclick="goFishing()" ${!canFish || game.stamina < 25 ? 'disabled' : ''}>
+                <button class="buy-btn" onclick="goFishing()" ${!canFish || game.stamina < 15 ? 'disabled' : ''}>
                     钓鱼
                 </button>
             </div>
@@ -20322,8 +20351,13 @@ function roundGameState() {
     game.stamina = Math.round(game.stamina * 10) / 10;
     game.health = Math.round(game.health * 10) / 10;
     game.reputation = Math.round(game.reputation * 10) / 10;
-    if (game.crops.rice !== undefined) game.crops.rice = Math.round(game.crops.rice * 10) / 10;
-    if (game.crops.sweet !== undefined) game.crops.sweet = Math.round(game.crops.sweet * 10) / 10;
+    // 统一处理所有作物
+    const cropTypes = ['rice', 'sweet', 'wheat', 'corn', 'soybean', 'potato', 'peanut', 'pepper', 'cabbage', 'radish', 'eggplant', 'garlic'];
+    cropTypes.forEach(type => {
+        if (game.crops[type] !== undefined) {
+            game.crops[type] = Math.round(game.crops[type] * 10) / 10;
+        }
+    });
     game.fields.forEach(f => {
         if (f.yieldBonus !== undefined) f.yieldBonus = Math.round(f.yieldBonus * 1000) / 1000;
         if (f.yieldLoss !== undefined) f.yieldLoss = Math.round(f.yieldLoss * 1000) / 1000;
@@ -20343,6 +20377,12 @@ function updateTopBar() {
     safeSetText('stat-wheat', Math.floor(game.crops.wheat || 0));
     safeSetText('stat-corn', Math.floor(game.crops.corn || 0));
     safeSetText('stat-soybean', Math.floor(game.crops.soybean || 0));
+    
+    // 仓库容量显示
+    const storageCap = game.storageCapacity || 2000;
+    const currentStorage = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
+    safeSetText('stat-storage', Math.floor(currentStorage));
+    safeSetText('stat-storage-cap', storageCap);
     safeSetText('stat-day', game.totalDay || game.day);
     safeSetText('stat-season', SEASON_NAMES[game.season]);
     safeSetText('season-icon', SEASON_ICONS[game.season]);
@@ -21408,7 +21448,12 @@ function renderBackpackModal() {
             }
             
             if (item && item.use && Object.keys(item.use).length > 0) {
-                consumables.push({ itemId, icon, name, count, desc, canUse: true });
+                // 根据当前状态判断物品是否可用
+                let usable = true;
+                if (item.use.stamina && game.stamina >= game.maxStamina) usable = false;
+                if (item.use.health && game.health >= game.maxHealth) usable = false;
+                if (item.use.mood && game.mood >= 100) usable = false;
+                consumables.push({ itemId, icon, name, count, desc, canUse: usable });
             } else {
                 consumables.push({ itemId, icon, name, count, desc, canUse: false });
             }
