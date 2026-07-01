@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.30';
+const GAME_VERSION = '1.3.31';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -14486,8 +14486,9 @@ function renderQuestBox() {
             // 根据任务类型计算进度
             if (quest.id === 'q0') {
                 // 整地任务
-                progress = game.fields[0].prepared ? 100 : 0;
-                progressText = game.fields[0].prepared ? '已完成' : '未开始';
+                const firstField = game.fields && game.fields[0];
+                progress = firstField && firstField.prepared ? 100 : 0;
+                progressText = firstField && firstField.prepared ? '已完成' : '未开始';
             } else if (quest.id === 'q1') {
                 // 买种子任务
                 const hasSeeds = Object.values(game.seeds).some(s => s > 0);
@@ -18535,7 +18536,7 @@ function giveGift(npcKey, giftKey) {
     
     setTimeout(() => {
         showModal(
-            `${npc.emoji} ${npc.name}`,
+            `${npc.emoji} ${escapeHtml(npc.name)}`,
             modalContent,
             () => { if (game) game.needsRender = true; updateUI(); }
         );
@@ -19416,7 +19417,7 @@ function renderAnimalsPanel() {
                     <div class="shop-item-icon">${data.emoji}</div>
                     <div>
                         <div class="shop-item-name">${data.name}幼崽</div>
-                        <div class="shop-item-desc">日耗粮：${Object.entries(data.dailyFeed).map(([k,v]) => v + '斤' + ({rice:'稻谷',wheat:'小麦',corn:'玉米',sweet:'红薯',potato:'土豆',peanut:'花生',pepper:'辣椒',cabbage:'白菜',radish:'萝卜',eggplant:'茄子',garlic:'大蒜'}[k]||k)).join('、')}</div>
+                        <div class="shop-item-desc">日耗粮：${Object.entries(data.dailyFeed || {}).map(([k,v]) => v + '斤' + ({rice:'稻谷',wheat:'小麦',corn:'玉米',sweet:'红薯',potato:'土豆',peanut:'花生',pepper:'辣椒',cabbage:'白菜',radish:'萝卜',eggplant:'茄子',garlic:'大蒜'}[k]||k)).join('、') || '无'}</div>
                         <div class="shop-item-desc">${data.growthDays}天成年，${data.sellPrice}元出售</div>
                     </div>
                 </div>
