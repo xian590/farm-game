@@ -3097,7 +3097,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.4';
+const GAME_VERSION = '1.3.5';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10010,7 +10010,7 @@ function showOfflineReward(reward) {
             content += `<div style="color: #e67e22; font-size: 13px;">（换季交了${reward.rentDeducted}块房租）</div>`;
         }
         if (reward.totalOfflineSell > 0) {
-            content += `<div style="color: #27ae60; font-size: 13px;">💹 顺手卖了点作物，多赚了${reward.totalOfflineSell}块</div>`;
+            content += `<div style="color: #27ae60; font-size: 13px;">💹 （其中离线自动销售作物${reward.totalOfflineSell}元已包含在上面的变化中）</div>`;
         }
         content += `</div>`;
     }
@@ -11686,6 +11686,9 @@ function onNewDay() {
 
 function checkHealthDeath() {
     if (game.health <= 0) {
+        // 防止同一天内重复弹窗
+        if (game._healthDeathChecked === game.totalDay) return;
+        game._healthDeathChecked = game.totalDay;
         // 健康归零——累倒了，不是死亡
         game.health = 1; // 健康值不会低于1
         game.stamina = Math.min(game.maxStamina, game.stamina + 20); // 强制休息恢复体力（从30降到20）
@@ -13432,8 +13435,8 @@ function updateProcessingJobs() {
         if (job.completed) return;
         
         const jobTotalTime = (job.startTotalDay || job.startDay) * 24 + job.startTime;
-        const elapsed = currentTotalTime - jobTotalTime;
-        job.progress = Math.min(100, Math.floor((elapsed / job.duration) * 100));
+        const elapsed = Math.max(0, currentTotalTime - jobTotalTime);
+        job.progress = Math.min(100, Math.max(0, Math.floor((elapsed / job.duration) * 100)));
         
         if (elapsed >= job.duration) {
             // 加工完成
@@ -14086,14 +14089,29 @@ function getQuestProgress(questId) {
     const q = game.quests;
     if (q[questId]) return 100;
     
-    // 根据任务类型估算进度
+    // 根据任务类型精确计算进度
     const progressMap = {
         q0: game.fields[0] && game.fields[0].prepared ? 100 : 0,
         q1: game.seeds.rice_spring > 0 ? 100 : (game.money > 30 ? 50 : 20),
         q2: game.fields[0] && game.fields[0].stage === 'seedling' ? 100 : (game.seeds.rice_spring > 0 ? 50 : 0),
         q3: game.fields[0] && game.fields[0].stage === 'growing' ? 100 : (game.fields[0] && game.fields[0].stage === 'seedling' ? 70 : 0),
         q4: game.fields[0] && game.fields[0].stage === 'mature' ? 100 : (game.fields[0] && game.fields[0].growProgress > 0 ? Math.min(95, game.fields[0].growProgress) : 0),
-        q5: game.crops.rice > 0 ? 60 : 0,
+        q5: game.stats && game.stats.totalSell > 0 ? 100 : (game.crops.rice > 0 || game.crops.sweet > 0 ? 60 : 0),
+        q6: game.tools && game.tools.length > 0 ? 100 : (game.money > 100 ? 50 : 0),
+        q8: game.compost && game.compost.totalCompostDays > 0 ? 100 : 0,
+        q9: game.npcFavor && Object.values(game.npcFavor).some(f => f > 0) ? 100 : 0,
+        q10: game.npcFavor && Object.values(game.npcFavor).some(f => f >= 10) ? 100 : (game.npcFavor && Object.values(game.npcFavor).some(f => f > 0) ? 50 : 0),
+        q11: game.pets && Object.keys(game.pets).length > 0 ? 100 : (game.money > 200 ? 50 : 0),
+        q12: game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level >= 2 ? 100 : (game.skills && game.skills.cropFamiliarity ? Math.min(90, (game.skills.cropFamiliarity.exp || 0) / 50 * 100) : 0),
+        q18: game.dailyActions && game.dailyActions.exercise > 0 ? 100 : 0,
+        q19: game.dailyActions && game.dailyActions.fish > 0 ? 100 : 0,
+        q20: game.dailyActions && game.dailyActions.foraging > 0 ? 100 : 0,
+        q21: game.processing && game.processing.riceMill ? 100 : 0,
+        q22: game.processing && game.processing.sweetDryer ? 100 : 0,
+        q23: game.stats && game.stats.processingCount > 0 ? 100 : 0,
+        q24: game.stats && game.stats.processingCount >= 100 ? 100 : (game.stats && game.stats.processingCount ? Math.min(90, (game.stats.processingCount / 100) * 100) : 0),
+        q27: game.stats && game.stats.fishCaught >= 50 ? 100 : (game.stats && game.stats.fishCaught ? Math.min(90, (game.stats.fishCaught / 50) * 100) : 0),
+        q31: game.storageCapacity >= 5000 ? 100 : (game.storageCapacity ? Math.min(90, ((game.storageCapacity - 1000) / 4000) * 100) : 0),
     };
     
     return progressMap[questId] || 0;
@@ -16683,7 +16701,7 @@ function rerenderBuilding() {
 }
 
 function getSkillLevel(exp) {
-    for (let i = 10; i >= 0; i--) {
+    for (let i = SKILL_EXP_TABLE.length - 1; i >= 0; i--) {
         if (exp >= SKILL_EXP_TABLE[i]) {
             return i;
         }
@@ -16804,7 +16822,7 @@ function addSkillExp(skillKey, amount) {
 
 // ==================== 里程碑成就系统 ====================
 function checkMilestones() {
-    if (!MILESTONE_DATA) return;
+    if (!game || !MILESTONE_DATA) return;
     
     for (const key in MILESTONE_DATA) {
         const milestone = MILESTONE_DATA[key];
@@ -17803,7 +17821,7 @@ function updateStorageCapacity() {
 function getSeedPrice(basePrice) {
     const discount = getTechBonus('shopDiscount');
     if (discount > 0) {
-        return Math.floor(basePrice * (1 - discount));
+        return Math.max(1, Math.floor(basePrice * (1 - discount)));
     }
     return basePrice;
 }
