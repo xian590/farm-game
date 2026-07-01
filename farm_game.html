@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.25';
+const GAME_VERSION = '1.3.26';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9614,6 +9614,11 @@ function calculateOfflineReward() {
             game.day++;
             game.totalDay = (game.totalDay !== undefined ? game.totalDay : game.day) + 1;
             
+            // 离线跨季节处理
+            if (game.day > 28) {
+                advanceSeason(true);
+            }
+            
             // 重置每日操作
             game.dailyActions = {exercise: 0, chat: 0, fish: 0, read: 0, foraging: 0, sideHustle: 0};
             game.dailyProcessed = {};
@@ -10238,15 +10243,19 @@ function useItem(itemId) {
 function saveGame() {
     if (!game) return;
     try {
-        // 自动备份：轮转保存最近3个存档
-        try {
-            const b2 = safeStorageGet(SAVE_KEY + '_backup_2');
-            if (b2) safeStorageSet(SAVE_KEY + '_backup_3', b2);
-            const b1 = safeStorageGet(SAVE_KEY + '_backup_1');
-            if (b1) safeStorageSet(SAVE_KEY + '_backup_2', b1);
-            const current = safeStorageGet(SAVE_KEY);
-            if (current) safeStorageSet(SAVE_KEY + '_backup_1', current);
-        } catch(e) { console.error('存档备份轮转失败', e); }
+        // 自动备份：每5次存档轮转保存最近3个存档
+        const saveCount = game._saveCount || 0;
+        if (saveCount % 5 === 0) {
+            try {
+                const b2 = safeStorageGet(SAVE_KEY + '_backup_2');
+                if (b2) safeStorageSet(SAVE_KEY + '_backup_3', b2);
+                const b1 = safeStorageGet(SAVE_KEY + '_backup_1');
+                if (b1) safeStorageSet(SAVE_KEY + '_backup_2', b1);
+                const current = safeStorageGet(SAVE_KEY);
+                if (current) safeStorageSet(SAVE_KEY + '_backup_1', current);
+            } catch(e) { console.error('存档备份轮转失败', e); }
+        }
+        game._saveCount = (saveCount + 1) % 1000;
         
         game.lastSaveTimestamp = Date.now();
         // 保存前移除瞬态字段（减少存档大小和序列化时间）
@@ -10262,12 +10271,6 @@ function saveGame() {
         delete game._healthDeathChecked;
         const saveData = JSON.stringify(game);
         localStorage.setItem(SAVE_KEY, saveData);
-        // 恢复瞬态字段
-        game.needsRender = _needsRender;
-        game.tickCount = _tickCount;
-        game._lastSaveTime = _lastSave;
-        game._lastUITick = _lastUI;
-        game._healthDeathChecked = _healthDeath;
     } catch(e) {
         console.error('存档保存失败', e);
     } finally {
@@ -11221,6 +11224,12 @@ function advanceSeason(silent = false) {
         if (field.plantedDay > 0) {
             field.plantedDay = Math.max(0, field.plantedDay - dayOffset);
         }
+        if (field.lastWaterDay > 0) {
+            field.lastWaterDay = Math.max(0, field.lastWaterDay - dayOffset);
+        }
+        if (field.lastWeedDay > 0) {
+            field.lastWeedDay = Math.max(0, field.lastWeedDay - dayOffset);
+        }
     });
     
     let removedCount = 0;
@@ -11328,7 +11337,8 @@ function gameTick() {
     }
     
     // UI更新节流：每5个tick或跨天/跨整点时才更新，避免高频DOM操作
-    if (!game._lastUITick || (game.tickCount - game._lastUITick) >= 5 || game.time === 6) {
+    const tickDiff = game.tickCount - (game._lastUITick || 0);
+    if (!game._lastUITick || tickDiff >= 5 || tickDiff < 0 || game.time === 6) {
         game._lastUITick = game.tickCount;
         scheduleUpdateUI();
     }
@@ -11460,6 +11470,8 @@ function onNewDay() {
                                     game.crops[crop] -= actualAmount;
                                 }
                                 animal.weight = Math.min(100, (animal.weight || 50) + 1);
+                            } else {
+                                animal.weight = Math.max(10, (animal.weight || 50) - 1);
                             }
                         });
                     }
@@ -11623,7 +11635,7 @@ function onNewDay() {
     // 邻里互助效果
     if (game.neighborHelp) {
         const totalFriendship = Object.values(game.friendship || {}).reduce((sum, v) => sum + (v || 0), 0);
-        
+        if (game.neighborHelp) {
         for (const [helpId, active] of Object.entries(game.neighborHelp)) {
             if (!active) continue;
             const help = NEIGHBOR_HELP_DATA[helpId];
@@ -14845,7 +14857,10 @@ function renderFieldCard(field, idx) {
                 // 浇水
                 const needWater = game.day - field.lastWaterDay >= 1;
                 if (needWater) {
-                    const waterCost = Math.floor(8 * (1 - ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) * 0.03));
+                    const toolSkillLevel = (game.skills.toolMastery && game.skills.toolMastery.level) || 0;
+                    let waterCost = Math.max(1, Math.floor(8 * (1 - toolSkillLevel * 0.03)));
+                    const npcWaterBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('waterStaminaReduce') : 0;
+                    if (npcWaterBonus > 0) waterCost = Math.max(1, Math.floor(waterCost * (1 - npcWaterBonus)));
                     html += `<div><button class="action-btn" onclick="waterField(${idx})" ${game.stamina < waterCost ? 'disabled' : ''}>💧 浇水 (-${waterCost}体力)</button></div>`;
                 } else {
                     html += `<div><span style="font-size: 12px; color: #27ae60;">✓ 水分充足</span></div>`;
@@ -14854,7 +14869,8 @@ function renderFieldCard(field, idx) {
                 // 除草
                 const needWeed = game.day - field.lastWeedDay >= 3;
                 if (needWeed && field.step >= 2) {
-                    const weedCost = Math.floor(15 * (1 - ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) * 0.03));
+                    const toolSkillLevelWeed = (game.skills.toolMastery && game.skills.toolMastery.level) || 0;
+                    const weedCost = Math.max(1, Math.floor(15 * (1 - toolSkillLevelWeed * 0.03)));
                     html += `<div><button class="action-btn" onclick="weedField(${idx})" ${game.stamina < weedCost ? 'disabled' : ''}>🌿 除草 (-${weedCost}体力)</button></div>`;
                 } else if (field.step >= 2) {
                     html += `<div><span style="font-size: 12px; color: #27ae60;">✓ 无杂草</span></div>`;
@@ -14862,7 +14878,11 @@ function renderFieldCard(field, idx) {
                 
                 // 施肥
                 if (!field.fertilized && field.step >= 2) {
-                    const fertCost = game.tools.includes('fertilizerCart') ? 6 : 10;
+                    let fertCost = game.tools.includes('fertilizerCart') ? 6 : 10;
+                    const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
+                    if (toolMasteryLevel > 0) {
+                        fertCost = Math.max(1, Math.floor(fertCost * (1 - toolMasteryLevel * 0.05)));
+                    }
                     html += `<div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
                     html += `<button class="action-btn" style="font-size: 12px; padding: 6px 10px;" onclick="fertilizeField(${idx}, 'normal')" ${game.stamina < fertCost ? 'disabled' : ''}>🧪 化肥(+5%) -${fertCost}体力</button>`;
                     html += `<button class="action-btn" style="font-size: 12px; padding: 6px 10px; background: #4a7c59;" onclick="fertilizeField(${idx}, 'organic')" ${game.stamina < fertCost ? 'disabled' : ''}>💩 有机肥(+8%) -${fertCost}体力</button>`;
@@ -20207,13 +20227,17 @@ function fertilizeField(fieldIdx, type = 'normal') {
 function turnVine(fieldIdx, turnNum) {
     if (!game.fields || fieldIdx < 0 || fieldIdx >= game.fields.length) { showToast('操作失败', 'bad'); return; }
     const field = game.fields[fieldIdx];
-    if (game.stamina < 13) {
+    let vineCost = 13;
+    if (game.tools.includes('hoe')) {
+        vineCost = Math.floor(vineCost * 0.9);
+    }
+    if (game.stamina < vineCost) {
         showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
         playErrorSound();
         return;
     }
     playWeedSound();
-    game.stamina -= 13;
+    game.stamina -= vineCost;
     
     if (turnNum === 1) {
         field.turnedVine1 = true;
