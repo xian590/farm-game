@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.18';
+const GAME_VERSION = '1.3.19';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3122,7 +3122,7 @@ window.addEventListener('error', function(e) {
         if (now - lastErrorLogTime < 5000) return;
         lastErrorLogTime = now;
         
-        const logs = (function() { try { return JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]'); } catch(e) { return []; } })();
+        const logs = (function() { try { return JSON.parse(safeStorageGet(ERROR_LOG_KEY) || '[]'); } catch(e) { return []; } })();
         logs.push({
             time: new Date().toLocaleString(),
             message: e.message,
@@ -3132,7 +3132,7 @@ window.addEventListener('error', function(e) {
         });
         // 最多保留20条
         if (logs.length > 20) logs.shift();
-        localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(logs));
+        safeStorageSet(ERROR_LOG_KEY, JSON.stringify(logs));
     } catch(err) { console.error('全局错误日志记录失败', err); }
 });
 
@@ -3257,19 +3257,26 @@ const BGM_DATA = {
 
 // 初始化音频（必须用户交互后调用）
 function initAudio() {
-    // 手机浏览器会自动关闭音频上下文，需要重新创建
-    if (!audioCtx || audioCtx.state === 'closed') {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        musicGainNode = audioCtx.createGain();
-        musicGainNode.gain.value = musicVolume;
-        musicGainNode.connect(audioCtx.destination);
-        
-        sfxGainNode = audioCtx.createGain();
-        sfxGainNode.gain.value = sfxVolume;
-        sfxGainNode.connect(audioCtx.destination);
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume().catch(() => {});
+    try {
+        // 手机浏览器会自动关闭音频上下文，需要重新创建
+        if (!audioCtx || audioCtx.state === 'closed') {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            musicGainNode = audioCtx.createGain();
+            musicGainNode.gain.value = musicVolume;
+            musicGainNode.connect(audioCtx.destination);
+            
+            sfxGainNode = audioCtx.createGain();
+            sfxGainNode.gain.value = sfxVolume;
+            sfxGainNode.connect(audioCtx.destination);
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => {});
+        }
+    } catch (e) {
+        console.warn('initAudio failed:', e);
+        audioCtx = null;
+        musicGainNode = null;
+        sfxGainNode = null;
     }
 }
 
@@ -3875,10 +3882,12 @@ function switchBgm(bgmName) {
         musicGainNode.gain.setValueAtTime(musicGainNode.gain.value, audioCtx.currentTime);
         musicGainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1);
         
+        if (bgmFadeTimer) clearTimeout(bgmFadeTimer);
         bgmFadeTimer = setTimeout(() => {
             stopMusic();
             musicGainNode.gain.value = musicVolume;
             startBgm(bgmName, true);
+            bgmFadeTimer = null;
         }, 1000);
     } else {
         startBgm(bgmName, true);
@@ -10258,13 +10267,13 @@ function saveGame() {
     try {
         // 自动备份：轮转保存最近3个存档
         try {
-            const b2 = localStorage.getItem(SAVE_KEY + '_backup_2');
-            if (b2) localStorage.setItem(SAVE_KEY + '_backup_3', b2);
-            const b1 = localStorage.getItem(SAVE_KEY + '_backup_1');
-            if (b1) localStorage.setItem(SAVE_KEY + '_backup_2', b1);
-            const current = localStorage.getItem(SAVE_KEY);
-            if (current) localStorage.setItem(SAVE_KEY + '_backup_1', current);
-        } catch(e) { console.error('存档导出失败', e); }
+            const b2 = safeStorageGet(SAVE_KEY + '_backup_2');
+            if (b2) safeStorageSet(SAVE_KEY + '_backup_3', b2);
+            const b1 = safeStorageGet(SAVE_KEY + '_backup_1');
+            if (b1) safeStorageSet(SAVE_KEY + '_backup_2', b1);
+            const current = safeStorageGet(SAVE_KEY);
+            if (current) safeStorageSet(SAVE_KEY + '_backup_1', current);
+        } catch(e) { console.error('存档备份轮转失败', e); }
         
         game.lastSaveTimestamp = Date.now();
         // 保存前移除瞬态字段（减少存档大小和序列化时间）
