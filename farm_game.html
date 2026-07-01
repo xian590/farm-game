@@ -3098,7 +3098,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.8';
+const GAME_VERSION = '1.3.9';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9400,7 +9400,7 @@ function calculateOfflineReward() {
             let actualWage = npc.dailyWage;
             const workerDiscount = (typeof getTechBonus === 'function') ? getTechBonus('workerDiscount') : 0;
             if (workerDiscount > 0) {
-                actualWage = Math.floor(npc.dailyWage * (1 - workerDiscount));
+                actualWage = Math.max(0, Math.floor(npc.dailyWage * (1 - workerDiscount)));
             }
             if (game.money >= actualWage) {
                 game.money -= actualWage;
@@ -9623,7 +9623,7 @@ function calculateOfflineReward() {
                 let actualWage = npc.dailyWage;
                 const workerDiscount = (typeof getTechBonus === 'function') ? getTechBonus('workerDiscount') : 0;
                 if (workerDiscount > 0) {
-                    actualWage = Math.floor(npc.dailyWage * (1 - workerDiscount));
+                    actualWage = Math.max(0, Math.floor(npc.dailyWage * (1 - workerDiscount)));
                 }
                 if (game.money >= actualWage) {
                     game.money -= actualWage;
@@ -17250,9 +17250,15 @@ function processDailyProcessing() {
         if (processingSpeedBonus > 0 || buildingProcessingBonus > 0) {
             effectiveCapacity = Math.floor(dailyCapacity * (1 + processingSpeedBonus + buildingProcessingBonus));
         }
-        const maxBatches = Math.floor(effectiveCapacity / building.inputAmount);
-        const availableBatches = Math.floor(inputAmount / building.inputAmount);
-        const batches = Math.min(maxBatches, availableBatches);
+        let batches;
+        if (!building.inputAmount || building.inputAmount <= 0) {
+            // 无原料型建筑（如蜂箱）：直接按产能上限产出
+            batches = effectiveCapacity;
+        } else {
+            const maxBatches = Math.floor(effectiveCapacity / building.inputAmount);
+            const availableBatches = Math.floor(inputAmount / building.inputAmount);
+            batches = Math.min(maxBatches, availableBatches);
+        }
         
         if (batches <= 0) continue;
         
@@ -19778,7 +19784,7 @@ function waterField(fieldIdx) {
     }
     // 农具精通减少体力消耗（每级-3%）
     const toolSkillLevel =(game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-    let waterCost = Math.floor(8 * (1 - toolSkillLevel * 0.03));
+    let waterCost = Math.max(1, Math.floor(8 * (1 - toolSkillLevel * 0.03)));
     
     // 大柱NPC好感度减少浇水体力消耗
     const npcWaterBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('waterStaminaReduce') : 0;
@@ -19798,7 +19804,7 @@ function waterField(fieldIdx) {
     // 浇水增加微量产量，科技加成
     const waterBaseBonus = 0.01; // 基础浇水增产1%
     const waterTechBonus = getTechBonus('waterBonus');
-    field.yieldBonus = (field.yieldBonus || 0) + waterBaseBonus + waterTechBonus;
+    field.yieldBonus = Math.min(0.5, (field.yieldBonus || 0) + waterBaseBonus + waterTechBonus);
     
     // 增加田间管理经验
     addSkillExp('fieldManagement', 2);
@@ -19823,7 +19829,7 @@ function weedField(fieldIdx) {
     }
     // 农具精通减少体力消耗（每级-3%）
     const toolSkillLevelWeed =(game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-    const weedCost = Math.floor(15 * (1 - toolSkillLevelWeed * 0.03));
+    const weedCost = Math.max(1, Math.floor(15 * (1 - toolSkillLevelWeed * 0.03)));
     
     if (game.stamina < weedCost) {
         showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
@@ -19863,10 +19869,10 @@ function fertilizeField(fieldIdx, type = 'normal') {
     // 陈阳NPC好感度减少施肥体力消耗
     const npcFertilizeBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('fertilizeStaminaReduce') : 0;
     if (npcFertilizeBonus > 0) {
-        staminaCost = Math.floor(staminaCost * (1 - npcFertilizeBonus));
+        staminaCost = Math.max(1, Math.floor(staminaCost * (1 - npcFertilizeBonus)));
     }
     
-    staminaCost = Math.floor(staminaCost);
+    staminaCost = Math.max(1, Math.floor(staminaCost));
     
     if (game.stamina < staminaCost) {
         showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
@@ -19952,8 +19958,8 @@ function harvestCrop(fieldIdx) {
     
     // 农具精通减少体力消耗（每级-3%）
     const toolSkillLevelHarvest =(game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-    staminaCost *= (1 - toolSkillLevelHarvest * 0.03);
-    staminaCost = Math.floor(staminaCost);
+    staminaCost *= Math.max(0.1, 1 - toolSkillLevelHarvest * 0.03);
+    staminaCost = Math.max(1, Math.floor(staminaCost));
     
     if (game.stamina < staminaCost) {
         showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
@@ -20184,7 +20190,7 @@ function _doSellCrop(cropKey, sellAmount, price) {
     if (npcSellBonus > 0) {
         sellBonusTotal += npcSellBonus;
     }
-    const finalPrice = price * (1 + sellBonusTotal);
+    const finalPrice = price * (1 + Math.min(2.0, sellBonusTotal));
     let money = Math.floor(sellAmount * finalPrice);
     
     game.crops[cropKey] -= sellAmount;
@@ -20422,21 +20428,34 @@ function harvestCompost() {
 
 function roundGameState() {
     if (!game) return;
-    // 防止浮点数累积
+    // 防止浮点数累积，同时修复NaN/Infinity污染
+    if (!isFinite(game.money)) game.money = 0;
+    if (!isFinite(game.stamina)) game.stamina = game.maxStamina || 100;
+    if (!isFinite(game.health)) game.health = game.maxHealth || 100;
+    if (!isFinite(game.reputation)) game.reputation = 0;
+    
     game.money = Math.round(game.money * 10) / 10;
     game.stamina = Math.round(game.stamina * 10) / 10;
     game.health = Math.round(game.health * 10) / 10;
     game.reputation = Math.round(game.reputation * 10) / 10;
+    
     // 统一处理所有作物
     const cropTypes = ['rice', 'sweet', 'wheat', 'corn', 'soybean', 'potato', 'peanut', 'pepper', 'cabbage', 'radish', 'eggplant', 'garlic'];
     cropTypes.forEach(type => {
         if (game.crops[type] !== undefined) {
+            if (!isFinite(game.crops[type])) game.crops[type] = 0;
             game.crops[type] = Math.round(game.crops[type] * 10) / 10;
         }
     });
     game.fields.forEach(f => {
-        if (f.yieldBonus !== undefined) f.yieldBonus = Math.round(f.yieldBonus * 1000) / 1000;
-        if (f.yieldLoss !== undefined) f.yieldLoss = Math.round(f.yieldLoss * 1000) / 1000;
+        if (f.yieldBonus !== undefined) {
+            if (!isFinite(f.yieldBonus)) f.yieldBonus = 0;
+            f.yieldBonus = Math.round(f.yieldBonus * 1000) / 1000;
+        }
+        if (f.yieldLoss !== undefined) {
+            if (!isFinite(f.yieldLoss)) f.yieldLoss = 0;
+            f.yieldLoss = Math.round(f.yieldLoss * 1000) / 1000;
+        }
     });
 }
 
