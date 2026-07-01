@@ -1011,9 +1011,16 @@
             70% {
                 background: rgba(243, 156, 18, 0.08);
             }
+            99% {
+                background: transparent;
+            }
             100% {
                 background: transparent;
             }
+        }
+
+        .log-item.new-done {
+            background: transparent;
         }
 
         .log-time {
@@ -3098,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.10';
+const GAME_VERSION = '1.3.11';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9370,8 +9377,10 @@ function calculateOfflineReward() {
     const gameDays = Math.floor(actualGameHours / 24);
     const remainingHours = Math.floor(actualGameHours % 24);
     
-    // 记录离线前的状态
-    const beforeFields = JSON.parse(JSON.stringify(game.fields));
+    // 记录离线前的状态（仅保存关键字段，避免昂贵的深拷贝）
+    const beforeFields = game.fields.map(f => ({
+        stage: f.stage, crop: f.crop, lastWaterDay: f.lastWaterDay, lastWeedDay: f.lastWeedDay
+    }));
     const beforeStamina = game.stamina;
     const beforeMoney = game.money;
     const beforeSeason = game.season;
@@ -10171,8 +10180,25 @@ function saveGame() {
         } catch(e) { console.error('存档导出失败', e); }
         
         game.lastSaveTimestamp = Date.now();
+        // 保存前移除瞬态字段（减少存档大小和序列化时间）
+        const _needsRender = game.needsRender;
+        const _tickCount = game.tickCount;
+        const _lastSave = game._lastSaveTime;
+        const _lastUI = game._lastUITick;
+        const _healthDeath = game._healthDeathChecked;
+        delete game.needsRender;
+        delete game.tickCount;
+        delete game._lastSaveTime;
+        delete game._lastUITick;
+        delete game._healthDeathChecked;
         const saveData = JSON.stringify(game);
         localStorage.setItem(SAVE_KEY, saveData);
+        // 恢复瞬态字段
+        game.needsRender = _needsRender;
+        game.tickCount = _tickCount;
+        game._lastSaveTime = _lastSave;
+        game._lastUITick = _lastUI;
+        game._healthDeathChecked = _healthDeath;
     } catch(e) {
         console.error('存档保存失败', e);
     }
@@ -11218,7 +11244,12 @@ function gameTick() {
         game._lastSaveTime = nowSave;
         saveGame();
     }
-    scheduleUpdateUI();
+    
+    // UI更新节流：每5个tick或跨天/跨整点时才更新，避免高频DOM操作
+    if (!game._lastUITick || (game.tickCount - game._lastUITick) >= 5 || game.time === 6) {
+        game._lastUITick = game.tickCount;
+        scheduleUpdateUI();
+    }
 }
 
 function getStaminaRegenRate() {
@@ -13565,6 +13596,14 @@ function scheduleUpdateUI() {
     });
 }
 
+// 页面可见性变化时重置UI更新状态，避免切回后UI不一致
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        _uiUpdatePending = false;
+        updateUI();
+    }
+});
+
 // ==================== UI更新 ====================
 function updateUI() {
     if (!game) return;
@@ -13636,8 +13675,9 @@ function updateUI() {
         game.needsRender = false;
     }
     
-    // 更新页签解锁状态
-    if (typeof updateTabLockStatus === 'function') {
+    // 更新页签解锁状态（仅在每天或首次进入时检查，避免每tick遍历）
+    if (typeof updateTabLockStatus === 'function' && (game.time === 6 || !window._tabLockChecked)) {
+        window._tabLockChecked = true;
         updateTabLockStatus();
     }
     
@@ -20770,10 +20810,8 @@ function addLog(text, type = 'normal') {
     const item = document.createElement('div');
     item.className = 'log-item new';
     
-    // 3秒后移除new高亮
-    setTimeout(() => {
-        if (item.parentNode) item.classList.remove('new');
-    }, 3000);
+    // 3秒后移除new高亮（CSS动画处理，避免JS timer泄漏）
+    // .log-item.new 在CSS中定义了animation
     
     let timeStr = `[第${game.totalDay || game.day}天]`;
     let icon = '';
@@ -21691,8 +21729,10 @@ function useBackpackItem(itemId) {
 }
 
 // ==================== 飘字提示 ====================
+let _toastTimer = null;
 function showToast(text, type = 'normal') {
     const toast = document.getElementById('toast');
+    if (!toast) return;
     toast.textContent = text;
     toast.className = 'toast';
     if (type === 'good') toast.classList.add('good');
@@ -21700,8 +21740,10 @@ function showToast(text, type = 'normal') {
     
     toast.classList.add('show');
     
-    setTimeout(() => {
-        toast.classList.remove('show');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => {
+        if (toast) toast.classList.remove('show');
+        _toastTimer = null;
     }, 2000);
 }
 
@@ -21803,6 +21845,10 @@ function queueQuestReward(questId, money, text, reputation) {
         money: money || 0,
         reputation: reputation || 0
     });
+    // 限制待领取队列长度，防止无限累积
+    if (game.pendingQuestRewards.length > 50) {
+        game.pendingQuestRewards = game.pendingQuestRewards.slice(-50);
+    }
     addLog(`📋 任务完成：${quest.name}，奖励已发放！去【任务追踪】领取`, 'good');
     
     // 不再自动弹出奖励弹窗，玩家需手动去任务页面领取
