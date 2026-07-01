@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.12';
+const GAME_VERSION = '1.3.13';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -13961,11 +13961,11 @@ const QUEST_DATA = {
     // 新手任务（引导玩家熟悉核心系统）
     q0: { name: '整地开荒', desc: '点击左侧【田地管理】，给第1块田整地', reward: '解锁种植功能', icon: '⛏️', category: '新手任务' },
     q1: { name: '购买种子', desc: '点击左侧【商店】，购买早稻种子', reward: '100元', icon: '🌾', category: '新手任务' },
-    q2: { name: '添置农具', desc: '点击左侧【农具商店】，购买第一把农具', reward: '100元+效率提升', icon: '🔧', category: '新手任务' },
-    q3: { name: '堆肥入门', desc: '点击左侧【堆肥工坊】，制作第一份堆肥', reward: '150元+肥力提升', icon: '💩', category: '新手任务' },
-    q4: { name: '播种育苗', desc: '回到【田地管理】，在第1块田育苗', reward: '50元', icon: '🌱', category: '新手任务' },
+    q2: { name: '播种育苗', desc: '回到【田地管理】，在第1块田育苗', reward: '100元+效率提升', icon: '🔧', category: '新手任务' },
+    q3: { name: '移栽插秧', desc: '育苗完成后进行移栽', reward: '50元', icon: '🌿', category: '新手任务' },
+    q4: { name: '丰收时节', desc: '等待作物成熟并收割', reward: '50元', icon: '🌱', category: '新手任务' },
     q5: { name: '移栽插秧', desc: '育苗完成后进行移栽', reward: '50元', icon: '🌿', category: '新手任务' },
-    q6: { name: '丰收时节', desc: '等待作物成熟并收割', reward: '200元', icon: '🌾', category: '新手任务' },
+    q6: { name: '添置农具', desc: '点击左侧【农具商店】，购买第一把农具', reward: '200元', icon: '🌾', category: '新手任务' },
     q7: { name: '开市售卖', desc: '去【商店】卖掉收获的作物', reward: '100元+10声望', icon: '💰', category: '新手任务' },
     // 发展任务
     q8: { name: '乔迁之喜', desc: '把房屋升级到进阶房', reward: '300元', icon: '🏠', category: '发展任务' },
@@ -14020,6 +14020,7 @@ const QUEST_DATA = {
     q48: { name: '世家大族', desc: '和4个村民达到友好关系', reward: '600元', icon: '👨‍👩‍👧‍👦', category: '综合任务' },
     q49: { name: '农商一体', desc: '同时拥有3种置办好的副业作坊', reward: '400元', icon: '🏭', category: '综合任务' },
     q50: { name: '年过半百', desc: '游戏时间超过50天', reward: '500元', icon: '📅', category: '综合任务' },
+    q51: { name: '堆肥入门', desc: '点击左侧【堆肥工坊】，制作第一份堆肥', reward: '150元+肥力提升', icon: '💩', category: '新手任务' },
 };
 
 // ==================== 里程碑成就系统 ====================
@@ -14156,7 +14157,8 @@ function getQuestProgress(questId) {
         q5: game.fields.some(f => f.stage === 'growing') ? 100 : (game.fields.some(f => f.stage === 'seedling') ? 50 : 0),
         q6: game.tools && game.tools.length > 0 ? 100 : (game.money > 100 ? 50 : 0),
         q7: game.stats && game.stats.totalSell > 0 ? 100 : (game.crops.rice > 0 || game.crops.sweet > 0 ? 60 : 0),
-        q8: game.compost && game.compost.totalCompostDays > 0 ? 100 : 0,
+        q8: game.house === '进阶房' || game.house === '精英房' || game.house === '终极房' ? 100 : 0,
+        q51: game.composting || (game.items.organicFertilizer > 0) ? 100 : 0,
         q9: game.npcFavor && Object.values(game.npcFavor).some(f => f > 0) ? 100 : 0,
         q10: game.npcFavor && Object.values(game.npcFavor).some(f => f >= 10) ? 100 : (game.npcFavor && Object.values(game.npcFavor).some(f => f > 0) ? 50 : 0),
         q11: game.pets && Object.keys(game.pets).length > 0 ? 100 : (game.money > 200 ? 50 : 0),
@@ -14196,9 +14198,9 @@ function renderQuestBox() {
         { id: 'q2', name: '播种育苗', desc: '第三步：回【田地管理】，在第1块田育苗', reward: '50元', icon: '🌱', type: 'newbie', order: 2 },
         { id: 'q3', name: '移栽插秧', desc: '第四步：育苗3天后，进行移栽插秧', reward: '50元', icon: '🌿', type: 'newbie', order: 3 },
         { id: 'q6', name: '添置农具', desc: '第五步：去【农具商店】买锄头，干活更省力', reward: '100元+效率提升', icon: '🔧', type: 'newbie', order: 4 },
-        { id: 'q8', name: '堆肥入门', desc: '第六步：去【堆肥工坊】做堆肥，增加产量', reward: '150元+肥力提升', icon: '💩', type: 'newbie', order: 5 },
+        { id: 'q51', name: '堆肥入门', desc: '第六步：去【堆肥工坊】做堆肥，增加产量', reward: '150元+肥力提升', icon: '💩', type: 'newbie', order: 5 },
         { id: 'q4', name: '丰收时节', desc: '第七步：等待28天，作物成熟后收割', reward: '200元', icon: '🌾', type: 'newbie', order: 6 },
-        { id: 'q5', name: '开市售卖', desc: '第八步：去【商店】卖掉粮食，赚第一桶金', reward: '100元+10声望', icon: '💰', type: 'newbie', order: 7 },
+        { id: 'q7', name: '开市售卖', desc: '第八步：去【商店】卖掉粮食，赚第一桶金', reward: '100元+10声望', icon: '💰', type: 'newbie', order: 7 },
     ];
     
     // 发展任务
@@ -14415,14 +14417,14 @@ function renderSidebarQuests() {
         { id: 'q2', name: '播种育苗', icon: '🌱', order: 2 },
         { id: 'q3', name: '移栽插秧', icon: '🌿', order: 3 },
         { id: 'q6', name: '添置农具', icon: '🔧', order: 4 },
-        { id: 'q8', name: '堆肥入门', icon: '💩', order: 5 },
+        { id: 'q51', name: '堆肥入门', icon: '💩', order: 5 },
         { id: 'q4', name: '丰收时节', icon: '🌾', order: 6 },
-        { id: 'q5', name: '开市售卖', icon: '💰', order: 7 },
+        { id: 'q7', name: '开市售卖', icon: '💰', order: 7 },
     ];
     
     // 发展任务
     const devQuests = [
-        { id: 'q7', name: '乔迁之喜', icon: '🏠', order: 8 },
+        { id: 'q8', name: '乔迁之喜', icon: '🏠', order: 8 },
         { id: 'q9', name: '邻里初识', icon: '👋', order: 9 },
         { id: 'q10', name: '礼尚往来', icon: '🎁', order: 10 },
         { id: 'q11', name: '萌宠相伴', icon: '🐱', order: 11 },
@@ -19894,10 +19896,14 @@ function transplantCrop(fieldIdx) {
     
     addLog(`🌱 完成了${cropData.name}的移栽。${flavorText}`, 'good');
     
-    // 检查任务
+    // 检查任务：移栽插秧
     if (!game.quests.q3) {
         game.quests.q3 = true;
-        queueQuestReward('q3', 50, '✅ 任务完成：移栽，奖励50元');
+        queueQuestReward('q3', 50, '✅ 任务完成：移栽插秧，奖励50元');
+    }
+    if (!game.quests.q5) {
+        game.quests.q5 = true;
+        queueQuestReward('q5', 50, '✅ 任务完成：移栽插秧，奖励50元');
     }
     
     game.needsRender = true;
@@ -20518,9 +20524,9 @@ function startCompost() {
     game.time += 1;
     
     // 任务检查：制作第一份堆肥
-    if (!game.quests.q8) {
-        game.quests.q8 = true;
-        queueQuestReward('q8', 150, '✅ 任务完成：第一份堆肥，奖励150元');
+    if (!game.quests.q51) {
+        game.quests.q51 = true;
+        queueQuestReward('q51', 150, '✅ 任务完成：第一份堆肥，奖励150元');
     }
     
     addLog('🌱 忙活了一个钟头，把堆肥的材料都备好了，等3天后来收。', 'info');
