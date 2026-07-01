@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.16';
+const GAME_VERSION = '1.3.17';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3404,42 +3404,44 @@ function playNpcChatter(npcKey, duration = 1.2) {
     initAudio();
     if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
-    const config = NPC_VOICE_CONFIG[npcKey] || NPC_VOICE_CONFIG['wangcunzhang'];
-    const startTime = audioCtx.currentTime;
-    // 根据语速计算音节数量
-    const syllableCount = Math.floor(duration * config.speed * 3.5);
-    
-    for (let i = 0; i < syllableCount; i++) {
-        const syllableStart = startTime + i * (1 / config.speed / 3.5);
-        const syllableDuration = 0.12 + Math.random() * 0.12;
+    try {
+        const config = NPC_VOICE_CONFIG[npcKey] || NPC_VOICE_CONFIG['wangcunzhang'];
+        const startTime = audioCtx.currentTime;
+        // 根据语速计算音节数量
+        const syllableCount = Math.floor(duration * config.speed * 3.5);
         
-        // 随机音高变化，模拟说话的抑扬顿挫
-        const freqVariation = (Math.random() - 0.3) * config.variation;
-        const freq = config.baseFreq + freqVariation;
-        
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(sfxGainNode);
-        
-        osc.type = config.wave;
-        osc.frequency.setValueAtTime(freq, syllableStart);
-        // 每个音节内有一点点音高滑动，更自然
-        osc.frequency.linearRampToValueAtTime(
-            freq + (Math.random() - 0.5) * 25, 
-            syllableStart + syllableDuration
-        );
-        
-        // 音量包络：快速起音，中间平稳，快速收尾
-        gain.gain.setValueAtTime(0, syllableStart);
-        gain.gain.linearRampToValueAtTime(0.07, syllableStart + 0.015);
-        gain.gain.linearRampToValueAtTime(0.05, syllableStart + syllableDuration * 0.6);
-        gain.gain.exponentialRampToValueAtTime(0.001, syllableStart + syllableDuration);
-        
-        osc.start(syllableStart);
-        osc.stop(syllableStart + syllableDuration + 0.02);
-    }
+        for (let i = 0; i < syllableCount; i++) {
+            const syllableStart = startTime + i * (1 / config.speed / 3.5);
+            const syllableDuration = 0.12 + Math.random() * 0.12;
+            
+            // 随机音高变化，模拟说话的抑扬顿挫
+            const freqVariation = (Math.random() - 0.3) * config.variation;
+            const freq = config.baseFreq + freqVariation;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(sfxGainNode);
+            
+            osc.type = config.wave;
+            osc.frequency.setValueAtTime(freq, syllableStart);
+            // 每个音节内有一点点音高滑动，更自然
+            osc.frequency.linearRampToValueAtTime(
+                freq + (Math.random() - 0.5) * 25, 
+                syllableStart + syllableDuration
+            );
+            
+            // 音量包络：快速起音，中间平稳，快速收尾
+            gain.gain.setValueAtTime(0, syllableStart);
+            gain.gain.linearRampToValueAtTime(0.07, syllableStart + 0.015);
+            gain.gain.linearRampToValueAtTime(0.05, syllableStart + syllableDuration * 0.6);
+            gain.gain.exponentialRampToValueAtTime(0.001, syllableStart + syllableDuration);
+            
+            osc.start(syllableStart);
+            osc.stop(syllableStart + syllableDuration + 0.02);
+        }
+    } catch (e) { console.warn('playNpcChatter error:', e); }
 }
 
 // ==================== 剧情演唱音效系统 ====================
@@ -3460,39 +3462,41 @@ function playStorySinging(emotion = 'normal', speed = 1.0) {
     initAudio();
     if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
-    const melody = SING_MELODIES[emotion] || SING_MELODIES['normal'];
-    const startTime = audioCtx.currentTime;
-    const noteDuration = (0.18 / speed);
-    
-    melody.forEach((freq, i) => {
-        const noteStart = startTime + i * noteDuration;
+    try {
+        const melody = SING_MELODIES[emotion] || SING_MELODIES['normal'];
+        const startTime = audioCtx.currentTime;
+        const noteDuration = (0.18 / speed);
         
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(sfxGainNode);
-        
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, noteStart);
-        
-        // 每个音之间有滑音，更像唱歌
-        if (i < melody.length - 1) {
-            osc.frequency.linearRampToValueAtTime(
-                melody[i + 1], 
-                noteStart + noteDuration * 0.85
-            );
-        }
-        
-        // 音量包络
-        gain.gain.setValueAtTime(0, noteStart);
-        gain.gain.linearRampToValueAtTime(0.09, noteStart + 0.03);
-        gain.gain.linearRampToValueAtTime(0.07, noteStart + noteDuration * 0.5);
-        gain.gain.exponentialRampToValueAtTime(0.001, noteStart + noteDuration);
-        
-        osc.start(noteStart);
-        osc.stop(noteStart + noteDuration + 0.02);
-    });
+        melody.forEach((freq, i) => {
+            const noteStart = startTime + i * noteDuration;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(sfxGainNode);
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, noteStart);
+            
+            // 每个音之间有滑音，更像唱歌
+            if (i < melody.length - 1) {
+                osc.frequency.linearRampToValueAtTime(
+                    melody[i + 1], 
+                    noteStart + noteDuration * 0.85
+                );
+            }
+            
+            // 音量包络
+            gain.gain.setValueAtTime(0, noteStart);
+            gain.gain.linearRampToValueAtTime(0.09, noteStart + 0.03);
+            gain.gain.linearRampToValueAtTime(0.07, noteStart + noteDuration * 0.5);
+            gain.gain.exponentialRampToValueAtTime(0.001, noteStart + noteDuration);
+            
+            osc.start(noteStart);
+            osc.stop(noteStart + noteDuration + 0.02);
+        });
+    } catch (e) { console.warn('playStorySinging error:', e); }
 }
 
 // 翻页音效（唰唰声）
@@ -3612,29 +3616,31 @@ function playWaterSound() {
     initAudio();
     if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
-    const bufferSize = audioCtx.sampleRate * 0.4;
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * (1 - Math.abs(i / bufferSize * 2 - 1));
-    }
-    
-    const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
-    
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 1500;
-    filter.Q.value = 0.5;
-    
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0.06;
-    
-    source.connect(filter);
-    filter.connect(gain);
-    gain.connect(sfxGainNode);
-    
-    source.start();
+    try {
+        const bufferSize = audioCtx.sampleRate * 0.4;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * (1 - Math.abs(i / bufferSize * 2 - 1));
+        }
+        
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1500;
+        filter.Q.value = 0.5;
+        
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.06;
+        
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(sfxGainNode);
+        
+        source.start();
+    } catch (e) { console.warn('playWaterSound error:', e); }
 }
 
 // 除草音效（沙沙声）
@@ -3645,28 +3651,30 @@ function playWeedSound() {
     
     for (let i = 0; i < 3; i++) {
         setTimeout(() => {
-            const bufferSize = audioCtx.sampleRate * 0.1;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let j = 0; j < bufferSize; j++) {
-                data[j] = (Math.random() * 2 - 1) * (1 - j / bufferSize);
-            }
-            
-            const source = audioCtx.createBufferSource();
-            source.buffer = buffer;
-            
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.value = 2000;
-            
-            const gain = audioCtx.createGain();
-            gain.gain.value = 0.08;
-            
-            source.connect(filter);
-            filter.connect(gain);
-            gain.connect(sfxGainNode);
-            
-            source.start();
+            try {
+                const bufferSize = audioCtx.sampleRate * 0.1;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let j = 0; j < bufferSize; j++) {
+                    data[j] = (Math.random() * 2 - 1) * (1 - j / bufferSize);
+                }
+                
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 2000;
+                
+                const gain = audioCtx.createGain();
+                gain.gain.value = 0.08;
+                
+                source.connect(filter);
+                filter.connect(gain);
+                gain.connect(sfxGainNode);
+                
+                source.start();
+            } catch (e) { console.warn('playWeedSound error:', e); }
         }, i * 60);
     }
 }
@@ -3677,23 +3685,25 @@ function playDirtSound() {
     initAudio();
     if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
     
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(sfxGainNode);
-    
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.15);
-    
-    gain.gain.setValueAtTime(0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.22);
-    
-    playNoise(0.1, 0.05, 300);
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(sfxGainNode);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.15);
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.22);
+        
+        playNoise(0.1, 0.05, 300);
+    } catch (e) { console.warn('playDirtSound error:', e); }
 }
 
 // 施肥音效（轻微哗啦声）
@@ -10939,7 +10949,7 @@ function loadGame() {
                 game = JSON.parse(backup);
                 fixSaveData(); // 加载后修复存档兼容性
                 game.needsRender = true; // 加载存档后强制刷新面板
-                localStorage.setItem(SAVE_KEY, backup);
+                safeStorageSet(SAVE_KEY, backup);
                 if (typeof showToast === 'function') {
                     showToast('📂 已从备份' + i + '恢复存档', 'warn');
                 }
