@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.31';
+const GAME_VERSION = '1.3.32';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -11491,7 +11491,7 @@ function onNewDay() {
                         const feedReduction = [0, 0.1, 0.2][level - 1] || 0;
                         animals.forEach(animal => {
                             let canFeed = true;
-                            for (const [crop, amount] of Object.entries(data.dailyFeed)) {
+                            for (const [crop, amount] of Object.entries(data.dailyFeed || {})) {
                                 const actualAmount = Math.max(0, amount * (1 - feedReduction));
                                 if ((game.crops[crop] || 0) < actualAmount) {
                                     canFeed = false;
@@ -11499,7 +11499,7 @@ function onNewDay() {
                                 }
                             }
                             if (canFeed) {
-                                for (const [crop, amount] of Object.entries(data.dailyFeed)) {
+                                for (const [crop, amount] of Object.entries(data.dailyFeed || {})) {
                                     const actualAmount = Math.max(0, amount * (1 - feedReduction));
                                     game.crops[crop] -= actualAmount;
                                 }
@@ -11790,7 +11790,7 @@ function onNewDay() {
                 
                 // 自动喂养（消耗作物）
                 let canFeed = true;
-                for (const [crop, amount] of Object.entries(data.dailyFeed)) {
+                for (const [crop, amount] of Object.entries(data.dailyFeed || {})) {
                     if ((game.crops[crop] || 0) < amount) {
                         canFeed = false;
                         break;
@@ -11798,7 +11798,7 @@ function onNewDay() {
                 }
                 
                 if (canFeed) {
-                    for (const [crop, amount] of Object.entries(data.dailyFeed)) {
+                    for (const [crop, amount] of Object.entries(data.dailyFeed || {})) {
                         game.crops[crop] -= amount;
                     }
                     animal.weight = Math.min(100, (animal.weight || 50) + 2);
