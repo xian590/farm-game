@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.13';
+const GAME_VERSION = '1.3.14';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9724,6 +9724,44 @@ function calculateOfflineReward() {
                             });
                         }
                     }
+                    if (deviceId === 'harvester') {
+                        // 自动收割：收割成熟作物（与onNewDay一致）
+                        const maxHarvest = level * 2;
+                        let harvested = 0;
+                        const storageCap = game.storageCapacity || 2000;
+                        const currentStorage = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
+                        let remainingStorage = Math.max(0, storageCap - currentStorage);
+                        game.fields.forEach((field, idx) => {
+                            if (harvested >= maxHarvest && level < 3) return;
+                            if (remainingStorage <= 0) return;
+                            if (field.crop && field.stage === 'mature') {
+                                const cropData = CROP_DATA[field.crop];
+                                if (cropData) {
+                                    let yield_ = cropData.baseYield;
+                                    const levelBonus = { '新手档': 1.0, '进阶档': 1.15, '精英档': 1.35, '终极档': 1.6 };
+                                    yield_ *= levelBonus[field.level] || 1.0;
+                                    yield_ = Math.max(0, Math.floor(yield_ * (0.9 + Math.random() * 0.2)));
+                                    if (yield_ > remainingStorage) yield_ = remainingStorage;
+                                    if (yield_ <= 0) return;
+                                    remainingStorage -= yield_;
+                                    if (cropData.type === 'rice') game.crops.rice = (game.crops.rice || 0) + yield_;
+                                    else if (cropData.type === 'sweet') game.crops.sweet = (game.crops.sweet || 0) + yield_;
+                                    else if (cropData.type === 'wheat') game.crops.wheat = (game.crops.wheat || 0) + yield_;
+                                    else if (cropData.type === 'corn') game.crops.corn = (game.crops.corn || 0) + yield_;
+                                    else if (cropData.type === 'soybean') game.crops.soybean = (game.crops.soybean || 0) + yield_;
+                                    else if (cropData.type === 'potato') game.crops.potato = (game.crops.potato || 0) + yield_;
+                                    else if (cropData.type === 'peanut') game.crops.peanut = (game.crops.peanut || 0) + yield_;
+                                    else if (cropData.type === 'pepper') game.crops.pepper = (game.crops.pepper || 0) + yield_;
+                                    else if (cropData.type === 'cabbage') game.crops.cabbage = (game.crops.cabbage || 0) + yield_;
+                                    else if (cropData.type === 'radish') game.crops.radish = (game.crops.radish || 0) + yield_;
+                                    else if (cropData.type === 'eggplant') game.crops.eggplant = (game.crops.eggplant || 0) + yield_;
+                                    else if (cropData.type === 'garlic') game.crops.garlic = (game.crops.garlic || 0) + yield_;
+                                    field.crop = null; field.stage = 'idle'; field.step = 0; field.growProgress = 0; field.plantedDay = 0; field.prepared = true;
+                                    harvested++;
+                                }
+                            }
+                        });
+                    }
                 }
             }
             
@@ -9849,6 +9887,43 @@ function calculateOfflineReward() {
                 changeWeather();
             }
         }
+    }
+    
+    // 离线期间银行利息结算（复利计算）
+    if (game.bankDeposit > 0 && gameDays > 0) {
+        const compoundRate = Math.pow(1 + BANK_DATA.interestRate, gameDays);
+        const newDeposit = Math.floor(game.bankDeposit * compoundRate);
+        const totalInterest = newDeposit - game.bankDeposit;
+        if (totalInterest > 0) {
+            game.bankDeposit = newDeposit;
+            addLog(`🏦 离线期间银行利息结算：${gameDays}天共获得${totalInterest}元利息，当前存款${game.bankDeposit}元`, 'good');
+        }
+    }
+    
+    // 离线期间农业科技效果应用（统一处理）
+    if (game.agriTechEffects && game.agriTechEffects.autoGrowth && gameDays > 0) {
+        game.fields.forEach(field => {
+            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                field.growProgress += game.agriTechEffects.autoGrowth * 0.1 * gameDays;
+            }
+        });
+    }
+    
+    // 离线期间社区建设健康恢复
+    if (gameDays > 0) {
+        let totalHealthRegen = game.healthRegenBonus || 0;
+        const npcHealthRegen = (typeof getNpcBonus === 'function') ? getNpcBonus('healthRegen') : 0;
+        if (npcHealthRegen > 0) {
+            totalHealthRegen += Math.floor(npcHealthRegen);
+        }
+        if (totalHealthRegen > 0 && game.health < game.maxHealth) {
+            game.health = Math.min(game.maxHealth, game.health + totalHealthRegen * gameDays);
+        }
+    }
+    
+    // 离线期间检查成就（多次跨天可能触发成就）
+    if (gameDays > 0 && typeof checkAchievements === 'function') {
+        checkAchievements();
     }
     
     // 处理季节变化（兜底，确保game.day不超过28）
@@ -10684,6 +10759,7 @@ function fixSaveData() {
     // 补全事件
     if (game.currentEvent === undefined) if (game) game.currentEvent = null;
     if (!game.eventHistory) game.eventHistory = [];
+    if (game.eventHistory.length > 100) game.eventHistory = game.eventHistory.slice(-100);
     if (game.nextSeasonBonus === undefined) game.nextSeasonBonus = 0;
     if (game.currentSeasonBonus === undefined) game.currentSeasonBonus = 0;
     
@@ -13421,7 +13497,11 @@ function handleEventChoice(optionIdx) {
             game.time -= 24;
             game.day += 1;
             const baseDay = (game.totalDay || game.day || 1);
-    game.totalDay = baseDay + 1;
+            game.totalDay = baseDay + 1;
+            // 检查季节变化
+            if (game.day > 28) {
+                advanceSeason(true);
+            }
             // 触发完整的新的一天逻辑
             onNewDay();
         }
@@ -13435,8 +13515,9 @@ function handleEventChoice(optionIdx) {
     }
     
     if (effect.pestReduce) {
-        game.pestReduction = (game.pestReduction || 0) + effect.pestReduce;
+        game.pestReduction = Math.min(1.0, (game.pestReduction || 0) + effect.pestReduce);
         addLog(`🐦 虫害减少效果已生效（当前减少${Math.floor(game.pestReduction * 100)}%）`, 'good');
+    }
     }
     
     // 特殊事件处理
@@ -22603,7 +22684,7 @@ function contributeToProject(projKey, type) {
                 game.healthRegenBonus = (game.healthRegenBonus || 0) + proj.rewards.healthRegen;
             }
             if (proj.rewards.medicineDiscount) {
-                game.medicineDiscount = (game.medicineDiscount || 0) + proj.rewards.medicineDiscount;
+                game.medicineDiscount = Math.min(0.8, (game.medicineDiscount || 0) + proj.rewards.medicineDiscount);
             }
         }
         
