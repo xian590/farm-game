@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.29';
+const GAME_VERSION = '1.3.30';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -14057,6 +14057,11 @@ function renderFieldsPanel() {
     if (!panel) return;
     // 增量更新：只更新变化的部分，避免整面板重建
     // 使用关键状态快照（排除growProgress等高频变化字段）
+    // 安全校验：如果面板被切换过（没有field-card），强制全量重建
+    const hasFieldCards = panel.querySelector('.field-card') !== null;
+    if (!hasFieldCards) {
+        panel._lastRenderFields = null;
+    }
     const stateSnapshot = game.fields.map(f => ({
         crop: f.crop, stage: f.stage, step: f.step, level: f.level,
         fertilized: f.fertilized, prepared: f.prepared,
@@ -14064,7 +14069,7 @@ function renderFieldsPanel() {
         fertilizerType: f.fertilizerType, turnedVine1: f.turnedVine1, turnedVine2: f.turnedVine2
     }));
     const stateKey = JSON.stringify(stateSnapshot);
-    if (panel._lastRenderFields && panel._lastRenderFields === stateKey) {
+    if (panel._lastRenderFields && panel._lastRenderFields === stateKey && hasFieldCards) {
         // 只更新进度条和状态
         game.fields.forEach((field, idx) => {
             const card = panel.querySelector(`.field-card[data-idx="${idx}"]`);
