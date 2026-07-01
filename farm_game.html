@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.23';
+const GAME_VERSION = '1.3.24';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -11465,14 +11465,30 @@ function onNewDay() {
             }
             
             if (deviceId === 'autoFeeder') {
-                // 自动喂养：畜牧自动喂食，不消耗玩家手动操作
+                // 自动喂养：畜牧自动喂食，消耗饲料
                 if (game.animals) {
                     for (const [animalKey, animals] of Object.entries(game.animals)) {
                         if (animals.length === 0) continue;
                         const data = ANIMAL_DATA[animalKey];
                         if (!data) continue;
+                        // 饲料消耗减免：Lv1=0%, Lv2=10%, Lv3=20%
+                        const feedReduction = [0, 0.1, 0.2][level - 1] || 0;
                         animals.forEach(animal => {
-                            animal.weight = Math.min(100, (animal.weight || 50) + 1);
+                            let canFeed = true;
+                            for (const [crop, amount] of Object.entries(data.dailyFeed)) {
+                                const actualAmount = Math.max(0, amount * (1 - feedReduction));
+                                if ((game.crops[crop] || 0) < actualAmount) {
+                                    canFeed = false;
+                                    break;
+                                }
+                            }
+                            if (canFeed) {
+                                for (const [crop, amount] of Object.entries(data.dailyFeed)) {
+                                    const actualAmount = Math.max(0, amount * (1 - feedReduction));
+                                    game.crops[crop] -= actualAmount;
+                                }
+                                animal.weight = Math.min(100, (animal.weight || 50) + 1);
+                            }
                         });
                     }
                     addLog(`🤖 ${device.name}自动喂养了所有牲口`, 'info');
@@ -11731,6 +11747,8 @@ function onNewDay() {
 
     // 畜牧每日更新
     if (game.animals) {
+        // 检查是否有自动投喂器（如果存在则跳过手动喂养，由自动化设备处理）
+        const hasAutoFeeder = game.automation && game.automation.autoFeeder > 0;
         for (const [animalKey, animals] of Object.entries(game.animals)) {
             if (!animals || animals.length === 0) continue;
             const data = ANIMAL_DATA[animalKey];
@@ -11739,6 +11757,18 @@ function onNewDay() {
             animals.forEach(animal => {
                 animal.age++;
                 animal.daysSinceProduct++;
+                
+                // 自动投喂器已处理喂养，跳过手动喂养
+                if (hasAutoFeeder) {
+                    // 产出产品仍然需要检查
+                    if (data.product && animal.age >= data.growthDays && animal.daysSinceProduct >= data.productDays) {
+                        animal.daysSinceProduct = 0;
+                        const productAmount = Math.floor(data.productPrice / 5) + 1;
+                        game.animalProducts[data.product] = (game.animalProducts[data.product] || 0) + productAmount;
+                        addLog(`${data.emoji} ${animal.name} 产出了${data.productName} ${productAmount}个`, 'good');
+                    }
+                    return;
+                }
                 
                 // 自动喂养（消耗作物）
                 let canFeed = true;
@@ -17448,9 +17478,15 @@ function processDailyProcessing() {
         // 能加工的批次数
         const processingSpeedBonus = getTechBonus('processingSpeed');
         const buildingProcessingBonus = getBuildingBonus('processingSpeed');
+        // 自动化设备：加工流水线产能加成
+        let conveyorBonus = 0;
+        if (game.automation && game.automation.conveyor > 0) {
+            const conveyorLevel = game.automation.conveyor;
+            conveyorBonus = [0.5, 1.0, 2.0][conveyorLevel - 1] || 0;
+        }
         let effectiveCapacity = dailyCapacity;
-        if (processingSpeedBonus > 0 || buildingProcessingBonus > 0) {
-            effectiveCapacity = Math.floor(dailyCapacity * (1 + processingSpeedBonus + buildingProcessingBonus));
+        if (processingSpeedBonus > 0 || buildingProcessingBonus > 0 || conveyorBonus > 0) {
+            effectiveCapacity = Math.floor(dailyCapacity * (1 + processingSpeedBonus + buildingProcessingBonus + conveyorBonus));
         }
         let batches;
         if (!building.inputAmount || building.inputAmount <= 0) {
