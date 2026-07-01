@@ -1902,6 +1902,7 @@
                 z-index: 1000;
                 background: #5d4e37;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+                padding-bottom: env(safe-area-inset-bottom, 0);
             }
             .sidebar-tabs {
                 display: flex;
@@ -1949,7 +1950,7 @@
                 font-size: 10px;
             }
             .content-panel {
-                padding: 10px 10px 250px 10px;
+                padding: 10px 10px 180px 10px;
                 order: 1;
             }
             .mode-cards {
@@ -2004,7 +2005,7 @@
                 padding-bottom: 60px;
             }
             body {
-                overflow: auto;
+                overflow: hidden;
                 -webkit-overflow-scrolling: touch;
             }
             /* 移动端顶部状态栏精简 */
@@ -2067,10 +2068,10 @@
             }
             .event-log {
                 position: fixed;
-                bottom: 120px;
+                bottom: 180px;
                 left: 0;
                 right: 0;
-                z-index: 1001;
+                z-index: 999;
                 max-height: 120px;
                 min-height: 80px;
                 border-radius: 12px 12px 0 0;
@@ -2086,6 +2087,8 @@
                 overflow-y: auto;
                 display: flex;
                 flex-direction: column;
+                overscroll-behavior: contain;
+                -webkit-overflow-scrolling: touch;
             }
             .modal-content {
                 flex: 1;
@@ -3066,7 +3069,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.0';
+const GAME_VERSION = '1.3.1';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -13599,6 +13602,19 @@ function updateUI() {
     }
 }
 
+function switchTab(tabName) {
+    const tab = document.querySelector(`.sidebar-tab[data-tab="${tabName}"]`);
+    if (!tab || tab.classList.contains('locked')) {
+        console.warn(`Tab ${tabName} not found or locked`);
+        return;
+    }
+    playTabSound();
+    document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMainTab = tabName;
+    renderPanel(currentMainTab);
+}
+
 function showGame() {
     const savedStyle = safeStorageGet('farm_bgm_style') || 'game';
     switchBgm(savedStyle);
@@ -17854,7 +17870,6 @@ function showGiftModal(npcKey) {
     // 显示弹窗
     const modalTitle = document.getElementById('modal-title');
     const modalContent = document.getElementById('modal-content');
-    const modalOverlay1 = document.getElementById('modal-overlay');
     const modalButtons = document.querySelector('.modal-buttons');
     const modalConfirm = document.getElementById('modal-confirm');
     const modalSecondary = document.querySelector('.modal-btn.secondary');
@@ -20465,7 +20480,7 @@ function checkQuests() {
 // 简单的 HTML 转义，防止文本中包含的 HTML 标签被解析
 function escapeHtml(str) {
     if (typeof str !== 'string') return String(str);
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // ==================== 日志系统 ====================
@@ -20573,7 +20588,7 @@ function openFeedbackModal() {
     `;
     showModal('提交反馈', html, submitFeedbackEmail, '取消');
     setTimeout(() => {
-        const modalOverlay3 = document.getElementById('modal-overlay');
+        const modalOverlay = document.getElementById('modal-overlay');
         if (!modalOverlay) return;
         const btnContainer = modalOverlay.querySelector('.modal-buttons');
         if (!btnContainer) return;
@@ -20891,7 +20906,7 @@ function closeEventModal() {
             <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
         `;
     }
-    setTimeout(() => { modalClosing = false; }, 100);
+    setTimeout(() => { modalClosing = false; }, 300);
 }
 
 function closeModal() {
@@ -20910,7 +20925,7 @@ function closeModal() {
             <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
         `;
     }
-    setTimeout(() => { modalClosing = false; }, 100);
+    setTimeout(() => { modalClosing = false; }, 300);
 }
 
 function confirmModal() {
@@ -21537,8 +21552,8 @@ function showQuestRewardModal() {
     if (modalTitle) modalTitle.textContent = '任务奖励';
     if (modalContent) modalContent.innerHTML = html;
     closeAllModals(); // 打开弹窗前关闭其他弹窗
-    const modalOverlay4 = document.getElementById('modal-overlay');
-    if (modalOverlay) modalOverlay.style.display = 'flex';
+    const modalOverlay3 = document.getElementById('modal-overlay');
+    if (modalOverlay3) modalOverlay.style.display = 'flex';
 }
 
 function claimQuestReward() {

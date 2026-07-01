@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : 'undefined'"},"session":"farm-v128-verify"}
