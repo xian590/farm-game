@@ -498,6 +498,7 @@
             background: linear-gradient(90deg, #27ae60, #2ecc71);
             border-radius: 3px;
             transition: width 0.3s;
+            will-change: width;
         }
 
         /* 中央面板 */
@@ -582,6 +583,7 @@
             background-size: 200% 100%;
             transition: width 0.5s ease;
             width: 0%;
+            will-change: width;
         }
         
         .field-progress-bar.active {
@@ -736,6 +738,7 @@
             background: linear-gradient(90deg, #27ae60, #2ecc71);
             transition: width 0.5s ease;
             width: 0%;
+            will-change: width;
         }
 
         .field-actions {
@@ -783,7 +786,8 @@
         }
 
         .action-btn:disabled {
-            background: #ccc;
+            background: #bbb;
+            color: #333;
             cursor: not-allowed;
         }
 
@@ -1035,33 +1039,33 @@
         }
 
         .log-good {
-            color: #27ae60;
-            font-weight: 500;
+            color: #1e7e48;
+            font-weight: 600;
         }
 
         .log-bad {
-            color: #c0392b;
-            font-weight: 500;
+            color: #a93226;
+            font-weight: 600;
         }
 
         .log-info {
-            color: #2980b9;
-            font-weight: 500;
+            color: #1a5276;
+            font-weight: 600;
         }
 
         .log-crop {
-            color: #d35400;
-            font-weight: 500;
+            color: #a04000;
+            font-weight: 600;
         }
 
         .log-npc {
-            color: #8e44ad;
-            font-weight: 500;
+            color: #6c3483;
+            font-weight: 600;
         }
 
         .log-pet {
-            color: #e67e22;
-            font-weight: 500;
+            color: #b8631a;
+            font-weight: 600;
         }
 
         /* 弹窗 */
@@ -1363,6 +1367,7 @@
             background: #27ae60;
             border-radius: 3px;
             transition: width 0.5s ease;
+            will-change: width;
         }
         
         /* 背包样式 */
@@ -1903,6 +1908,7 @@
             height: 100%;
             border-radius: 3px;
             transition: width 0.5s ease;
+            will-change: width;
         }
         
         .quest-more {
@@ -2103,6 +2109,7 @@
                 min-height: 80px;
                 border-radius: 12px 12px 0 0;
                 transition: height 0.3s ease, max-height 0.3s ease;
+                will-change: height, max-height;
                 padding-bottom: env(safe-area-inset-bottom, 0);
             }
             .event-log.expanded {
@@ -2307,6 +2314,7 @@
             height: 100%;
             border-radius: 3px;
             transition: width 0.3s ease;
+            will-change: width;
         }
         
         .quest-item-footer {
@@ -3105,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.26';
+const GAME_VERSION = '1.3.27';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -8908,6 +8916,28 @@ let game = null;
 let storyPage = 0;
 let modalCallback = null;
 let modalClosing = false; // 防止弹窗重复关闭
+let previousActiveElement = null; // 弹窗打开前的焦点元素，用于关闭时恢复焦点
+let modalFocusTrapped = false; // 焦点是否被限制在弹窗内
+
+// 全局 Escape 键关闭弹窗支持
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const overlay = document.getElementById('modal-overlay');
+        if (overlay && overlay.style.display === 'flex') {
+            e.preventDefault();
+            // 判断是事件弹窗还是普通弹窗
+            const confirmBtn = document.getElementById('modal-confirm');
+            const titleEl = document.getElementById('modal-title');
+            // 事件弹窗的确认按钮文字是"知道了"或"接受"，普通弹窗是"确定"
+            const isEventModal = confirmBtn && (confirmBtn.textContent === '知道了' || confirmBtn.textContent === '接受');
+            if (isEventModal) {
+                closeEventModal();
+            } else {
+                closeModal();
+            }
+        }
+    }
+});
 let currentMainTab = 'fields'; // 当前主标签
 let currentShopTab = 'seeds'; // 当前商店子标签：默认显示种子（玩家刚进来买种子最重要）
 
@@ -11123,14 +11153,18 @@ function setGameSpeed(speed) {
     }
 }
 
+let _loadGameSpeedTimeout = null;
 function loadGameSpeed() {
     const saved = safeStorageGet('farm_game_speed');
     if (saved) {
         const parsedSpeed = parseInt(saved, 10);
     gameSpeed = isNaN(parsedSpeed) ? 1 : parsedSpeed;
     }
+    // 清除之前的timeout，避免堆积
+    if (_loadGameSpeedTimeout) clearTimeout(_loadGameSpeedTimeout);
     // 更新所有时间流速按钮的选中状态
-    setTimeout(() => {
+    _loadGameSpeedTimeout = setTimeout(() => {
+        _loadGameSpeedTimeout = null;
         // 设置弹窗内的按钮
         document.querySelectorAll('.speed-btn').forEach(btn => {
             if (parseInt(btn.textContent, 10) === gameSpeed) {
@@ -21470,6 +21504,24 @@ function showModal(title, content, onConfirm) {
     contentEl.innerHTML = content;
     closeAllModals(); // 打开弹窗前关闭其他弹窗
     overlayEl.style.display = 'flex';
+    
+    // === 焦点管理 ===
+    // 保存前一个焦点元素
+    previousActiveElement = document.activeElement;
+    // 设置焦点到弹窗确认按钮（如果有）或弹窗本身
+    if (confirmBtn && confirmBtn.style.display !== 'none') {
+        setTimeout(() => confirmBtn.focus(), 0);
+    } else {
+        const modalContent = document.querySelector('.modal-content');
+        if (modalContent) {
+            setTimeout(() => {
+                modalContent.setAttribute('tabindex', '-1');
+                modalContent.focus();
+            }, 0);
+        }
+    }
+    modalFocusTrapped = true;
+    // === 焦点管理结束 ===
 }
 
 function closeEventModal() {
@@ -21489,6 +21541,15 @@ function closeEventModal() {
             <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
         `;
     }
+    // === 焦点恢复 ===
+    modalFocusTrapped = false;
+    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+        setTimeout(() => {
+            try { previousActiveElement.focus(); } catch(e) {}
+        }, 0);
+        previousActiveElement = null;
+    }
+    // === 焦点恢复结束 ===
     setTimeout(() => { modalClosing = false; }, 300);
 }
 
@@ -21508,6 +21569,15 @@ function closeModal() {
             <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
         `;
     }
+    // === 焦点恢复 ===
+    modalFocusTrapped = false;
+    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+        setTimeout(() => {
+            try { previousActiveElement.focus(); } catch(e) {}
+        }, 0);
+        previousActiveElement = null;
+    }
+    // === 焦点恢复结束 ===
     setTimeout(() => { modalClosing = false; }, 300);
 }
 
