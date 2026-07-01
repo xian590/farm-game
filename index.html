@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.24';
+const GAME_VERSION = '1.3.25';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3280,6 +3280,14 @@ function initAudio() {
     }
 }
 
+// 音频初始化守卫（提取公共逻辑）
+function ensureAudioReady() {
+    if (!sfxEnabled) return false;
+    initAudio();
+    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return false;
+    return true;
+}
+
 // 播放单个音符
 function playNote(frequency, duration, wave = 'sine', volume = 0.06, targetNode = null) {
     if (!audioCtx || audioCtx.state === 'closed') return;
@@ -3365,10 +3373,7 @@ function playNoise(duration, volume = 0.03, filterFreq = 1000) {
 
 // 点击音效（木头轻响）
 function playClickSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
-    
+    if (!ensureAudioReady()) return;
     try {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -3407,10 +3412,7 @@ const NPC_VOICE_CONFIG = {
 
 // 播放NPC呢喃声（类似动森那种叽叽喳喳的感觉）
 function playNpcChatter(npcKey, duration = 1.2) {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
-    
+    if (!ensureAudioReady()) return;
     try {
         const config = NPC_VOICE_CONFIG[npcKey] || NPC_VOICE_CONFIG['wangcunzhang'];
         const startTime = audioCtx.currentTime;
@@ -3465,10 +3467,7 @@ const SING_MELODIES = {
 
 // 播放剧情演唱音效（每句话"唱出来"的感觉）
 function playStorySinging(emotion = 'normal', speed = 1.0) {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
-    
+    if (!ensureAudioReady()) return;
     try {
         const melody = SING_MELODIES[emotion] || SING_MELODIES['normal'];
         const startTime = audioCtx.currentTime;
@@ -3508,17 +3507,13 @@ function playStorySinging(emotion = 'normal', speed = 1.0) {
 
 // 翻页音效（唰唰声）
 function playPageFlipSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
+    if (!ensureAudioReady()) return;
     playNoise(0.15, 0.025, 2000);
 }
 
 // 收获音效（欢快上升音阶）
 function playHarvestSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
+    if (!ensureAudioReady()) return;
     
     const notes = [523, 659, 784, 1047];
     notes.forEach((note, i) => {
@@ -3530,9 +3525,7 @@ function playHarvestSound() {
 
 // 元音效（叮铃哐啷）
 function playCoinSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
+    if (!ensureAudioReady()) return;
     
     playNote(1319, 0.1, 'square', 0.04, sfxGainNode);
     setTimeout(() => {
@@ -3545,9 +3538,7 @@ function playCoinSound() {
 
 // 事件提示音（叮咚）
 function playEventSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
+    if (!ensureAudioReady()) return;
     
     playNote(880, 0.15, 'triangle', 0.06, sfxGainNode);
     setTimeout(() => {
@@ -3557,9 +3548,7 @@ function playEventSound() {
 
 // 灾害音效（打雷轰隆隆）
 function playDisasterSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
+    if (!ensureAudioReady()) return;
     
     playNoise(0.5, 0.15, 300);
     playNote(80, 0.4, 'sawtooth', 0.1, sfxGainNode);
@@ -3567,9 +3556,7 @@ function playDisasterSound() {
 
 // 增益音效（欢快叮叮）
 function playBonusSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
+    if (!ensureAudioReady()) return;
     
     const notes = [523, 659, 784, 880, 1047];
     notes.forEach((note, i) => {
@@ -3581,10 +3568,7 @@ function playBonusSound() {
 
 // 错误音效（低沉嗡声）
 function playErrorSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
-    
+    if (!ensureAudioReady()) return;
     try {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -3619,10 +3603,7 @@ function playSound(type) {
 
 // 浇水音效（水流声）
 function playWaterSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
-    
+    if (!ensureAudioReady()) return;
     try {
         const bufferSize = audioCtx.sampleRate * 0.4;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -3652,9 +3633,7 @@ function playWaterSound() {
 
 // 除草音效（沙沙声）
 function playWeedSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
+    if (!ensureAudioReady()) return;
     
     for (let i = 0; i < 3; i++) {
         setTimeout(() => {
@@ -3688,10 +3667,7 @@ function playWeedSound() {
 
 // 种植/翻土音效（泥土声）
 function playDirtSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
-    
+    if (!ensureAudioReady()) return;
     try {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -3715,8 +3691,7 @@ function playDirtSound() {
 
 // 施肥音效（轻微哗啦声）
 function playFertilizerSound() {
-    if (!sfxEnabled) return;
-    initAudio();
+    if (!ensureAudioReady()) return;
     
     for (let i = 0; i < 5; i++) {
         setTimeout(() => {
@@ -3727,10 +3702,7 @@ function playFertilizerSound() {
 
 // 标签切换音效（轻微嗒声）
 function playTabSound() {
-    if (!sfxEnabled) return;
-    initAudio();
-    if (!audioCtx || audioCtx.state === 'closed' || !sfxGainNode) return;
-    
+    if (!ensureAudioReady()) return;
     try {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -4517,7 +4489,7 @@ const DAILY_ACTIVITIES = {
         desc: '在村里跑两圈，出出汗，身体更结实。',
         staminaCost: 20,
         effect: '健康 +1~2',
-        dailyLimit: 2,
+        dailyLimit: 3,
     },
     visit: {
         id: 'visit',
@@ -4535,7 +4507,7 @@ const DAILY_ACTIVITIES = {
         desc: '去村头小河边钓钓鱼，说不定能钓着大鱼。',
         staminaCost: 25,
         effect: '随机获得鱼，可卖钱',
-        dailyLimit: 2,
+        dailyLimit: 3,
     },
     study: {
         id: 'study',
@@ -4544,7 +4516,7 @@ const DAILY_ACTIVITIES = {
         desc: '翻翻农书，学点新知识，种地更得心应手。',
         staminaCost: 15,
         effect: '随机技能经验 +1~3',
-        dailyLimit: 2,
+        dailyLimit: 3,
     },
 };
 
