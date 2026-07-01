@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.17';
+const GAME_VERSION = '1.3.18';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3856,6 +3856,9 @@ document.addEventListener('visibilitychange', function() {
         if (!gameLoopInterval && !gamePaused) {
             startGameLoop();
         }
+        // 页面回到前台：重置UI更新状态，避免切回后UI不一致
+        _uiUpdatePending = false;
+        updateUI();
     }
 });
 function switchBgm(bgmName) {
@@ -10285,6 +10288,13 @@ function saveGame() {
         game._healthDeathChecked = _healthDeath;
     } catch(e) {
         console.error('存档保存失败', e);
+    } finally {
+        // 恢复瞬态字段（无论成败都恢复）
+        game.needsRender = _needsRender;
+        game.tickCount = _tickCount;
+        game._lastSaveTime = _lastSave;
+        game._lastUITick = _lastUI;
+        game._healthDeathChecked = _healthDeath;
     }
     
     if (typeof checkMilestones === 'function' && game.day > 0) {
@@ -13706,14 +13716,6 @@ function scheduleUpdateUI() {
         updateUI();
     });
 }
-
-// 页面可见性变化时重置UI更新状态，避免切回后UI不一致
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-        _uiUpdatePending = false;
-        updateUI();
-    }
-});
 
 // ==================== UI更新 ====================
 function updateUI() {
@@ -21967,9 +21969,9 @@ function showErrorLogs() {
         logs.forEach((log, i) => {
             html += `<div style="margin-bottom: 12px; padding: 10px; background: #f8f8f8; border-radius: 6px; border-left: 3px solid #e74c3c;">`;
             html += `<div style="color: #999; font-size: 11px; margin-bottom: 4px;">${log.time || '未知时间'}</div>`;
-            html += `<div style="color: #c0392b; font-weight: bold;">${log.message || '未知错误'}</div>`;
+            html += `<div style="color: #c0392b; font-weight: bold;">${escapeHtml(log.message || '未知错误')}</div>`;
             if (log.file) {
-                html += `<div style="color: #666; font-size: 11px; margin-top: 2px;">${log.file}:${log.line || '?'}</div>`;
+                html += `<div style="color: #666; font-size: 11px; margin-top: 2px;">${escapeHtml(log.file)}:${log.line || '?'}</div>`;
             }
             html += `</div>`;
         });
