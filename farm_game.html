@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.22';
+const GAME_VERSION = '1.3.23';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9923,7 +9923,7 @@ function calculateOfflineReward() {
     if (game.agriTechEffects && game.agriTechEffects.autoGrowth && gameDays > 0) {
         game.fields.forEach(field => {
             if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-                field.growProgress += game.agriTechEffects.autoGrowth * 0.1 * gameDays;
+                field.growProgress += game.agriTechEffects.autoGrowth * 100 * gameDays;
             }
         });
     }
@@ -11589,7 +11589,7 @@ function onNewDay() {
         // 所有田地自动生长
         game.fields.forEach(field => {
             if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-                field.growProgress += game.agriTechEffects.autoGrowth * 0.1;
+                field.growProgress += game.agriTechEffects.autoGrowth * 100;
             }
         });
     }
@@ -12244,7 +12244,7 @@ const STORY_EVENTS = [
         ],
         minDay: 10,
         probability: 0.04,
-        requiresPet: 'ahuang'
+        requiresPet: 'ahua'
     },
     {
         id: 'dahuang_chase_rabbit',
@@ -12252,7 +12252,7 @@ const STORY_EVENTS = [
         emoji: '🐶',
         description: '大黄从地里叼回来一只野兔子，摇着尾巴放在你面前，吐着舌头等你夸它。',
         options: [
-            { text: '奖励它骨头', effect: { money: -3, pets: {dahuang: {favor: 5}}, money: 30, mood: 8 }, result: '你奖励了大黄骨头，把兔子卖了30块钱，大黄以后天天往地里跑撵兔子。大黄好感+5，钱+30，心情+8' },
+            { text: '奖励它骨头', effect: { money: 27, pets: {dahuang: {favor: 5}}, mood: 8 }, result: '你奖励了大黄骨头，把兔子卖了30块钱（扣除3元骨头成本净赚27元），大黄以后天天往地里跑撵兔子。大黄好感+5，钱+27，心情+8' },
             { text: '夸它两句', effect: { pets: {dahuang: {favor: 2}}, money: 30, mood: 5 }, result: '你夸了大黄两句，它高兴的直蹦跶。大黄好感+2，钱+30，心情+5' }
         ],
         minDay: 10,
@@ -13033,7 +13033,7 @@ function triggerRandomEvent() {
         }
         
         // 燕子归来：需要至少过了一年
-        if (e.id === 'swallow' && game.totalDay <= 240) return false;
+        if (e.id === 'swallowsReturn' && game.totalDay <= 240) return false;
         
         return true;
     });
@@ -13554,6 +13554,12 @@ function handleEventChoice(optionIdx) {
         game.pestReduction = Math.min(1.0, (game.pestReduction || 0) + effect.pestReduce);
         addLog(`🐦 虫害减少效果已生效（当前减少${Math.floor(game.pestReduction * 100)}%）`, 'good');
     }
+    if (effect.seeds) {
+        if (!game.seeds) game.seeds = {};
+        for (const [seedId, val] of Object.entries(effect.seeds)) {
+            game.seeds[seedId] = (game.seeds[seedId] || 0) + val;
+        }
+        addLog(`🌱 获得了种子奖励！`, 'good');
     }
     
     // 特殊事件处理
@@ -13647,6 +13653,10 @@ function growCrops() {
     let growRate = 1.0;
     if (game.neighborHelp && game.neighborHelp.seedShare) {
         growRate += 0.05;
+    }
+    // 农业科技：土壤改良 - 生长速度加成
+    if (game.agriTechEffects && game.agriTechEffects.growthSpeed) {
+        growRate += game.agriTechEffects.growthSpeed;
     }
     game.fields.forEach(field => {
         if (!field.crop) return;
@@ -14070,7 +14080,7 @@ const QUEST_DATA = {
     q2: { name: '播种育苗', desc: '回到【田地管理】，在第1块田育苗', reward: '100元+效率提升', icon: '🔧', category: '新手任务' },
     q3: { name: '移栽插秧', desc: '育苗完成后进行移栽', reward: '50元', icon: '🌿', category: '新手任务' },
     q4: { name: '丰收时节', desc: '等待作物成熟并收割', reward: '50元', icon: '🌱', category: '新手任务' },
-    q5: { name: '移栽插秧', desc: '育苗完成后进行移栽', reward: '50元', icon: '🌿', category: '新手任务' },
+    q5: { name: '再次移栽', desc: '给另一块田进行移栽', reward: '50元', icon: '🌿', category: '新手任务' },
     q6: { name: '添置农具', desc: '点击左侧【农具商店】，购买第一把农具', reward: '200元', icon: '🌾', category: '新手任务' },
     q7: { name: '开市售卖', desc: '去【商店】卖掉收获的作物', reward: '100元+10声望', icon: '💰', category: '新手任务' },
     // 发展任务
@@ -14265,15 +14275,15 @@ function getQuestProgress(questId) {
         q7: game.stats && game.stats.totalSell > 0 ? 100 : (game.crops.rice > 0 || game.crops.sweet > 0 ? 60 : 0),
         q8: game.house === '进阶房' || game.house === '精英房' || game.house === '终极房' ? 100 : 0,
         q51: game.composting || (game.items.organicFertilizer > 0) ? 100 : 0,
-        q9: game.npcFavor && Object.values(game.npcFavor).some(f => f > 0) ? 100 : 0,
-        q10: game.npcFavor && Object.values(game.npcFavor).some(f => f >= 10) ? 100 : (game.npcFavor && Object.values(game.npcFavor).some(f => f > 0) ? 50 : 0),
+        q9: game.npcs && Object.values(game.npcs).some(f => f > 0) ? 100 : 0,
+        q10: game.npcs && Object.values(game.npcs).some(f => f >= 10) ? 100 : (game.npcs && Object.values(game.npcs).some(f => f > 0) ? 50 : 0),
         q11: game.pets && Object.keys(game.pets).length > 0 ? 100 : (game.money > 200 ? 50 : 0),
         q12: game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level >= 2 ? 100 : (game.skills && game.skills.cropFamiliarity ? Math.min(90, (game.skills.cropFamiliarity.exp || 0) / 50 * 100) : 0),
         q18: game.dailyActions && game.dailyActions.exercise > 0 ? 100 : 0,
         q19: game.dailyActions && game.dailyActions.fish > 0 ? 100 : 0,
         q20: game.dailyActions && game.dailyActions.foraging > 0 ? 100 : 0,
-        q21: game.processing && game.processing.riceMill ? 100 : 0,
-        q22: game.processing && game.processing.sweetDryer ? 100 : 0,
+        q21: game.builtProcessing && game.builtProcessing.riceMill ? 100 : 0,
+        q22: game.builtProcessing && game.builtProcessing.sweetPotatoDry ? 100 : 0,
         q23: game.stats && game.stats.processingCount > 0 ? 100 : 0,
         q24: game.stats && game.stats.processingCount >= 100 ? 100 : (game.stats && game.stats.processingCount ? Math.min(90, (game.stats.processingCount / 100) * 100) : 0),
         q27: game.stats && game.stats.fishCaught >= 50 ? 100 : (game.stats && game.stats.fishCaught ? Math.min(90, (game.stats.fishCaught / 50) * 100) : 0),
@@ -17870,6 +17880,11 @@ function getTechBonus(effectType) {
         }
     }
     
+    // 农业科技效果加成
+    if (game.agriTechEffects && game.agriTechEffects[effectType] !== undefined) {
+        total += game.agriTechEffects[effectType];
+    }
+    
     // 科技加成上限：折扣类最多80%，产量/售价类最多200%
     if (effectType === 'shopDiscount' || effectType === 'workerDiscount' || effectType === 'staminaReduction' || effectType === 'fertilizeStaminaReduce' || effectType === 'waterStaminaReduce' || effectType === 'pestReduction') {
         return Math.min(0.8, total);
@@ -17983,12 +17998,11 @@ function getBuildingBonus(effectType) {
         const building = BUILDING_DATA[buildingId];
         if (!building || !building.effect[effectType]) continue;
         
-        // 如果是数值型效果（比如storageBonus），直接加
+        // 如果是数值型效果（比如storageBonus），取最高级的效果
         if (effectType === 'storageBonus') {
-            // 每级的效果，限制索引不超过数组长度
-            for (let i = 0; i < level; i++) {
-                const safeIndex = Math.min(i, building.upgradeEffect.length - 1);
-                total += building.upgradeEffect[safeIndex] || building.effect[effectType];
+            if (level > 0) {
+                const effectIndex = Math.min(Math.max(0, level - 1), building.upgradeEffect.length - 1);
+                total += building.upgradeEffect[effectIndex] || building.effect[effectType];
             }
         } else {
             // 如果是百分比型效果，取最高级的效果
@@ -19864,6 +19878,10 @@ function prepareField(fieldIdx) {
     if (toolMasteryLevel > 0) {
         staminaCost = Math.max(1, Math.floor(staminaCost * (1 - toolMasteryLevel * 0.05)));
     }
+    // 农业科技：机械化耕作 - 翻地体力消耗减免
+    if (game.agriTechEffects && game.agriTechEffects.plowStaminaReduction) {
+        staminaCost = Math.max(1, Math.floor(staminaCost * (1 - game.agriTechEffects.plowStaminaReduction)));
+    }
     staminaCost = Math.floor(staminaCost);
     
     if (game.stamina < staminaCost) {
@@ -19904,8 +19922,9 @@ function plantCrop(fieldIdx, cropKey) {
         return;
     }
     
-    // 季节检查
-    if (cropData && cropData.season !== game.season) {
+    // 季节检查（温室大棚科技可豁免）
+    const seasonless = game.agriTechEffects && game.agriTechEffects.seasonless && game.agriTechEffects.seasonless > 0;
+    if (!seasonless && cropData && cropData.season !== game.season) {
         const seasonNames = { spring: '春季', summer: '夏季', autumn: '秋季', winter: '冬季' };
         showToast(`${cropData.name}是${seasonNames[cropData.season] || cropData.season}作物，现在不是种植季节！`, 'bad');
         return;
@@ -19970,7 +19989,7 @@ function plantCrop(fieldIdx, cropKey) {
     // 检查任务
     if (cropKey === 'rice_spring' && !game.quests.q2) {
         game.quests.q2 = true;
-        queueQuestReward('q2', 50, '✅ 任务完成：育苗，奖励50元');
+        queueQuestReward('q2', 100, '✅ 任务完成：育苗，奖励100元+效率提升');
     }
     
     game.needsRender = true;
@@ -20398,7 +20417,7 @@ function harvestCrop(fieldIdx) {
     // 检查任务
     if (!game.quests.q4) {
         game.quests.q4 = true;
-        queueQuestReward('q4', 200, '✅ 任务完成：第一次收割，奖励200元');
+        queueQuestReward('q4', 50, '✅ 任务完成：第一次收割，奖励50元');
     }
     
     // 检查里程碑
@@ -20601,7 +20620,7 @@ function buyTool(toolKey) {
     // 任务检查：购买第一把农具
     if (!game.quests.q6) {
         game.quests.q6 = true;
-        queueQuestReward('q6', 100, '✅ 任务完成：第一把农具，奖励100元');
+        queueQuestReward('q6', 200, '✅ 任务完成：第一把农具，奖励200元');
     }
     
     addLog(`🔧 购买了${tool.name}！${tool.effect}`, 'good');
@@ -20885,7 +20904,7 @@ function getHouseStaminaRegen() {
 
 // 升级房屋
 function upgradeHouse(targetHouse) {
-    const houseOrder = ['新手房', '进阶房', '精英房', '终极房'];
+    const houseOrder = ['新手房', '进阶房', '精英房', '终极房', '豪宅', '庄园'];
     const currentIndex = houseOrder.indexOf(game.house);
     const targetIndex = houseOrder.indexOf(targetHouse);
     
