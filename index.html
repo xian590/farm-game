@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.21';
+const GAME_VERSION = '1.3.22';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4561,7 +4561,7 @@ const PROCESSING_DATA = {
         inputCrop: 'rice',
         inputAmount: 10,
         outputItem: 'riceGrain',
-        outputAmount: 6.5,
+        outputAmount: 8,
         dailyCapacity: 12,
         staminaCost: 12,
         upgradeCost: [300, 800],
@@ -4591,7 +4591,7 @@ const PROCESSING_DATA = {
         id: 'fishDrying', name: '腌鱼晒场', emoji: '🌊',
         desc: '把鲜鱼腌制后晒干，保存时间长，赶集能卖好价钱。',
         buildCost: 120, unlockCondition: '钓鱼熟练度Lv2或攒够2000块钱',
-        inputType: 'fish', inputAmount: 5, outputItem: 'driedFish', outputAmount: 5,
+        inputType: 'fish', inputAmount: 3, outputItem: 'driedFish', outputAmount: 5,
         dailyCapacity: 10, staminaCost: 12,
         upgradeCost: [200, 500],
         levelCapacity: [15, 30, 60],
@@ -4601,7 +4601,7 @@ const PROCESSING_DATA = {
         id: 'fishBallWorkshop', name: '鱼丸作坊', emoji: '🔪',
         desc: '手工打制鱼丸，工序复杂但利润高。',
         buildCost: 200, unlockCondition: '钓鱼熟练度Lv3或攒够3000块钱',
-        inputType: 'fish', inputAmount: 8, outputItem: 'fishBall', outputAmount: 6,
+        inputType: 'fish', inputAmount: 5, outputItem: 'fishBall', outputAmount: 6,
         dailyCapacity: 12, staminaCost: 15,
         upgradeCost: [400, 1000],
         levelCapacity: [20, 40, 80],
@@ -4611,7 +4611,7 @@ const PROCESSING_DATA = {
         id: 'fishSoupKitchen', name: '鲜鱼汤锅', emoji: '🍲',
         desc: '大锅熬鱼汤，汤白味浓，卖给城里餐馆。',
         buildCost: 280, unlockCondition: '钓鱼熟练度Lv4或攒够4000块钱',
-        inputType: 'fish', inputAmount: 10, outputItem: 'fishSoup', outputAmount: 5,
+        inputType: 'fish', inputAmount: 6, outputItem: 'fishSoup', outputAmount: 5,
         dailyCapacity: 12, staminaCost: 12,
         upgradeCost: [500, 1500],
         levelCapacity: [20, 40, 80],
@@ -4843,48 +4843,48 @@ const AUTOMATION_DATA = {
     sprinkler: {
         id: 'sprinkler', name: '自动灌溉系统', emoji: '💧',
         desc: '装上这套系统，再也不用挑水浇地了。',
-        cost: 2000, level: 1, maxLevel: 5,
+        cost: 1200, level: 1, maxLevel: 5,
         effect: 'autoWater', effectDesc: '每天自动给所有田地浇水',
-        levelUpCost: [2000, 5000, 12000, 30000, 80000],
+        levelUpCost: [1200, 3000, 7200, 18000, 48000],
         levelDesc: ['基础喷头（覆盖1块田）', '滴灌系统（覆盖2块田）', '喷灌系统（覆盖3块田）', '智能灌溉（覆盖4块田）', '全村供水系统（覆盖5块田）']
     },
     weeder: {
         id: 'weeder', name: '电动除草机', emoji: '🌿',
         desc: '嗡嗡嗡，杂草一扫光。',
-        cost: 1500, level: 1, maxLevel: 3,
+        cost: 900, level: 1, maxLevel: 3,
         effect: 'autoWeed', effectDesc: '自动除草，减少杂草生长',
-        levelUpCost: [1500, 4000, 10000],
+        levelUpCost: [900, 2400, 6000],
         levelDesc: ['手动除草机（3天除1次）', '电动除草机（2天除1次）', '智能除草机器人（每天自动除）']
     },
     autoFeeder: {
         id: 'autoFeeder', name: '自动投喂器', emoji: '🤖',
         desc: '到点自动喂牲口，不用早起。',
-        cost: 3000, level: 1, maxLevel: 3,
+        cost: 1800, level: 1, maxLevel: 3,
         effect: 'autoFeed', effectDesc: '自动喂养畜牧，无需手动喂食',
-        levelUpCost: [3000, 8000, 20000],
+        levelUpCost: [1800, 4800, 12000],
         levelDesc: ['定时投喂（基础饲料）', '智能配餐（优化饲料配比）', '精准营养（减少饲料消耗20%）']
     },
     conveyor: {
         id: 'conveyor', name: '加工流水线', emoji: '⚙️',
         desc: '把加工坊串联起来，一次投入多次产出。',
-        cost: 5000, level: 1, maxLevel: 3,
+        cost: 3000, level: 1, maxLevel: 3,
         effect: 'processingEfficiency', effectDesc: '加工坊产能+50%',
-        levelUpCost: [5000, 15000, 40000],
+        levelUpCost: [3000, 9000, 24000],
         levelDesc: ['皮带输送（产能+50%）', '半自动流水线（产能+100%）', '全自动生产线（产能+200%）']
     },
     harvester: {
         id: 'harvester', name: '小型收割机', emoji: '🚜',
         desc: '庄稼熟了自动收割，不用弯腰。',
-        cost: 8000, level: 1, maxLevel: 3,
+        cost: 4500, level: 1, maxLevel: 3,
         effect: 'autoHarvest', effectDesc: '成熟作物自动收割',
-        levelUpCost: [8000, 20000, 50000],
+        levelUpCost: [4500, 11250, 28125],
         levelDesc: ['手推收割机（自动收割1块田）', '小型联合收割机（自动收割2块田）', '大型收割机（自动收割所有田）']
     }
 };
 
 // 银行利息系统
 const BANK_DATA = {
-    interestRate: 0.005, // 日利率 0.5%
+    interestRate: 0.0002, // 日利率 0.02%（年化约7.5%）
     maxDeposit: 1000000, // 最大存款 100万
     depositUnlock: 5000 // 总资产5000元解锁
 };
@@ -4957,18 +4957,18 @@ const MARKET_DATA = {
         { id: 'bun', name: '馒头', emoji: '🍞', price: 3, stock: 30, desc: '填饱肚子' }
     ],
     specialCrops: [
-        { id: 'rice', name: '稻谷', emoji: '🌾', buyPrice: 3, sellPrice: 1.95, desc: '基础粮食' },
-        { id: 'sweet', name: '红薯', emoji: '🍠', buyPrice: 1, sellPrice: 0.65, desc: '粗粮' },
-        { id: 'wheat', name: '小麦', emoji: '🌾', buyPrice: 2, sellPrice: 1.3, desc: '做面粉' },
-        { id: 'corn', name: '玉米', emoji: '🌽', buyPrice: 2, sellPrice: 1.3, desc: '做玉米油' },
-        { id: 'soybean', name: '大豆', emoji: '🫘', buyPrice: 2, sellPrice: 1.3, desc: '做豆腐' },
-        { id: 'potato', name: '土豆', emoji: '🥔', buyPrice: 2, sellPrice: 1.3, desc: '做薯片' },
-        { id: 'peanut', name: '花生', emoji: '🥜', buyPrice: 3, sellPrice: 1.95, desc: '榨油用' },
-        { id: 'pepper', name: '辣椒', emoji: '🌶️', buyPrice: 2, sellPrice: 1.3, desc: '调味' },
-        { id: 'cabbage', name: '白菜', emoji: '🥬', buyPrice: 1, sellPrice: 0.65, desc: '做酸菜' },
-        { id: 'radish', name: '萝卜', emoji: '🥕', buyPrice: 1, sellPrice: 0.65, desc: '炖汤' },
-        { id: 'eggplant', name: '茄子', emoji: '🍆', buyPrice: 2, sellPrice: 1.3, desc: '烧茄子' },
-        { id: 'garlic', name: '大蒜', emoji: '🧄', buyPrice: 2, sellPrice: 1.3, desc: '调味' }
+        { id: 'rice', name: '稻谷', emoji: '🌾', buyPrice: 3, sellPrice: 3, desc: '基础粮食' },
+        { id: 'sweet', name: '红薯', emoji: '🍠', buyPrice: 1, sellPrice: 1, desc: '粗粮' },
+        { id: 'wheat', name: '小麦', emoji: '🌾', buyPrice: 2, sellPrice: 2, desc: '做面粉' },
+        { id: 'corn', name: '玉米', emoji: '🌽', buyPrice: 2, sellPrice: 2, desc: '做玉米油' },
+        { id: 'soybean', name: '大豆', emoji: '🫘', buyPrice: 2, sellPrice: 2, desc: '做豆腐' },
+        { id: 'potato', name: '土豆', emoji: '🥔', buyPrice: 2, sellPrice: 2, desc: '做薯片' },
+        { id: 'peanut', name: '花生', emoji: '🥜', buyPrice: 3, sellPrice: 3, desc: '榨油用' },
+        { id: 'pepper', name: '辣椒', emoji: '🌶️', buyPrice: 2, sellPrice: 2, desc: '调味' },
+        { id: 'cabbage', name: '白菜', emoji: '🥬', buyPrice: 1, sellPrice: 1, desc: '做酸菜' },
+        { id: 'radish', name: '萝卜', emoji: '🥕', buyPrice: 1, sellPrice: 1, desc: '炖汤' },
+        { id: 'eggplant', name: '茄子', emoji: '🍆', buyPrice: 2, sellPrice: 2, desc: '烧茄子' },
+        { id: 'garlic', name: '大蒜', emoji: '🧄', buyPrice: 2, sellPrice: 2, desc: '调味' }
     ]
 };
 
@@ -4993,9 +4993,9 @@ const ANIMAL_DATA = {
     pig: { name: '猪', emoji: '🐷', buyCost: 500, dailyFeed: {rice: 2, corn: 1}, growthDays: 30, sellPrice: 2000, product: null, productPrice: 0, productDays: 0 },
     cow: { name: '牛', emoji: '🐮', buyCost: 1200, dailyFeed: {wheat: 3, corn: 2}, growthDays: 45, sellPrice: 5000, product: 'milk', productName: '牛奶', productEmoji: '🥛', productPrice: 30, productDays: 1 },
     sheep: { name: '羊', emoji: '🐑', buyCost: 800, dailyFeed: {wheat: 2, sweet: 1}, growthDays: 35, sellPrice: 3000, product: 'wool', productName: '羊毛', productEmoji: '🧶', productPrice: 25, productDays: 7 },
-    chicken: { name: '鸡', emoji: '🐔', buyCost: 50, dailyFeed: {rice: 1, corn: 0}, growthDays: 14, sellPrice: 80, product: 'egg', productName: '鸡蛋', productEmoji: '🥚', productPrice: 3, productDays: 1 },
-    duck: { name: '鸭', emoji: '🦆', buyCost: 60, dailyFeed: {rice: 1, corn: 0}, growthDays: 16, sellPrice: 100, product: 'duck_egg', productName: '鸭蛋', productEmoji: '🥚', productPrice: 4, productDays: 2 },
-    goose: { name: '鹅', emoji: '🪿', buyCost: 100, dailyFeed: {wheat: 1, corn: 1}, growthDays: 20, sellPrice: 180, product: 'goose_egg', productName: '鹅蛋', productEmoji: '🥚', productPrice: 8, productDays: 3 }
+    chicken: { name: '鸡', emoji: '🐔', buyCost: 50, dailyFeed: {rice: 1, corn: 0}, growthDays: 14, sellPrice: 150, product: 'egg', productName: '鸡蛋', productEmoji: '🥚', productPrice: 3, productDays: 1 },
+    duck: { name: '鸭', emoji: '🦆', buyCost: 60, dailyFeed: {rice: 1, corn: 0}, growthDays: 16, sellPrice: 180, product: 'duck_egg', productName: '鸭蛋', productEmoji: '🥚', productPrice: 4, productDays: 2 },
+    goose: { name: '鹅', emoji: '🪿', buyCost: 100, dailyFeed: {wheat: 1, corn: 1}, growthDays: 20, sellPrice: 300, product: 'goose_egg', productName: '鹅蛋', productEmoji: '🥚', productPrice: 8, productDays: 3 }
 };
 
 // 果园数据
@@ -5174,7 +5174,7 @@ const PROCESSED_ITEMS = {
     peanutCandy: {
         id: 'peanutCandy', name: '花生糖', emoji: '🍬',
         desc: '花生和麦芽糖熬制，香甜酥脆，过年必备。',
-        basePrice: 15.0, type: 'processed'
+        basePrice: 10.0, type: 'processed'
     },
     // === 辣椒加工品 ===
     chiliSauce: {
@@ -5196,12 +5196,12 @@ const PROCESSED_ITEMS = {
     mushroom: {
         id: 'mushroom', name: '栽培蘑菇', emoji: '🍄',
         desc: '菌菇房里种出的蘑菇，比野生的更均匀，口感也好。',
-        basePrice: 6.0, type: 'processed'
+        basePrice: 4.0, type: 'processed'
     },
     pickle: {
         id: 'pickle', name: '腌咸菜', emoji: '🥒',
         desc: '老坛子腌的咸菜，酸脆爽口，下饭神器。',
-        basePrice: 5.0, type: 'processed'
+        basePrice: 3.5, type: 'processed'
     }
 };
 
@@ -5248,7 +5248,7 @@ const COOKING_DATA = {
         desc: '现熬的鲜鱼汤，鲜美滋补。',
         ingredients: { fishInventory: 2, foragingItems: { herb: 1 } },
         stamina: 25, health: 5, mood: 5,
-        sellPrice: 15, staminaCost: 8
+        sellPrice: 45, staminaCost: 8
     },
     stir_fry: {
         id: 'stir_fry', name: '野菜炒肉', emoji: '🥘',
@@ -5262,7 +5262,7 @@ const COOKING_DATA = {
         desc: '野蘑菇熬的汤，鲜得很。',
         ingredients: { foragingItems: { mushroom: 2, wild_mushroom: 2 } },
         stamina: 15, health: 8, mood: 4,
-        sellPrice: 10, staminaCost: 5
+        sellPrice: 32, staminaCost: 5
     },
     sweet_potato_porridge: {
         id: 'sweet_potato_porridge', name: '红薯粥', emoji: '🥣',
@@ -5283,7 +5283,7 @@ const COOKING_DATA = {
         desc: '嫩豆腐脑，淋上卤汁，入口即化。',
         ingredients: { processedItems: { tofu: 1 } },
         stamina: 12, health: 2, mood: 6,
-        sellPrice: 8, staminaCost: 3
+        sellPrice: 14, staminaCost: 3
     },
     noodle_soup: {
         id: 'noodle_soup', name: '热汤面', emoji: '🍜',
@@ -5304,7 +5304,7 @@ const COOKING_DATA = {
         desc: '板栗熬的粥，香甜软糯。',
         ingredients: { foragingItems: { chestnut: 3 } },
         stamina: 16, health: 6, mood: 5,
-        sellPrice: 12, staminaCost: 5
+        sellPrice: 25, staminaCost: 5
     }
 };
 
@@ -6077,7 +6077,7 @@ const NPC_DATA = {
         canHire: true,
         hireFriendship: 60,
         hireFee: 200,
-        dailyWage: 60,
+        dailyWage: 35,
         skills: ['water', 'weed'],
         efficiency: 1.2,
         hireDesc: '老把式亲自出马，浇水除草样样精通，效率还高20%'
@@ -6091,7 +6091,7 @@ const NPC_DATA = {
         canHire: true,
         hireFriendship: 40,
         hireFee: 100,
-        dailyWage: 40,
+        dailyWage: 25,
         skills: ['water', 'weed'],
         efficiency: 1.0,
         hireDesc: '张婶手脚麻利，浇水除草都能帮你搞定'
@@ -6105,7 +6105,7 @@ const NPC_DATA = {
         canHire: true,
         hireFriendship: 20,
         hireFee: 50,
-        dailyWage: 20,
+        dailyWage: 12,
         skills: ['water'],
         efficiency: 0.8,
         hireDesc: '二蛋虽然皮，但浇浇水还是没问题的，就是有点慢'
@@ -6157,7 +6157,7 @@ const NPC_DATA = {
         canHire: true,
         hireFriendship: 40,
         hireFee: 80,
-        dailyWage: 35,
+        dailyWage: 22,
         skills: ['fish'],
         efficiency: 1.3,
         hireDesc: '老渔夫帮你管鱼塘，鱼长得快30%，还知道不少钓鱼秘诀'
@@ -6171,7 +6171,7 @@ const NPC_DATA = {
         canHire: true,
         hireFriendship: 30,
         hireFee: 60,
-        dailyWage: 25,
+        dailyWage: 15,
         skills: ['water'],
         efficiency: 1.0,
         hireDesc: '大柱有一身好力气，浇水施肥都没问题'
@@ -6213,7 +6213,7 @@ const NPC_DATA = {
         canHire: true,
         hireFriendship: 35,
         hireFee: 70,
-        dailyWage: 30,
+        dailyWage: 18,
         skills: ['weed', 'fertilize'],
         efficiency: 1.15,
         hireDesc: '小芳手巧心细，除草施肥效率比一般人高15%'
@@ -10219,11 +10219,15 @@ function renderBackpack() {
             const item = ITEM_EFFECTS[itemId];
             const div = document.createElement('div');
             div.style.cssText = 'padding: 10px; border: 1px solid #d4b896; border-radius: 8px; background: #fff9f0; text-align: center;';
+            const btn = document.createElement('button');
+            btn.textContent = '使用';
+            btn.style.cssText = 'padding: 4px 8px; font-size: 12px; background: #8b5a2b; color: white; border: none; border-radius: 4px; cursor: pointer;';
+            btn.onclick = function() { useItem(itemId); };
             div.innerHTML = `
-                <div style="font-size: 24px;">${item.icon}</div>
-                <div style="margin: 5px 0; font-size: 14px;">${item.name} ×${game.items[itemId]}</div>
-                <button onclick="useItem('${itemId}')" style="padding: 4px 8px; font-size: 12px; background: #8b5a2b; color: white; border: none; border-radius: 4px; cursor: pointer;">使用</button>
+                <div style="font-size: 24px;">${escapeHtml(item.icon)}</div>
+                <div style="margin: 5px 0; font-size: 14px;">${escapeHtml(item.name)} ×${game.items[itemId]}</div>
             `;
+            div.appendChild(btn);
             list.appendChild(div);
         }
     }
@@ -11060,7 +11064,8 @@ function cancelImportSave() {
 }
 
 function doImportSave() {
-    const text = document.getElementById('save-import-text').value.trim();
+    const el = document.getElementById('save-import-text');
+    const text = el ? el.value.trim() : '';
     if (!text) {
         showToast('请输入存档代码！', 'bad');
         return;
@@ -16067,7 +16072,7 @@ function renderPlayerPanel() {
                     <div class="shop-item-name">健康值</div>
                     <div class="shop-item-desc">${game.health} / ${game.maxHealth}</div>
                     <div class="field-progress" style="margin-top: 6px;">
-                        <div class="field-progress-bar" style="width: ${(game.health / game.maxHealth) * 100}%; background: #e74c3c;"></div>
+                        <div class="field-progress-bar" style="width: ${game.maxHealth > 0 ? (game.health / game.maxHealth) * 100 : 0}%; background: #e74c3c;"></div>
                     </div>
                 </div>
             </div>
@@ -16082,7 +16087,7 @@ function renderPlayerPanel() {
                     <div class="shop-item-name">体力值</div>
                     <div class="shop-item-desc">${Math.floor(game.stamina)} / ${game.maxStamina}</div>
                     <div class="field-progress" style="margin-top: 6px;">
-                        <div class="field-progress-bar" style="width: ${(game.stamina / game.maxStamina) * 100}%;"></div>
+                        <div class="field-progress-bar" style="width: ${game.maxStamina > 0 ? (game.stamina / game.maxStamina) * 100 : 0}%;"></div>
                     </div>
                 </div>
             </div>
@@ -16972,13 +16977,19 @@ function addSkillExp(skillKey, amount) {
             10: { money: 1000, name: '登峰造极' }
         };
         
+        let totalRewardMoney = 0;
+        let highestMilestone = '';
         for (let lv = oldLevel + 1; lv <= newLevel; lv++) {
             if (milestoneRewards[lv]) {
                 const reward = milestoneRewards[lv];
                 game.money += reward.money;
+                totalRewardMoney += reward.money;
+                highestMilestone = reward.name;
                 addLog(`🏆 里程碑达成：${reward.name}！奖励${reward.money}元`, 'good');
-                showToast(`🏆 ${reward.name}！+${reward.money}元`, 'good');
             }
+        }
+        if (totalRewardMoney > 0) {
+            showToast(`🏆 ${highestMilestone}！累计+${totalRewardMoney}元`, 'good');
         }
         
         // 技能升级解锁内容提示
@@ -17954,7 +17965,7 @@ function getNpcMilestoneText(npcKey) {
         }
     }
     
-    if (nextMs) {
+    if (nextMs && nextMs.friendship > 0) {
         const progress = Math.min(100, (friendship / nextMs.friendship) * 100);
         return `🌟 里程碑 ${achieved.length}/${total} | 下一个：${nextMs.name}（${nextMs.desc}）- ${friendship}/${nextMs.friendship}`;
     } else {
@@ -18179,7 +18190,8 @@ function chatWithNpc(npcKey) {
     // 避免和上次对话重复
     if (!game.lastDialogue) game.lastDialogue = {};
     if (game.lastDialogue[npcKey] !== undefined && dialogues.length > 1) {
-        while (dialogueIndex === game.lastDialogue[npcKey]) {
+        let _maxRetry = 10;
+        while (dialogueIndex === game.lastDialogue[npcKey] && _maxRetry-- > 0) {
             dialogueIndex = Math.floor(Math.random() * dialogues.length);
         }
     }
@@ -21527,6 +21539,8 @@ function confirmModal() {
     
     // 为所有弹窗标题栏添加拖拽事件
     document.addEventListener('mousedown', function(e) {
+        // 触摸设备上忽略mousedown，避免与touchstart重复触发
+        if ('ontouchstart' in window) return;
         const title = e.target.closest('.modal-title');
         if (title) {
             const modal = title.closest('.modal');
@@ -21969,10 +21983,10 @@ function showErrorLogs() {
         let html = `<div style="margin-bottom: 10px; color: #666;">共 ${logs.length} 条记录（最多保留50条）</div>`;
         logs.forEach((log, i) => {
             html += `<div style="margin-bottom: 12px; padding: 10px; background: #f8f8f8; border-radius: 6px; border-left: 3px solid #e74c3c;">`;
-            html += `<div style="color: #999; font-size: 11px; margin-bottom: 4px;">${log.time || '未知时间'}</div>`;
+            html += `<div style="color: #999; font-size: 11px; margin-bottom: 4px;">${escapeHtml(log.time || '未知时间')}</div>`;
             html += `<div style="color: #c0392b; font-weight: bold;">${escapeHtml(log.message || '未知错误')}</div>`;
             if (log.file) {
-                html += `<div style="color: #666; font-size: 11px; margin-top: 2px;">${escapeHtml(log.file)}:${log.line || '?'}</div>`;
+                html += `<div style="color: #666; font-size: 11px; margin-top: 2px;">${escapeHtml(log.file)}:${escapeHtml(String(log.line || '?'))}</div>`;
             }
             html += `</div>`;
         });
@@ -22023,7 +22037,7 @@ document.addEventListener('keydown', function(e) {
     if (e.key === ' ' || e.key === 'Enter') {
         // 故事页面按空格/回车翻页
         const storyContainer = document.getElementById('story-container');
-        if (storyContainer.style.display !== 'none') {
+        if (storyContainer && storyContainer.style.display !== 'none') {
             nextStoryPage();
         }
     }
@@ -22655,6 +22669,10 @@ function contributeToProject(projKey, type) {
             return;
         }
         const needStone = proj.materials.stone || 0;
+        if (needStone <= 0) {
+            showToast('此项目不需要石块', 'bad');
+            return;
+        }
         const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / Math.max(1, proj.totalProgress / Math.max(1, needStone)));
         const useStone = Math.min(haveStone, remainingNeed, 5); // 一次最多捐5个
         game.mineInventory.stone -= useStone;
@@ -22662,11 +22680,15 @@ function contributeToProject(projKey, type) {
         addLog(`🪨 给${proj.name}捐了${useStone}个石块`, 'good');
     } else if (type === 'money') {
         const needMoney = proj.materials.money || 0;
+        if (needMoney <= 0) {
+            showToast('此项目不需要资金', 'bad');
+            return;
+        }
         if (game.money < 10) {
             showToast('钱不够，先赚点钱再来', 'bad');
             return;
         }
-        const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / (proj.totalProgress / needMoney));
+        const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / Math.max(1, proj.totalProgress / needMoney));
         const useMoney = Math.min(game.money, remainingNeed, 50); // 一次最多捐50
         game.money -= useMoney;
         contributed = useMoney * Math.floor(proj.totalProgress / needMoney);
@@ -22950,7 +22972,7 @@ function renderAchievementsPanel() {
     // 统计
     const totalAch = Object.keys(ACHIEVEMENT_DATA).length;
     const unlockedCount = Object.keys(game.achievements).length;
-    const percent = Math.floor((unlockedCount / totalAch) * 100);
+    const percent = totalAch > 0 ? Math.floor((unlockedCount / totalAch) * 100) : 0;
     
     html += `<div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #f5af19 0%, #f12711 100%); border-radius: 12px; color: white; text-align: center;">`;
     html += `<div style="font-size: 28px; font-weight: bold; margin-bottom: 5px;">${unlockedCount}/${totalAch}</div>`;
