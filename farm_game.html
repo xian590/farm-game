@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.14';
+const GAME_VERSION = '1.3.15';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -13492,25 +13492,27 @@ function handleEventChoice(optionIdx) {
     if (effect.time) {
         // 时间快进/倒退
         game.time += effect.time;
-        // 处理跨天
-        while (game.time >= 24) {
-            game.time -= 24;
-            game.day += 1;
-            const baseDay = (game.totalDay || game.day || 1);
-            game.totalDay = baseDay + 1;
-            // 检查季节变化
-            if (game.day > 28) {
-                advanceSeason(true);
+        // 处理跨天（直接计算避免while循环卡死）
+        if (game.time >= 24) {
+            const daysToAdd = Math.floor(game.time / 24);
+            game.time = game.time % 24;
+            for (let i = 0; i < daysToAdd; i++) {
+                game.day += 1;
+                const baseDay = (game.totalDay || game.day || 1);
+                game.totalDay = baseDay + 1;
+                // 检查季节变化
+                if (game.day > 28) {
+                    advanceSeason(true);
+                }
+                // 触发完整的新的一天逻辑
+                onNewDay();
             }
-            // 触发完整的新的一天逻辑
-            onNewDay();
         }
-        while (game.time < 0) {
-            game.time += 24;
-            game.day -= 1;
-            game.totalDay -= 1;
-            if (game.day < 1) game.day = 1;
-            if (game.totalDay < 1) game.totalDay = 1;
+        if (game.time < 0) {
+            const daysToSub = Math.ceil(Math.abs(game.time) / 24);
+            game.time = (game.time % 24 + 24) % 24;
+            game.day = Math.max(1, game.day - daysToSub);
+            game.totalDay = Math.max(1, (game.totalDay || game.day) - daysToSub);
         }
     }
     
@@ -13623,7 +13625,7 @@ function growCrops() {
         
         // 育苗期
         if (field.stage === 'seedling') {
-            const seedlingDays = cropData.seedlingDays !== undefined ? cropData.seedlingDays : 5;
+            const seedlingDays = Math.max(1, cropData.seedlingDays !== undefined ? cropData.seedlingDays : 5);
             field.growProgress = Math.min(20, (growDays * growRate / seedlingDays) * 20);
             return;
         }
@@ -14437,7 +14439,7 @@ function renderQuestBox() {
                 const questNum = parseInt(quest.id.slice(1), 10);
                 const completedBefore = Object.keys(q).filter(k => k.startsWith('q') && parseInt(k.slice(1), 10) < questNum && q[k]).length;
                 const totalBefore = questNum;
-                progress = Math.min(95, (completedBefore / totalBefore) * 100);
+                progress = Math.min(95, (completedBefore / Math.max(1, totalBefore)) * 100);
                 progressText = '进行中';
             }
             
@@ -16440,7 +16442,7 @@ function exercise() {
     }
     
     // 健康值影响体力上限
-    game.maxStamina = game.health;
+    game.maxStamina = Math.max(1, game.health);
     if (game.stamina > game.maxStamina) {
         game.stamina = game.maxStamina;
     }
@@ -16719,7 +16721,7 @@ function renderSkillsPanel() {
         const nextLevelExp = SKILL_EXP_TABLE[level + 1] || SKILL_EXP_TABLE[10];
         const currentLevelExp = SKILL_EXP_TABLE[level] || 0;
         const expInLevel = exp - currentLevelExp;
-        const expNeeded = nextLevelExp - currentLevelExp;
+        const expNeeded = Math.max(1, nextLevelExp - currentLevelExp);
         const progress = Math.min(100, (expInLevel / expNeeded) * 100);
         
         html += `
@@ -17128,7 +17130,7 @@ function renderNpcsPanel() {
             const nextLevel = nextLevelIndex > 0 ? FRIENDSHIP_LEVELS[nextLevelIndex] : null;
             const currentLevelMin = level.min;
             const nextLevelMin = nextLevel ? nextLevel.min : 100;
-            const progress = Math.min(100, ((friendship - currentLevelMin) / (nextLevelMin - currentLevelMin)) * 100);
+            const progress = Math.min(100, ((friendship - currentLevelMin) / Math.max(1, nextLevelMin - currentLevelMin)) * 100);
             
             html += `
                 <div class="shop-item">
@@ -21613,7 +21615,7 @@ function renderCountdownContent() {
             const jobTotalTime = (job.startTotalDay || job.startDay) * 24 + job.startTime;
             const elapsed = currentTotalTime - jobTotalTime;
             const remaining = Math.max(0, job.duration - elapsed);
-            const progress = Math.min(100, Math.floor((elapsed / job.duration) * 100));
+            const progress = Math.min(100, Math.floor((elapsed / Math.max(1, job.duration)) * 100));
             activeCount++;
             
             // 获取原料名称
@@ -22542,7 +22544,7 @@ function renderCommunityPanel() {
         const projData = game.communityProjects[projKey] || { progress: 0, completed: false };
         const isUnlocked = isCommunityProjectUnlocked(projKey);
         const isCompleted = projData.completed;
-        const progressPercent = Math.min(100, Math.floor((projData.progress / proj.totalProgress) * 100));
+        const progressPercent = Math.min(100, Math.floor((projData.progress / Math.max(1, proj.totalProgress)) * 100));
         
         html += `<div class="community-card" style="background: ${isCompleted ? '#d4edda' : (isUnlocked ? '#f8f9fa' : '#e9ecef')}; border-radius: 12px; padding: 16px; margin-bottom: 12px; opacity: ${isUnlocked ? 1 : 0.6};">`;
         html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">`;
@@ -22638,7 +22640,7 @@ function contributeToProject(projKey, type) {
             return;
         }
         const needStone = proj.materials.stone || 0;
-        const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / (proj.totalProgress / needStone));
+        const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / Math.max(1, proj.totalProgress / Math.max(1, needStone)));
         const useStone = Math.min(haveStone, remainingNeed, 5); // 一次最多捐5个
         game.mineInventory.stone -= useStone;
         contributed = useStone * Math.floor(proj.totalProgress / needStone);
@@ -22699,7 +22701,7 @@ function contributeToProject(projKey, type) {
             showToast('🎉 林老师来村里了！', 'good');
         }
     } else {
-        const percent = Math.floor((projData.progress / proj.totalProgress) * 100);
+        const percent = Math.floor((projData.progress / Math.max(1, proj.totalProgress)) * 100);
         showToast(`贡献成功！当前进度 ${percent}%`, 'good');
     }
     
