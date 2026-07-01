@@ -3105,7 +3105,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.15';
+const GAME_VERSION = '1.3.16';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10423,21 +10423,21 @@ function fixSaveData() {
     if (game.health === undefined) game.health = Math.floor(game.maxHealth * 0.6);
     if (game.maxStamina === undefined) game.maxStamina = 200;
     if (game.stamina === undefined) game.stamina = Math.floor(game.maxStamina * 0.5);
-    if (game.day == null) game.day = 1;
-    if (game.totalDay === undefined) game.totalDay = game.day || 1;
+    if (game.day == null || game.day < 1) game.day = 1;
+    if (game.totalDay === undefined || game.totalDay < 1) game.totalDay = game.day || 1;
     if (game.season === undefined) game.season = 'spring';
-    if (game.time === undefined) game.time = 6;
+    if (game.time === undefined || game.time < 0 || game.time > 23) game.time = 6;
     if (game.disasterRate === undefined) game.disasterRate = 1.0;
     if (game.needsRender === undefined) game.needsRender = true;
     
     // 升级旧存档：将旧版100上限升级到200
     if (game.maxHealth < 200) {
         game.maxHealth = 200;
-        if (game.health < 100) game.health = 100; // 健康值也相应提升
+        if (game.health < 100) game.health = Math.min(100, game.maxHealth); // 健康值也相应提升
     }
     if (game.maxStamina < 200) {
         game.maxStamina = 200;
-        if (game.stamina < 80) game.stamina = 80; // 体力值也相应提升
+        if (game.stamina < 80) game.stamina = Math.min(80, game.maxStamina); // 体力值也相应提升
     }
     
     // 补全items和dailyActions（只补全缺失字段，不覆盖当天数据）
@@ -11764,7 +11764,7 @@ function onNewDay() {
             
             if (project.effect === 'dailyIncome') {
                 const incomes = [50, 100, 200];
-                const income = incomes[level - 1] || 0;
+                const income = incomes[Math.max(0, level - 1)] || 0;
                 game.money += income;
                 addLog(`🏪 ${project.name} 今日收入 ${income} 元`, 'good');
             }
@@ -11781,7 +11781,7 @@ function onNewDay() {
     
     // 农家乐每日收益
     if (game.farmStay && game.farmStay.level > 0) {
-        const levelData = FARM_STAY_DATA.level[game.farmStay.level - 1];
+        const levelData = FARM_STAY_DATA.level[Math.max(0, game.farmStay.level - 1)];
         if (levelData) {
             // 随机客人数量
             const guests = Math.floor(Math.random() * levelData.maxGuests) + 1;
@@ -11847,6 +11847,8 @@ function checkHealthDeath() {
         `;
         showModal('注意身体', restHtml, () => {
             closeModal();
+            if (game) game.needsRender = true;
+            updateUI();
         });
     }
 }
@@ -15940,7 +15942,7 @@ function renderProcessingPanel() {
             const buildingLevel = game.builtProcessing[key] || 1;
             const levelIndex = Math.max(0, buildingLevel - 1);
     const dailyCapacity = item.levelCapacity && item.levelCapacity[levelIndex] !== undefined ? item.levelCapacity[levelIndex] : item.dailyCapacity;
-            const levelStaminaCost = item.levelStaminaCost && item.levelStaminaCost[buildingLevel - 1] !== undefined ? item.levelStaminaCost[buildingLevel - 1] : item.staminaCost;
+            const levelStaminaCost = item.levelStaminaCost && item.levelStaminaCost[Math.max(0, buildingLevel - 1)] !== undefined ? item.levelStaminaCost[Math.max(0, buildingLevel - 1)] : item.staminaCost;
             const canUpgrade = buildingLevel < 3 && item.upgradeCost && item.upgradeCost[buildingLevel - 1] !== undefined;
             const upgradeBtn = canUpgrade ? 
                 `<button class="buy-btn" onclick="upgradeProcessing('${key}')" ${game.money < item.upgradeCost[buildingLevel-1] ? 'disabled' : ''}>⬆️ Lv${buildingLevel+1}（${item.upgradeCost[buildingLevel-1]}元）</button>` : 
@@ -17403,8 +17405,8 @@ function processDailyProcessing() {
         
         // 获取加工坊等级对应的容量和体力消耗
         const buildingLevel = game.builtProcessing[key] || 1;
-        const dailyCapacity = building.levelCapacity ? building.levelCapacity[buildingLevel - 1] : building.dailyCapacity;
-        const levelStaminaCost = building.levelStaminaCost ? building.levelStaminaCost[buildingLevel - 1] : building.staminaCost;
+        const dailyCapacity = building.levelCapacity ? building.levelCapacity[Math.max(0, buildingLevel - 1)] : building.dailyCapacity;
+        const levelStaminaCost = building.levelStaminaCost ? building.levelStaminaCost[Math.max(0, buildingLevel - 1)] : building.staminaCost;
         
         // 能加工的批次数
         const processingSpeedBonus = getTechBonus('processingSpeed');
@@ -17569,7 +17571,7 @@ function upgradeProcessing(buildingKey) {
     if (!building) return;
     const currentLevel = game.builtProcessing[buildingKey] || 1;
     if (currentLevel >= 3) { showToast('已满级', 'warn'); return; }
-    const cost = building.upgradeCost && building.upgradeCost[currentLevel - 1] !== undefined ? building.upgradeCost[currentLevel - 1] : 0;
+    const cost = building.upgradeCost && building.upgradeCost[Math.max(0, currentLevel - 1)] !== undefined ? building.upgradeCost[Math.max(0, currentLevel - 1)] : 0;
     if (cost <= 0) { showToast('升级数据异常', 'bad'); return; }
     if (game.money < cost) { showToast('资金不足', 'bad'); return; }
     
@@ -17592,8 +17594,8 @@ function manualProcess(buildingKey) {
     
     // 获取加工坊等级
     const buildingLevel = game.builtProcessing[buildingKey] || 1;
-    const dailyCapacity = building.levelCapacity ? building.levelCapacity[buildingLevel - 1] : building.dailyCapacity;
-    const staminaCost = building.levelStaminaCost ? building.levelStaminaCost[buildingLevel - 1] : building.staminaCost;
+    const dailyCapacity = building.levelCapacity ? building.levelCapacity[Math.max(0, buildingLevel - 1)] : building.dailyCapacity;
+    const staminaCost = building.levelStaminaCost ? building.levelStaminaCost[Math.max(0, buildingLevel - 1)] : building.staminaCost;
     
     // 检查今天是否已达上限（dailyProcessed 已包含进行中的任务）
     const dailyDone =(game.dailyProcessed && game.dailyProcessed[buildingKey]) || 0;
@@ -17964,7 +17966,7 @@ function getBuildingBonus(effectType) {
         } else {
             // 如果是百分比型效果，取最高级的效果
             if (level > 0) {
-                const effectIndex = Math.min(level - 1, building.upgradeEffect.length - 1);
+                const effectIndex = Math.min(Math.max(0, level - 1), building.upgradeEffect.length - 1);
                 total += building.upgradeEffect[effectIndex] || building.effect[effectType];
             }
         }
@@ -18424,7 +18426,7 @@ function giveGift(npcKey, giftKey) {
         showModal(
             `${npc.emoji} ${npc.name}`,
             modalContent,
-            null
+            () => { if (game) game.needsRender = true; updateUI(); }
         );
     }, 200);
     
@@ -18874,7 +18876,7 @@ function renderAutomationPanel() {
                         <div class="shop-item-icon">${device.emoji}</div>
                         <div>
                             <div class="shop-item-name">${device.name}（Lv${level}/${device.maxLevel}）</div>
-                            <div class="shop-item-desc">${device.levelDesc[level - 1] || device.desc}</div>
+                            <div class="shop-item-desc">${device.levelDesc[Math.max(0, level - 1)] || device.desc}</div>
                             <div class="shop-item-desc">${device.effectDesc}</div>
                         </div>
                     </div>
@@ -19445,7 +19447,7 @@ function renderVillagePanel() {
                         <div class="shop-item-icon">${project.emoji}</div>
                         <div>
                             <div class="shop-item-name">${project.name}（Lv${level}/${project.maxLevel}）</div>
-                            <div class="shop-item-desc">${project.levelDesc[level - 1] || project.desc}</div>
+                            <div class="shop-item-desc">${project.levelDesc[Math.max(0, level - 1)] || project.desc}</div>
                         </div>
                     </div>
                 </div>
@@ -19494,7 +19496,7 @@ function renderFarmStayPanel() {
     
     // 当前等级
     if (currentLevel > 0) {
-        const levelData = FARM_STAY_DATA.level[currentLevel - 1];
+        const levelData = FARM_STAY_DATA.level[Math.max(0, currentLevel - 1)];
         html += `<div class="shop-category">🏡 当前：${levelData.emoji} ${levelData.name}</div>`;
         html += `<div class="shop-item"><div class="shop-item-info"><div class="shop-item-icon">${levelData.emoji}</div><div><div class="shop-item-name">${levelData.name}</div><div class="shop-item-desc">日收入：${levelData.dailyIncome}元/人，最多${levelData.maxGuests}人</div><div class="shop-item-desc">昨日接待：${(game.farmStay && game.farmStay.guests) || 0}人</div></div></div></div>`;
     } else {
