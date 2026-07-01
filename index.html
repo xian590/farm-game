@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.28';
+const GAME_VERSION = '1.3.29';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -14059,7 +14059,9 @@ function renderFieldsPanel() {
     // 使用关键状态快照（排除growProgress等高频变化字段）
     const stateSnapshot = game.fields.map(f => ({
         crop: f.crop, stage: f.stage, step: f.step, level: f.level,
-        fertilized: f.fertilized, prepared: f.prepared
+        fertilized: f.fertilized, prepared: f.prepared,
+        lastWaterDay: f.lastWaterDay, lastWeedDay: f.lastWeedDay,
+        fertilizerType: f.fertilizerType, turnedVine1: f.turnedVine1, turnedVine2: f.turnedVine2
     }));
     const stateKey = JSON.stringify(stateSnapshot);
     if (panel._lastRenderFields && panel._lastRenderFields === stateKey) {
