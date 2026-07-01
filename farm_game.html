@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.27';
+const GAME_VERSION = '1.3.28';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -14067,7 +14067,7 @@ function renderFieldsPanel() {
         game.fields.forEach((field, idx) => {
             const card = panel.querySelector(`.field-card[data-idx="${idx}"]`);
             if (card) {
-                const progressBar = card.querySelector('.progress-bar');
+                const progressBar = card.querySelector('.field-progress-bar');
                 if (progressBar) progressBar.style.width = field.growProgress + '%';
                 const statusText = card.querySelector('.field-status');
                 if (statusText) statusText.textContent = getStageDesc(field.stage);
@@ -14765,7 +14765,7 @@ function toggleQuestList() {
 }
 
 function renderFieldCard(field, idx) {
-    let html = '<div class="field-card">';
+    let html = `<div class="field-card" data-idx="${idx}">`;
     html += `<div class="field-header">
                 <span class="field-name">第${escapeHtml(field.id)}块田</span>
                 <span class="field-level">${escapeHtml(field.level)}</span>
@@ -20803,6 +20803,10 @@ function roundGameState() {
 }
 
 function getStorageUsed() {
+    // 简单缓存：同一 tick 内返回缓存值，避免重复全量聚合
+    if (game && game._storageCacheTick === game.tickCount && typeof game._storageCacheValue === 'number') {
+        return game._storageCacheValue;
+    }
     let total = 0;
     total += Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
     total += Object.values(game.fruits || {}).reduce((sum, v) => sum + (v || 0), 0);
@@ -20811,6 +20815,11 @@ function getStorageUsed() {
     total += Object.values(game.animalProducts || {}).reduce((sum, v) => sum + (v || 0), 0);
     total += Object.values(game.foragingItems || {}).reduce((sum, v) => sum + (v || 0), 0);
     total += Object.values(game.cookedFoods || {}).reduce((sum, v) => sum + (v || 0), 0);
+    // 写入缓存
+    if (game) {
+        game._storageCacheTick = game.tickCount;
+        game._storageCacheValue = total;
+    }
     return total;
 }
 
