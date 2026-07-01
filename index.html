@@ -3098,7 +3098,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.7';
+const GAME_VERSION = '1.3.8';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -21806,7 +21806,7 @@ function showQuestRewardModal() {
     if (modalContent) modalContent.innerHTML = html;
     closeAllModals(); // 打开弹窗前关闭其他弹窗
     const modalOverlay3 = document.getElementById('modal-overlay');
-    if (modalOverlay3) modalOverlay.style.display = 'flex';
+    if (modalOverlay3) modalOverlay3.style.display = 'flex';
 }
 
 function claimQuestReward() {
@@ -21919,7 +21919,7 @@ function isMineLayerUnlocked(layerKey) {
     if (layerKey === 'layer1') {
         return (game.totalDay || game.day) >= 10;
     } else if (layerKey === 'layer2') {
-        return ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) >= 2 && game.tools.has('pickaxe');
+        return ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) >= 2 && game.tools.includes('pickaxe');
     } else if (layerKey === 'layer3') {
         return ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) >= 5 && game.money >= 5000;
     }
