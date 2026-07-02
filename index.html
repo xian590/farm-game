@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.49';
+const GAME_VERSION = '1.3.50';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9743,7 +9743,7 @@ function calculateOfflineReward() {
     if (gameDays > 0) {
         for (let d = 0; d < gameDays; d++) {
             game.day++;
-            game.totalDay = (game.totalDay !== undefined ? game.totalDay : game.day) + 1;
+            game.totalDay = (game.totalDay || game.day) + 1;
             
             // 离线跨季节处理
             if (game.day > 28) {
@@ -9865,8 +9865,19 @@ function calculateOfflineReward() {
                                         game.crops[crop] = (game.crops[crop] || 0) - actualAmount;
                                     }
                                     animal.weight = Math.min(100, (animal.weight || 50) + 1);
+                                    // 补充：产出产品
+                                    if (data.product && animal.age >= data.growthDays && animal.daysSinceProduct >= data.productDays) {
+                                        animal.daysSinceProduct = 0;
+                                        const productAmount = Math.floor((data.productPrice || 0) / 5) + 1;
+                                        game.animalProducts[data.product] = (game.animalProducts[data.product] || 0) + productAmount;
+                                    } else {
+                                        animal.daysSinceProduct = (animal.daysSinceProduct || 0) + 1;
+                                    }
+                                    animal.age = (animal.age || 0) + 1;
                                 } else {
                                     animal.weight = Math.max(10, (animal.weight || 50) - 1);
+                                    animal.age = (animal.age || 0) + 1;
+                                    animal.daysSinceProduct = (animal.daysSinceProduct || 0) + 1;
                                 }
                             });
                         }
@@ -9907,6 +9918,19 @@ function calculateOfflineReward() {
                                     harvested++;
                                 }
                             }
+                        });
+                    }
+                }
+            }
+            
+            // 无 autoFeeder 时，动物每天 aging，但不增重
+            if (!game.automation || !game.automation.autoFeeder) {
+                if (game.animals) {
+                    for (const [animalKey, animals] of Object.entries(game.animals)) {
+                        animals.forEach(animal => {
+                            animal.age = (animal.age || 0) + 1;
+                            animal.daysSinceProduct = (animal.daysSinceProduct || 0) + 1;
+                            // 不增重也不减重，保持现状
                         });
                     }
                 }
@@ -10057,15 +10081,14 @@ function calculateOfflineReward() {
     }
     
     // 离线期间社区建设健康恢复
-    if (gameDays > 0) {
-        let totalHealthRegen = game.healthRegenBonus || 0;
-        const npcHealthRegen = (typeof getNpcBonus === 'function') ? getNpcBonus('healthRegen') : 0;
-        if (npcHealthRegen > 0) {
-            totalHealthRegen += Math.floor(npcHealthRegen);
-        }
-        if (totalHealthRegen > 0 && game.health < game.maxHealth) {
-            game.health = Math.min(game.maxHealth, game.health + totalHealthRegen * gameDays);
-        }
+    let totalHealthRegen = game.healthRegenBonus || 0;
+    const npcHealthRegen = (typeof getNpcBonus === 'function') ? getNpcBonus('healthRegen') : 0;
+    if (npcHealthRegen > 0) {
+        totalHealthRegen += Math.floor(npcHealthRegen);
+    }
+    const totalDays = gameDays + daysPassed + remainingHours / 24;
+    if (totalDays > 0 && totalHealthRegen > 0 && game.health < game.maxHealth) {
+        game.health = Math.min(game.maxHealth, game.health + totalHealthRegen * totalDays);
     }
     
     // 离线期间检查成就（多次跨天可能触发成就）
@@ -10087,7 +10110,10 @@ function calculateOfflineReward() {
     
     // 体力恢复（一次性按实际离线小时计算，避免重复）
     const regenRate = getStaminaRegenRate();
-    const totalRegen = actualGameHours * regenRate;
+    // 按昼夜比例计算体力恢复（与在线一致）
+    const dayHours = Math.min(14, actualGameHours);
+    const nightHours = Math.max(0, actualGameHours - 14);
+    const totalRegen = (dayHours + nightHours * 2) * regenRate;
     game.stamina = Math.min(game.maxStamina, game.stamina + totalRegen);
     
     // 计算成熟的作物
@@ -10132,10 +10158,6 @@ function calculateOfflineReward() {
     
     // 计算加工坊离线产出
     const processingOutput = [];
-    if (game.processedItems) {
-        const beforeProcessed = beforeFields._processedItems || {};
-        // 这个不太准确，跳过详细对比，只显示当前加工状态
-    }
     
     // 格式化离线时间
     let offlineText = '';
@@ -10167,6 +10189,7 @@ function calculateOfflineReward() {
             if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
             const finalPrice = price * (1 + Math.max(0, sellBonusTotal));
             const money = Math.floor(amount * finalPrice);
+            if (!isFinite(money) || money < 0) return;
             game.crops[cropType] = 0;
             game.money += money;
             totalOfflineSell += money;
@@ -10476,19 +10499,26 @@ function exportSaveFile() {
     }
     showToast('正在导出存档...', 'info');
     try {
-        const saveData = JSON.stringify(game, null, 2);
-        const blob = new Blob([saveData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `farm_save_${game.totalDay || game.day}day_${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a);
-        a.click();
-        // 延迟释放URL，确保浏览器有时间启动下载
-        setTimeout(() => {
-            URL.revokeObjectURL(url);
-            if (a.parentNode) document.body.removeChild(a);
-        }, 1000);
+        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout'];
+        const backups = {};
+        transientKeys.forEach(k => { backups[k] = game[k]; delete game[k]; });
+        try {
+            const saveData = JSON.stringify(game, null, 2);
+            const blob = new Blob([saveData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `farm_save_${game.totalDay || game.day}day_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            // 延迟释放URL，确保浏览器有时间启动下载
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+                if (a.parentNode) document.body.removeChild(a);
+            }, 1000);
+        } finally {
+            Object.assign(game, backups);
+        }
         showToast('✅ 存档已导出！', 'good');
     } catch(e) {
         console.error('导出失败', e);
@@ -11258,7 +11288,7 @@ function doImportSave() {
         }
         game = data;
         fixSaveData();
-        try { localStorage.setItem(SAVE_KEY, JSON.stringify(game)); } catch(e) { console.warn('存档失败:', e); }
+        saveGame();
         const saveImportArea = document.getElementById('save-import-area'); if (saveImportArea) saveImportArea.style.display = 'none';
         showToast('✅ 存档导入成功！即将刷新...', 'good');
         // 刷新页面以应用新存档
@@ -11430,15 +11460,9 @@ function advanceSeason(silent = false) {
     
     // 统一季节切换后的时间调整（不要钳位到0，避免生长进度重置）
     game.fields.forEach(field => {
-        if (field.plantedDay > 0) {
-            field.plantedDay -= dayOffset;
-        }
-        if (field.lastWaterDay > 0) {
-            field.lastWaterDay -= dayOffset;
-        }
-        if (field.lastWeedDay > 0) {
-            field.lastWeedDay -= dayOffset;
-        }
+        field.plantedDay -= dayOffset;
+        field.lastWaterDay -= dayOffset;
+        field.lastWeedDay -= dayOffset;
     });
     
     let removedCount = 0;
@@ -11493,10 +11517,10 @@ function advanceSeason(silent = false) {
 }
 
 function gameTick() {
-    // 游戏未正式开始时不执行
-    if (!game || !gameLoopInterval) return;
+    try {
+        if (!game || !gameLoopInterval) return;
 
-    game.time += 2;
+        game.time += 2;
     
     // 体力恢复（每2小时恢复一次）
     const regenRate = getStaminaRegenRate();
@@ -11552,6 +11576,9 @@ function gameTick() {
     if (!game._lastUITick || tickDiff >= 5 || tickDiff < 0 || game.time === 6) {
         game._lastUITick = game.tickCount;
         scheduleUpdateUI();
+    }
+    } catch (e) {
+        console.error('gameTick 异常', e);
     }
 }
 
@@ -11669,7 +11696,7 @@ function onNewDay() {
                         animals.forEach(animal => {
                             let canFeed = true;
                             for (const [crop, amount] of Object.entries(data.dailyFeed || {})) {
-                                const actualAmount = Math.max(0, amount * (1 - feedReduction));
+                                const actualAmount = Math.max(0, Math.ceil(amount * (1 - feedReduction)));
                                 if ((game.crops[crop] || 0) < actualAmount) {
                                     canFeed = false;
                                     break;
@@ -11808,7 +11835,7 @@ function onNewDay() {
     // 银行利息（每日结算）
     if (game.bankDeposit > 0) {
         const interest = Math.floor(game.bankDeposit * BANK_DATA.interestRate);
-        game.bankDeposit = Math.min(game.bankDeposit + interest, BANK_DATA.maxDeposit);
+        game.bankDeposit = Math.min(BANK_DATA.maxDeposit, game.bankDeposit + interest);
         addLog(`🏦 银行利息结算：存入${interest}元，当前存款${game.bankDeposit}元`, 'good');
     }
     
@@ -13834,16 +13861,17 @@ function updateProcessingJobs() {
         job.progress = Math.min(100, Math.max(0, Math.floor((elapsed / job.duration) * 100)));
         
         if (elapsed >= job.duration) {
-            // 加工完成
-            job.completed = true;
-            
-            // 产出加工品前检查仓库容量
+            // 产出加工品前先检查容量
             const used = getStorageUsed();
             const storageCap = game.storageCapacity || 2000;
             if (used + job.outputAmount > storageCap) {
-                addLog(`🏡 ${job.buildingName}加工完成，但仓库已满！`, 'bad');
-                return; // 不产出，但标记完成
+                addLog(`🏡 ${job.buildingName}加工完成，但仓库已满！产出${job.outputAmount}斤${(PROCESSED_ITEMS[job.outputItem] && PROCESSED_ITEMS[job.outputItem].name) || ''}无法入库`, 'bad');
+                // 不标记 completed，下次 tick 再尝试
+                return;
             }
+            
+            // 标记完成
+            job.completed = true;
             
             if (!game.processedItems) game.processedItems = {};
             game.processedItems[job.outputItem] = (game.processedItems[job.outputItem] || 0) + job.outputAmount;
@@ -13892,7 +13920,8 @@ function growCrops() {
     // 天气系统：应用天气对生长速度的影响
     const wData = WEATHER_DATA[game.weather] || WEATHER_DATA.sunny;
     if (wData && wData.growthSpeed) {
-        growRate *= wData.growthSpeed;
+        const speed = Math.max(0.1, wData.growthSpeed);
+        growRate *= speed;
     }
     game.fields.forEach(field => {
         if (!field.crop) return;
@@ -16118,6 +16147,7 @@ function getProcessedItemPrice(itemKey) {
     
     // 每日小幅波动（模拟市场行情，±5%）
     const dailyFluctuation = 1 + Math.sin((game.day / 7) * Math.PI * 2) * 0.05;
+    if (!isFinite(dailyFluctuation) || isNaN(dailyFluctuation)) return basePrice;
     
     return Math.round(basePrice * multiplier * dailyFluctuation * 100) / 100;
 }
@@ -16217,6 +16247,19 @@ function renderProcessingPanel() {
             const buildingLevel = game.builtProcessing[key] || 1;
             const levelIndex = Math.max(0, buildingLevel - 1);
     const dailyCapacity = item.levelCapacity && item.levelCapacity[levelIndex] !== undefined ? item.levelCapacity[levelIndex] : item.dailyCapacity;
+            
+            // 自动化设备：加工流水线产能加成
+            let conveyorBonus = 0;
+            if (game.automation && game.automation.conveyor > 0) {
+                conveyorBonus = [0.5, 1.0, 2.0][game.automation.conveyor - 1] || 0;
+            }
+            const processingSpeedBonus = getTechBonus('processingSpeed');
+            const buildingProcessingBonus = getBuildingBonus('processingSpeed');
+            let effectiveCapacity = dailyCapacity;
+            if (processingSpeedBonus > 0 || buildingProcessingBonus > 0 || conveyorBonus > 0) {
+                effectiveCapacity = Math.floor(dailyCapacity * (1 + processingSpeedBonus + buildingProcessingBonus + conveyorBonus));
+            }
+            
             const levelStaminaCost = item.levelStaminaCost && item.levelStaminaCost[Math.max(0, buildingLevel - 1)] !== undefined ? item.levelStaminaCost[Math.max(0, buildingLevel - 1)] : item.staminaCost;
             const canUpgrade = buildingLevel < 3 && item.upgradeCost && item.upgradeCost[buildingLevel - 1] !== undefined;
             const upgradeBtn = canUpgrade ? 
@@ -16231,7 +16274,7 @@ function renderProcessingPanel() {
                     </div>
                     <div class="processing-desc">${item.desc}</div>
                     <div class="processing-stats">
-                        <div>一天最多做${dailyCapacity}斤的量</div>
+                        <div>一天最多做${effectiveCapacity}斤的量</div>
                         <div>今天已经做了${dailyDone}斤</div>
                     </div>
                     <div class="processing-output">
@@ -16241,7 +16284,7 @@ function renderProcessingPanel() {
                     <div class="processing-actions">
                         ${(() => {
                             const dailyDone =(game.dailyProcessed && game.dailyProcessed[key]) || 0;
-                            const remaining = dailyCapacity - dailyDone;
+                            const remaining = effectiveCapacity - dailyDone;
                             const canProcess = remaining >= item.inputAmount && game.stamina >= levelStaminaCost;
                             return `<button class="btn btn-primary" onclick="manualProcess('${key}')" ${canProcess ? '' : 'disabled'}>⚡ 开始加工（耗${levelStaminaCost}体力）${!canProcess && remaining < item.inputAmount ? '(今日已达上限)' : ''}</button>`;
                         })()}
@@ -16832,7 +16875,6 @@ function goFishing() {
     
     const rand = Math.random();
     let result = '';
-    let moneyGain = 0;
     const fishTypes = ['carp', 'crucian', 'grass_carp', 'catfish'];
     
     if (rand < 0.15) {
@@ -16845,7 +16887,7 @@ function goFishing() {
         } else {
             // 高等级时，部分空军转为小鱼
             const fishType = fishTypes[Math.floor(Math.random() * 2)];
-            const fishAmount = Math.floor(Math.random() * 2 + 1);
+            const fishAmount = Math.floor((Math.random() * 2 + 1) * levelBonus);
             if (!game.fishInventory) game.fishInventory = {};
             game.fishInventory[fishType] = (game.fishInventory[fishType] || 0) + fishAmount;
             unlockCollectionItem('fish', fishType);
@@ -16858,7 +16900,7 @@ function goFishing() {
     } else if (rand < 0.55) {
         // 40%概率小鱼
         const fishType = fishTypes[Math.floor(Math.random() * 2)];
-        const fishAmount = Math.floor(Math.random() * 2 + 1);
+        const fishAmount = Math.floor((Math.random() * 2 + 1) * levelBonus);
         if (!game.fishInventory) game.fishInventory = {};
         game.fishInventory[fishType] = (game.fishInventory[fishType] || 0) + fishAmount;
         unlockCollectionItem('fish', fishType);
@@ -16870,7 +16912,7 @@ function goFishing() {
     } else if (rand < 0.85) {
         // 30%概率中鱼
         const fishType = fishTypes[Math.floor(Math.random() * 3)];
-        const fishAmount = Math.floor(Math.random() * 2 + 2);
+        const fishAmount = Math.floor((Math.random() * 2 + 2) * levelBonus);
         if (!game.fishInventory) game.fishInventory = {};
         game.fishInventory[fishType] = (game.fishInventory[fishType] || 0) + fishAmount;
         unlockCollectionItem('fish', fishType);
@@ -16882,7 +16924,7 @@ function goFishing() {
     } else {
         // 15%概率大鱼（随等级提升）
         const fishType = fishTypes[Math.floor(Math.random() * 4)];
-        const fishAmount = Math.floor(Math.random() * 3 + 3);
+        const fishAmount = Math.floor((Math.random() * 3 + 3) * levelBonus);
         if (!game.fishInventory) game.fishInventory = {};
         game.fishInventory[fishType] = (game.fishInventory[fishType] || 0) + fishAmount;
         unlockCollectionItem('fish', fishType);
@@ -16991,11 +17033,12 @@ function renderSkillsPanel() {
         }
         
         // 计算当前等级和下一级所需经验
-        const nextLevelExp = SKILL_EXP_TABLE[level + 1] || SKILL_EXP_TABLE[10];
+        const isMaxLevel = level >= 10;
+        const nextLevelExp = isMaxLevel ? exp : (SKILL_EXP_TABLE[level + 1] || SKILL_EXP_TABLE[10]);
         const currentLevelExp = SKILL_EXP_TABLE[level] || 0;
-        const expInLevel = exp - currentLevelExp;
         const expNeeded = Math.max(1, nextLevelExp - currentLevelExp);
-        const progress = Math.min(100, (expInLevel / expNeeded) * 100);
+        const expInLevel = isMaxLevel ? expNeeded : (exp - currentLevelExp);
+        const progress = isMaxLevel ? 100 : Math.min(100, (expInLevel / expNeeded) * 100);
         
         html += `
             <div class="shop-item">
@@ -17274,6 +17317,13 @@ function addSkillExp(skillKey, amount) {
                 5: '⭐ 解锁热堆肥，成功率大幅提升',
                 7: '⭐ 材料种类增加，肥效+5%',
                 10: '⭐ 最大增产+8%，成功率100%'
+            },
+            fishingMastery: {
+                1: '⭐ 钓鱼收益+5%，空军概率-1%',
+                3: '⭐ 解锁新鱼种，中鱼概率+5%',
+                5: '⭐ 大鱼概率+10%，收益+15%',
+                7: '⭐ 稀有鱼种出现率+5%',
+                10: '⭐ 钓鱼收益+50%，永不空军'
             }
         };
         
@@ -17951,6 +18001,14 @@ function manualProcess(buildingKey) {
         return;
     }
     
+    // 检查仓库容量
+    const used = getStorageUsed();
+    const storageCap = game.storageCapacity || 2000;
+    if (used + building.outputAmount > storageCap) {
+        showToast('仓库满了，先腾点地方', 'bad');
+        return;
+    }
+    
     // 消耗体力
     game.stamina -= staminaCost;
     
@@ -18008,7 +18066,11 @@ function manualProcess(buildingKey) {
     
     // 记录今日已加工量
     if (!game.dailyProcessed) game.dailyProcessed = {};
-    game.dailyProcessed[buildingKey] = (game.dailyProcessed[buildingKey] || 0) + building.inputAmount;
+    if (building.inputType === 'none') {
+        game.dailyProcessed[buildingKey] = (game.dailyProcessed[buildingKey] || 0) + 1;
+    } else {
+        game.dailyProcessed[buildingKey] = (game.dailyProcessed[buildingKey] || 0) + building.inputAmount;
+    }
     
     // 任务检查：初次加工
     if (!game.quests.q23) {
@@ -18211,8 +18273,8 @@ function getNpcBonus(effectType) {
         }
     }
     
-    // NPC加成上限：折扣类最多50%，产量/售价类最多100%
-    if (effectType === 'sellPrice' || effectType === 'cropExpGain' || effectType === 'readExpBonus' || effectType === 'staminaRegen') {
+    const YIELD_TYPES = ['sellPrice', 'cropExpGain', 'readExpBonus', 'staminaRegen', 'friendshipGain', 'reputationGain', 'fishYield', 'healthRegen'];
+    if (YIELD_TYPES.includes(effectType)) {
         return Math.min(1.0, total);
     }
     return Math.min(0.5, total);
@@ -19243,6 +19305,7 @@ function renderAutomationPanel() {
 function buyAutomation(deviceId) {
     const device = AUTOMATION_DATA[deviceId];
     if (!device) return;
+    if (game.automation && game.automation[deviceId] > 0) { showToast('已拥有该设备', 'bad'); return; }
     if (game.money < device.cost) { showToast('资金不足', 'bad'); return; }
     
     game.money -= device.cost;
@@ -19866,7 +19929,7 @@ function renderFarmStayPanel() {
                 let have = 0;
                 if (ingredient === 'fish') have =(game.items && game.items.fish) || 0;
                 else if (ingredient === 'fruit') {
-                    have = Object.values(game.fruits || {}).reduce((s, v) => s + v, 0);
+                    have = Object.values(game.fruits || {}).reduce((s, v) => s + (v || 0), 0);
                 }
                 else if (ingredient === 'riceWine') have =(game.processedItems && game.processedItems.riceWine) || 0;
                 else if (ingredient === 'chicken') have = (game.animals && game.animals.chicken && game.animals.chicken.length) || 0;
@@ -19957,8 +20020,14 @@ function makeDish(dishKey) {
         if (ingredient === 'fish') have =(game.items && game.items.fish) || 0;
         else if (ingredient === 'fruit') have = Object.values(game.fruits || {}).reduce((s, v) => s + (v || 0), 0);
         else if (ingredient === 'riceWine') have =(game.processedItems && game.processedItems.riceWine) || 0;
-        else if (ingredient === 'chicken') have = (game.animals && game.animals.chicken && game.animals.chicken.length) || 0;
-        else if (ingredient === 'lamb') have = (game.animals && game.animals.sheep && game.animals.sheep.length) || 0;
+        else if (ingredient === 'chicken') {
+            const adults = (game.animals.chicken || []).filter(a => a.age >= ANIMAL_DATA.chicken.growthDays).length;
+            have = adults;
+        }
+        else if (ingredient === 'lamb') {
+            const adults = (game.animals.sheep || []).filter(a => a.age >= ANIMAL_DATA.sheep.growthDays).length;
+            have = adults;
+        }
         else have =(game.crops && game.crops[ingredient]) || 0;
         
         if (have < amount) { showToast('原料不足', 'bad'); return; }
@@ -19979,8 +20048,28 @@ function makeDish(dishKey) {
             }
         }
         else if (ingredient === 'riceWine') game.processedItems.riceWine -= amount;
-        else if (ingredient === 'chicken' && game.animals.chicken) game.animals.chicken.splice(0, amount);
-        else if (ingredient === 'lamb' && game.animals.sheep) game.animals.sheep.splice(0, amount);
+        else if (ingredient === 'chicken' && game.animals.chicken) {
+            let consumed = 0;
+            for (let i = 0; i < game.animals.chicken.length && consumed < amount; ) {
+                if (game.animals.chicken[i].age >= ANIMAL_DATA.chicken.growthDays) {
+                    game.animals.chicken.splice(i, 1);
+                    consumed++;
+                } else {
+                    i++;
+                }
+            }
+        }
+        else if (ingredient === 'lamb' && game.animals.sheep) {
+            let consumed = 0;
+            for (let i = 0; i < game.animals.sheep.length && consumed < amount; ) {
+                if (game.animals.sheep[i].age >= ANIMAL_DATA.sheep.growthDays) {
+                    game.animals.sheep.splice(i, 1);
+                    consumed++;
+                } else {
+                    i++;
+                }
+            }
+        }
         else if (game.crops[ingredient]) game.crops[ingredient] -= amount;
     }
     
@@ -20018,6 +20107,11 @@ function sellAnimal(animalKey, idx) {
     const animal = game.animals[animalKey][idx];
     if (!animal) return;
     
+    if (animal.age < data.growthDays) {
+        showToast('还没成年，不能卖！', 'bad');
+        return;
+    }
+    
     const weightFactor = (animal.weight || 50) / 100;
     const price = Math.floor(data.sellPrice * weightFactor);
     game.money += price;
@@ -20035,6 +20129,15 @@ function harvestAnimalProduct(animalKey, idx) {
     if (!game.animals[animalKey]) return;
     const animal = game.animals[animalKey][idx];
     if (!animal) return;
+    
+    if (animal.age < data.growthDays) {
+        showToast('还没成年，不能收获！', 'bad');
+        return;
+    }
+    if (animal.daysSinceProduct < data.productDays) {
+        showToast('还没产出，再等等！', 'bad');
+        return;
+    }
     
     animal.daysSinceProduct = 0;
     const amount = Math.floor((data.productPrice || 0) / 5) + 1;
