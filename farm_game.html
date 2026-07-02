@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.37';
+const GAME_VERSION = '1.3.38';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -11799,7 +11799,7 @@ function onNewDay() {
                     // 产出产品仍然需要检查
                     if (data.product && animal.age >= data.growthDays && animal.daysSinceProduct >= data.productDays) {
                         animal.daysSinceProduct = 0;
-                        const productAmount = Math.floor(data.productPrice / 5) + 1;
+                        const productAmount = Math.floor((data.productPrice || 0) / 5) + 1;
                         game.animalProducts[data.product] = (game.animalProducts[data.product] || 0) + productAmount;
                         addLog(`${data.emoji} ${animal.name} 产出了${data.productName} ${productAmount}个`, 'good');
                     }
@@ -11824,7 +11824,7 @@ function onNewDay() {
                     // 产出产品
                     if (data.product && animal.age >= data.growthDays && animal.daysSinceProduct >= data.productDays) {
                         animal.daysSinceProduct = 0;
-                        const productAmount = Math.floor(data.productPrice / 5) + 1;
+                        const productAmount = Math.floor((data.productPrice || 0) / 5) + 1;
                         game.animalProducts[data.product] = (game.animalProducts[data.product] || 0) + productAmount;
                         addLog(`${data.emoji} ${animal.name} 产出了${data.productName} ${productAmount}个`, 'good');
                     }
@@ -16806,6 +16806,7 @@ function renderSkillsPanel() {
     skillKeys.forEach(skillKey => {
         const skillInfo = SKILL_EFFECTS[skillKey];
         const skill = game.skills[skillKey];
+        if (!skill) return;
         const level = skill.level;
         const exp = skill.exp;
         
@@ -18618,6 +18619,7 @@ function getPetEffect(effectType) {
     if (!game.pets) return total;
     
     for (const [petKey, petData] of Object.entries(game.pets)) {
+        if (!petData || typeof petData !== 'object') continue;
         const pet = PET_DATA[petKey];
         if (!pet || pet.effectType !== effectType) continue;
         
@@ -18967,6 +18969,7 @@ function collectPoop() {
     
     playDirtSound();
     const amount = game.petPoop;
+    if (!game.items) game.items = {};
     game.items.organicFertilizer = (game.items.organicFertilizer || 0) + amount;
     game.petPoop = 0;
     
@@ -19741,7 +19744,7 @@ function makeDish(dishKey) {
     for (const [ingredient, amount] of Object.entries(dish.cost)) {
         let have = 0;
         if (ingredient === 'fish') have =(game.items && game.items.fish) || 0;
-        else if (ingredient === 'fruit') have = Object.values(game.fruits || {}).reduce((s, v) => s + v, 0);
+        else if (ingredient === 'fruit') have = Object.values(game.fruits || {}).reduce((s, v) => s + (v || 0), 0);
         else if (ingredient === 'riceWine') have =(game.processedItems && game.processedItems.riceWine) || 0;
         else if (ingredient === 'chicken') have = (game.animals && game.animals.chicken && game.animals.chicken.length) || 0;
         else if (ingredient === 'lamb') have = (game.animals && game.animals.sheep && game.animals.sheep.length) || 0;
@@ -19758,8 +19761,9 @@ function makeDish(dishKey) {
             let remaining = amount;
             for (const [fType, fCount] of Object.entries(game.fruits || {})) {
                 if (remaining <= 0) break;
-                const take = Math.min(remaining, fCount);
-                game.fruits[fType] -= take;
+                const actualCount = fCount || 0;
+                const take = Math.min(remaining, actualCount);
+                game.fruits[fType] = (game.fruits[fType] || 0) - take;
                 remaining -= take;
             }
         }
@@ -19822,7 +19826,7 @@ function harvestAnimalProduct(animalKey, idx) {
     if (!animal) return;
     
     animal.daysSinceProduct = 0;
-    const amount = Math.floor(data.productPrice / 5) + 1;
+    const amount = Math.floor((data.productPrice || 0) / 5) + 1;
     if (!game.animalProducts) game.animalProducts = {};
     game.animalProducts[data.product] = (game.animalProducts[data.product] || 0) + amount;
     
@@ -22588,6 +22592,7 @@ function canCookFood(foodKey) {
 function cookFood(foodKey) {
     const food = COOKING_DATA[foodKey];
     if (!food) return;
+    if (!game.cookedFoods) game.cookedFoods = {};
     
     if (!canCookFood(foodKey)) {
         showToast('材料不够，做不了这道菜', 'bad');
@@ -22647,6 +22652,7 @@ function cookFood(foodKey) {
 function eatFood(foodKey) {
     const food = COOKING_DATA[foodKey];
     if (!food) return;
+    if (!game.cookedFoods) game.cookedFoods = {};
     
     const have = game.cookedFoods[foodKey] || 0;
     if (have < 1) {
@@ -22677,6 +22683,7 @@ function eatFood(foodKey) {
 function sellFood(foodKey) {
     const food = COOKING_DATA[foodKey];
     if (!food) return;
+    if (!game.cookedFoods) game.cookedFoods = {};
     
     const have = game.cookedFoods[foodKey] || 0;
     if (have < 1) {
