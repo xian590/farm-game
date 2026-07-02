@@ -3199,7 +3199,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.60';
+const GAME_VERSION = '1.3.61';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3235,11 +3235,11 @@ window.addEventListener('unhandledrejection', function(e) {
     const errorLog = { time: new Date().toISOString(), message: String(e.reason), stack: e.reason && e.reason.stack ? e.reason.stack : '', url: location.href };
     const ERROR_LOG_KEY = 'farm_game_error_log';
     try {
-        let logs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        let logs = JSON.parse(safeStorageGet(ERROR_LOG_KEY, '[]'));
         if (!Array.isArray(logs)) logs = [];
         logs.push(errorLog);
         if (logs.length > 20) logs.shift();
-        localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(logs));
+        safeStorageSet(ERROR_LOG_KEY, JSON.stringify(logs));
     } catch (err) { /* ignore */ }
 });
 
@@ -9492,7 +9492,6 @@ function initGame(mode) {
             fishingMastery: { level: 0, exp: 0, name: '钓鱼精通', expNeeded: 3 }
         },
         reputation: 0,
-        mood: 50,
         dailyActions: { exercise: 0, chat: 0, fish: 0, read: 0, foraging: 0, sideHustle: 0 },
         visitToday: { day: 0, count: 0 },
         fishToday: { day: 0, count: 0 },
@@ -9513,7 +9512,6 @@ function initGame(mode) {
             dogUnlocked: false,
             catUnlocked: false
         },
-        petPoop: 0,
         stats: {
             totalHarvest: 0,
             totalSell: 0,
@@ -10653,16 +10651,16 @@ function saveGame() {
         }
         game.lastSaveTimestamp = Date.now();
         saveData = JSON.stringify(game);
-        localStorage.setItem(SAVE_KEY, saveData);
+        safeStorageSet(SAVE_KEY, saveData);
     } catch(e) {
         console.error('存档保存失败', e);
         // 专门处理容量溢出
         if (e.name === 'QuotaExceededError' || e.name === 'QuotaExceeded') {
             try {
                 for (let i = 1; i <= 3; i++) {
-                    localStorage.removeItem(SAVE_KEY + '_backup_' + i);
+                    safeStorageRemove(SAVE_KEY + '_backup_' + i);
                 }
-                localStorage.setItem(SAVE_KEY, saveData);
+                safeStorageSet(SAVE_KEY, saveData);
                 showToast('⚠️ 存档空间紧张，已清理旧备份', 'warn');
             } catch(e2) {
                 showToast('💾 存档空间已满！请立即导出存档到文件，避免进度丢失', 'bad');
@@ -10704,7 +10702,7 @@ function exportSaveFile() {
     }
     showToast('正在导出存档...', 'info');
     try {
-        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout'];
+        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout', '_loggedFull'];
         const backups = {};
         transientKeys.forEach(k => { backups[k] = game[k]; delete game[k]; });
         try {
@@ -10795,7 +10793,7 @@ function saveGameManual() {
 // 手动读取
 function loadGameManual() {
     let saved = null;
-    try { saved = localStorage.getItem(SAVE_KEY); } catch(e) { console.warn('读档失败:', e); }
+    try { saved = safeStorageGet(SAVE_KEY); } catch(e) { console.warn('读档失败:', e); }
     if (!saved) {
         showToast('没有找到存档', 'bad');
         return;
@@ -11049,6 +11047,12 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
         if (game.stats.totalCooked === undefined) game.stats.totalCooked = 0;
         if (game.stats.totalDigs === undefined) game.stats.totalDigs = 0;
         if (game.stats.daysPlayed === undefined) game.stats.daysPlayed = 0;
+        if (game.stats.totalFruitHarvest === undefined) game.stats.totalFruitHarvest = 0;
+        if (game.stats.totalHoney === undefined) game.stats.totalHoney = 0;
+        if (game.stats.totalMushroom === undefined) game.stats.totalMushroom = 0;
+        if (game.stats.totalPickle === undefined) game.stats.totalPickle = 0;
+        if (game.stats.processingCount === undefined) game.stats.processingCount = 0;
+        if (game.stats.fishCaught === undefined) game.stats.fishCaught = 0;
     }
     
     // 补全成就
@@ -11355,7 +11359,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
 
 function loadGame() {
     let saved = null;
-    try { saved = localStorage.getItem(SAVE_KEY); } catch(e) { console.warn('读档失败:', e); }
+    try { saved = safeStorageGet(SAVE_KEY); } catch(e) { console.warn('读档失败:', e); }
     if (saved) {
         try {
             game = JSON.parse(saved);
@@ -11391,7 +11395,7 @@ function restartGame() {
         '重新开始',
         '确定要重新开始吗？所有进度将丢失，无法恢复。',
         () => {
-            try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+            try { safeStorageRemove(SAVE_KEY); } catch(e) {}
             game = null;
             closeModal();
             location.reload();
@@ -17229,6 +17233,7 @@ function goFishing() {
                 showToast(`钓到${getFishName(fishType)}！`, 'good');
                 if (!game.stats) game.stats = {};
                 game.stats.totalFish = (game.stats.totalFish || 0) + fishAmount;
+                game.stats.fishCaught = (game.stats.fishCaught || 0) + 1;
             }
         } else if (rand < 0.55) {
             // 40%概率小鱼
@@ -17242,6 +17247,7 @@ function goFishing() {
             showToast(`钓到${getFishName(fishType)}！`, 'good');
             if (!game.stats) game.stats = {};
             game.stats.totalFish = (game.stats.totalFish || 0) + fishAmount;
+            game.stats.fishCaught = (game.stats.fishCaught || 0) + 1;
         } else if (rand < 0.85) {
             // 30%概率中鱼
             const fishType = fishTypes[Math.floor(Math.random() * 3)];
@@ -17254,6 +17260,7 @@ function goFishing() {
             showToast(`钓到${getFishName(fishType)}！`, 'good');
             if (!game.stats) game.stats = {};
             game.stats.totalFish = (game.stats.totalFish || 0) + fishAmount;
+            game.stats.fishCaught = (game.stats.fishCaught || 0) + 1;
         } else {
             // 15%概率大鱼（随等级提升）
             const fishType = fishTypes[Math.floor(Math.random() * 4)];
@@ -17266,6 +17273,7 @@ function goFishing() {
             showToast(`🎉 钓到大${getFishName(fishType)}！`, 'good');
             if (!game.stats) game.stats = {};
             game.stats.totalFish = (game.stats.totalFish || 0) + fishAmount;
+            game.stats.fishCaught = (game.stats.fishCaught || 0) + 1;
         }
         
         // 任务检查：累积钓到50条鱼
@@ -24089,16 +24097,16 @@ function checkAchievements() {
             if (typeof ach.condition === 'string') {
                 if (ach.condition === 'allBuildingsBuilt') {
                     const allBuilt = Object.keys(BUILDING_DATA).every(key => {
-                        const building = game.buildings && game.buildings[key];
-                        return building && building.level >= 1;
+                        const level = game.buildings && game.buildings[key];
+                        return (level || 0) >= 1;
                     });
                     if (allBuilt) unlockAchievement(key);
                     continue;
                 }
                 if (ach.condition === 'allProcessingBuilt') {
                     const allBuilt = Object.keys(PROCESSING_DATA).every(key => {
-                        const building = game.processing && game.processing[key];
-                        return building && building.level >= 1;
+                        const level = game.builtProcessing && game.builtProcessing[key];
+                        return (level || 0) >= 1;
                     });
                     if (allBuilt) unlockAchievement(key);
                     continue;
