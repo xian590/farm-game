@@ -1,0 +1,257 @@
+=== 缺失的DATA常量 ===
+SEED_DATA, GIFT_DATA, FOOD_DATA (文件中没有这些常量定义)
+
+=== 1. SEED_DATA/CROP_DATA 一致性 ===
+SEED_DATA: 不存在 (种子信息直接内嵌在CROP_DATA中)
+CROP_DATA 条目数: 22
+所有22种作物都有完整的 season/growDays/baseYield
+
+=== 2. SEASON_NAMES / SEASON_ICONS ===
+SEASON_NAMES 季节: []
+SEASON_ICONS 季节: []
+问题: SEASON_NAMES 缺少 {'autumn', 'summer', 'winter', 'spring'}
+问题: SEASON_ICONS 缺少 {'autumn', 'summer', 'winter', 'spring'}
+
+=== 3. SEASON_WEATHER / WEATHER_DATA 一致性 ===
+WEATHER_DATA 定义的天气类型: {'lightRain', 'cloudy', 'foggy', 'rain', 'sunny', 'windy', 'heavyRain', 'frost'}
+所有季节天气都在 WEATHER_DATA 中有定义
+所有天气类型都有 duration 定义
+
+=== 4. NPC_DATA 完整性 ===
+问题:
+  wangcunzhang: 缺少 profession 字段
+  wangcunzhang: 缺少 giftPreference 字段
+  wangcunzhang: 缺少 difficulty 字段
+  lilaonong: 缺少 profession 字段
+  lilaonong: 缺少 giftPreference 字段
+  lilaonong: 缺少 difficulty 字段
+  zhangshen: 缺少 profession 字段
+  zhangshen: 缺少 giftPreference 字段
+  zhangshen: 缺少 difficulty 字段
+  wangerdan: 缺少 profession 字段
+  wangerdan: 缺少 giftPreference 字段
+  wangerdan: 缺少 difficulty 字段
+  zhaolaoban: 缺少 profession 字段
+  zhaolaoban: 缺少 giftPreference 字段
+  zhaolaoban: 缺少 difficulty 字段
+  chenyang: 缺少 profession 字段
+  chenyang: 缺少 giftPreference 字段
+  chenyang: 缺少 difficulty 字段
+  linxiaoyu: 缺少 profession 字段
+  linxiaoyu: 缺少 giftPreference 字段
+  linxiaoyu: 缺少 difficulty 字段
+  sunmiaoqing: 缺少 profession 字段
+  sunmiaoqing: 缺少 giftPreference 字段
+  sunmiaoqing: 缺少 difficulty 字段
+  laoyufu: 缺少 profession 字段
+  laoyufu: 缺少 giftPreference 字段
+  laoyufu: 缺少 difficulty 字段
+  zhouzhuzhu: 缺少 profession 字段
+  zhouzhuzhu: 缺少 giftPreference 字段
+  zhouzhuzhu: 缺少 difficulty 字段
+  liuhuolang: 缺少 profession 字段
+  liuhuolang: 缺少 giftPreference 字段
+  liuhuolang: 缺少 difficulty 字段
+  zhangsuanming: 缺少 profession 字段
+  zhangsuanming: 缺少 giftPreference 字段
+  zhangsuanming: 缺少 difficulty 字段
+  wangyiren: 缺少 profession 字段
+  wangyiren: 缺少 giftPreference 字段
+  wangyiren: 缺少 difficulty 字段
+  lixiaofang: 缺少 profession 字段
+  lixiaofang: 缺少 giftPreference 字段
+  lixiaofang: 缺少 difficulty 字段
+  zhouyouju: 缺少 profession 字段
+  zhouyouju: 缺少 giftPreference 字段
+  zhouyouju: 缺少 difficulty 字段
+  limujiang: 缺少 profession 字段
+  limujiang: 缺少 giftPreference 字段
+  limujiang: 缺少 difficulty 字段
+  wangtiejian: 缺少 profession 字段
+  wangtiejian: 缺少 giftPreference 字段
+  wangtiejian: 缺少 difficulty 字段
+  wucunyi: 缺少 profession 字段
+  wucunyi: 缺少 giftPreference 字段
+  wucunyi: 缺少 difficulty 字段
+
+=== 5. ITEM_DATA / PROCESSED_ITEMS / COOKING_DATA 完整性 ===
+问题:
+  ITEM_DATA.snack: 缺少 description/desc
+  ITEM_DATA.liquor: 缺少 description/desc
+  ITEM_DATA.cloth: 缺少 description/desc
+  ITEM_DATA.sugar: 缺少 description/desc
+  ITEM_DATA.cigarette: 缺少 description/desc
+  ITEM_DATA.fertilizer: 缺少 description/desc
+  ITEM_DATA.pesticide: 缺少 description/desc
+  ITEM_DATA.bun: 缺少 description/desc
+  ITEM_DATA.medicine: 缺少 description/desc
+  ITEM_DATA.organicFertilizer: 缺少 description/desc
+  PROCESSED_ITEMS.riceGrain: 缺少 price
+  PROCESSED_ITEMS.driedSweetPotato: 缺少 price
+  PROCESSED_ITEMS.driedFish: 缺少 price
+  PROCESSED_ITEMS.fishBall: 缺少 price
+  PROCESSED_ITEMS.fishSoup: 缺少 price
+  PROCESSED_ITEMS.polishedRice: 缺少 price
+  PROCESSED_ITEMS.riceWine: 缺少 price
+  PROCESSED_ITEMS.riceCake: 缺少 price
+  PROCESSED_ITEMS.sweetPotatoStarch: 缺少 price
+  PROCESSED_ITEMS.sweetPotatoNoodles: 缺少 price
+  PROCESSED_ITEMS.flour: 缺少 price
+  PROCESSED_ITEMS.noodles: 缺少 price
+  PROCESSED_ITEMS.tofu: 缺少 price
+  PROCESSED_ITEMS.soyMilk: 缺少 price
+  PROCESSED_ITEMS.cornOil: 缺少 price
+  PROCESSED_ITEMS.potatoChips: 缺少 price
+  PROCESSED_ITEMS.potatoStarch: 缺少 price
+  PROCESSED_ITEMS.peanutOil: 缺少 price
+  PROCESSED_ITEMS.peanutCandy: 缺少 price
+  PROCESSED_ITEMS.chiliSauce: 缺少 price
+  PROCESSED_ITEMS.chiliOil: 缺少 price
+  PROCESSED_ITEMS.honey: 缺少 price
+  PROCESSED_ITEMS.mushroom: 缺少 price
+  PROCESSED_ITEMS.pickle: 缺少 price
+
+=== 6. PROCESSING_DATA 完整性 ===
+问题:
+  riceMill: 缺少 duration 字段
+  sweetPotatoDry: 缺少 duration 字段
+  fishDrying: 缺少 duration 字段
+  fishBallWorkshop: 缺少 duration 字段
+  fishSoupKitchen: 缺少 duration 字段
+  ricePolishing: inputType='processed' 可能不是有效的库存键
+  ricePolishing: 缺少 duration 字段
+  riceWineBrew: inputType='processed' 可能不是有效的库存键
+  riceWineBrew: 缺少 duration 字段
+  riceCakeKitchen: inputType='processed' 可能不是有效的库存键
+  riceCakeKitchen: 缺少 duration 字段
+  sweetPotatoStarchMill: 缺少 duration 字段
+  sweetPotatoNoodlePress: inputType='processed' 可能不是有效的库存键
+  sweetPotatoNoodlePress: 缺少 duration 字段
+  flourMill: 缺少 duration 字段
+  noodleWorkshop: inputType='processed' 可能不是有效的库存键
+  noodleWorkshop: 缺少 duration 字段
+  tofuWorkshop: 缺少 duration 字段
+  soyMilkKitchen: 缺少 duration 字段
+  cornOilPress: 缺少 duration 字段
+  potatoChips: 缺少 duration 字段
+  potatoStarch: 缺少 duration 字段
+  peanutOil: 缺少 duration 字段
+  peanutCandy: 缺少 duration 字段
+  chiliSauce: 缺少 duration 字段
+  chiliOil: 缺少 duration 字段
+  beeHive: inputType='none' 可能不是有效的库存键
+  beeHive: 缺少 duration 字段
+  mushroomFarm: 缺少 duration 字段
+  pickleJar: 缺少 duration 字段
+
+=== 7. FOOD_DATA (实际为 COOKING_DATA) 完整性 ===
+问题:
+  fish_stew: 缺少 ingredients 字段
+  stir_fry: 缺少 ingredients 字段
+  mushroom_soup: 缺少 ingredients 字段
+  sweet_potato_porridge: 缺少 ingredients 字段
+  corn_pancake: 缺少 ingredients 字段
+  tofu_brain: 缺少 ingredients 字段
+  noodle_soup: 缺少 ingredients 字段
+  bamboo_shoot_meat: 缺少 ingredients 字段
+  chestnut_porridge: 缺少 ingredients 字段
+
+=== 8. ACHIEVEMENT_DATA 完整性 ===
+所有 52 个成就都有完整的 name/desc/condition
+
+=== 9. COLLECTION_DATA 完整性 ===
+问题:
+  crops: 缺少 category 字段
+  processed: 缺少 category 字段
+  ores: 缺少 category 字段
+  foraging: 缺少 category 字段
+  fish: 缺少 category 字段
+  foods: 缺少 category 字段
+
+=== 10. QUEST_DATA 完整性 ===
+问题:
+  q0: 缺少 condition 字段
+  q1: 缺少 condition 字段
+  q2: 缺少 condition 字段
+  q3: 缺少 condition 字段
+  q4: 缺少 condition 字段
+  q5: 缺少 condition 字段
+  q6: 缺少 condition 字段
+  q7: 缺少 condition 字段
+  q8: 缺少 condition 字段
+  q9: 缺少 condition 字段
+  q10: 缺少 condition 字段
+  q11: 缺少 condition 字段
+  q12: 缺少 condition 字段
+  q13: 缺少 condition 字段
+  q14: 缺少 condition 字段
+  q15: 缺少 condition 字段
+  q16: 缺少 condition 字段
+  q17: 缺少 condition 字段
+  q18: 缺少 condition 字段
+  q19: 缺少 condition 字段
+  q20: 缺少 condition 字段
+  q21: 缺少 condition 字段
+  q22: 缺少 condition 字段
+  q23: 缺少 condition 字段
+  q24: 缺少 condition 字段
+  q25: 缺少 condition 字段
+  q26: 缺少 condition 字段
+  q27: 缺少 condition 字段
+  q28: 缺少 condition 字段
+  q29: 缺少 condition 字段
+  q30: 缺少 condition 字段
+  q31: 缺少 condition 字段
+  q32: 缺少 condition 字段
+  q33: 缺少 condition 字段
+  q34: 缺少 condition 字段
+  q35: 缺少 condition 字段
+  q36: 缺少 condition 字段
+  q37: 缺少 condition 字段
+  q38: 缺少 condition 字段
+  q39: 缺少 condition 字段
+  q40: 缺少 condition 字段
+  q41: 缺少 condition 字段
+  q42: 缺少 condition 字段
+  q43: 缺少 condition 字段
+  q44: 缺少 condition 字段
+  q45: 缺少 condition 字段
+  q46: 缺少 condition 字段
+  q47: 缺少 condition 字段
+  q48: 缺少 condition 字段
+  q49: 缺少 condition 字段
+  q50: 缺少 condition 字段
+  q51: 缺少 condition 字段
+
+=== 11. AUTOMATION_DATA 完整性 ===
+问题:
+  sprinkler: 缺少 levels 字段
+  weeder: 缺少 levels 字段
+  autoFeeder: 缺少 levels 字段
+  conveyor: 缺少 levels 字段
+  harvester: 缺少 levels 字段
+
+=== 12. TECH_DATA 完整性 ===
+问题:
+  seedSelection: 缺少 requirement 字段
+  densePlanting: 缺少 requirement 字段
+  pestControl: 缺少 requirement 字段
+  scientificIrrigation: 缺少 requirement 字段
+  regularSchedule: 缺少 requirement 字段
+  balancedDiet: 缺少 requirement 字段
+  hardworking: 缺少 requirement 字段
+  thrifty: 缺少 requirement 字段
+  improvedMill: 缺少 requirement 字段
+  dryingTech: 缺少 requirement 字段
+  smoothTalker: 缺少 requirement 字段
+  goodNeighbor: 缺少 requirement 字段
+
+=== 13. BUILDING_DATA 完整性 ===
+问题:
+  granary: 缺少 levels 字段
+  dryingYard: 缺少 levels 字段
+  well: 缺少 levels 字段
+  toolShed: 缺少 levels 字段
+
+=== 总结 ===
+共发现 206 个问题

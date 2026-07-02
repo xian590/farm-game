@@ -299,6 +299,25 @@
             border-left: 1px solid rgba(255,255,255,0.2);
         }
         
+        .speed-btn {
+            padding: 4px 10px;
+            border: 1px solid #d4c9a8;
+            border-radius: 6px;
+            background: #f8f4e8;
+            color: #5d4037;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            min-height: 28px;
+            min-width: 36px;
+        }
+        .speed-btn:hover { background: #e8dfcc; }
+        .speed-btn.active { 
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border-color: #27ae60;
+        }
+        
         .speed-btn-top {
             padding: 4px 10px;
             border: 1px solid rgba(255,255,255,0.3);
@@ -540,15 +559,6 @@
             100% { background-position: 200% 0; }
         }
         
-        /* 收获动画 */
-        .harvest-animation {
-            animation: popIn 0.5s ease;
-        }
-        
-        .float-animation {
-            animation: float 3s ease-in-out infinite;
-        }
-        
         /* 按钮脉冲效果 */
         .action-btn.highlight {
             background: linear-gradient(135deg, #e67e22, #d35400);
@@ -569,11 +579,6 @@
         .stat-value {
             font-weight: bold;
             transition: all 0.3s ease;
-        }
-        
-        .stat-value.changed {
-            animation: popIn 0.3s ease;
-            color: #27ae60;
         }
         
         /* 进度条闪光效果 */
@@ -2150,9 +2155,6 @@
             .game-clock {
                 animation: none;
             }
-            .float-animation {
-                animation: none;
-            }
             .field-progress-bar.active {
                 animation: none;
             }
@@ -2185,9 +2187,6 @@
             .game-clock {
                 animation: none;
             }
-            .float-animation {
-                animation: none;
-            }
             .field-progress-bar.active {
                 animation: none;
             }
@@ -2213,9 +2212,6 @@
                 animation: none;
             }
             .content-panel {
-                animation: none;
-            }
-            .stat-value.changed {
                 animation: none;
             }
             .shop-item:hover {
@@ -3203,7 +3199,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.59';
+const GAME_VERSION = '1.3.60';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3232,6 +3228,19 @@ window.addEventListener('error', function(e) {
         if (logs.length > 20) logs.shift();
         safeStorageSet(ERROR_LOG_KEY, JSON.stringify(logs));
     } catch(err) { console.error('全局错误日志记录失败', err); }
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled Promise rejection:', e.reason);
+    const errorLog = { time: new Date().toISOString(), message: String(e.reason), stack: e.reason && e.reason.stack ? e.reason.stack : '', url: location.href };
+    const ERROR_LOG_KEY = 'farm_game_error_log';
+    try {
+        let logs = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        if (!Array.isArray(logs)) logs = [];
+        logs.push(errorLog);
+        if (logs.length > 20) logs.shift();
+        localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(logs));
+    } catch (err) { /* ignore */ }
 });
 
 const ITEM_EFFECTS = {
@@ -21716,7 +21725,7 @@ function getStorageUsed() {
 // 只更新顶部状态栏，不重新渲染面板
 function updateTopBar() {
     if (!game) return;
-    safeSetText('stat-money', Math.floor(game.money));
+    safeSetText('stat-money', game.money.toFixed(1));
     safeSetText('stat-stamina', Math.floor(game.stamina));
     safeSetText('stat-max-stamina', game.maxStamina);
     safeSetText('stat-health', Math.floor(game.health));
@@ -23070,6 +23079,7 @@ function showToast(text, type = 'normal') {
     toast.className = 'toast';
     if (type === 'good') toast.classList.add('good');
     if (type === 'bad') toast.classList.add('bad');
+    if (type === 'warn') toast.classList.add('warn');
     
     toast.classList.add('show');
     
@@ -23096,7 +23106,7 @@ function showErrorLogs() {
     if (logs.length === 0) {
         content.innerHTML = '<div style="text-align: center; padding: 30px; color: #888;">暂无错误日志 🎉</div>';
     } else {
-        let html = `<div style="margin-bottom: 10px; color: #666;">共 ${logs.length} 条记录（最多保留50条）</div>`;
+        let html = `<div style="margin-bottom: 10px; color: #666;">共 ${logs.length} 条记录（最多保留20条）</div>`;
         logs.forEach((log, i) => {
             html += `<div style="margin-bottom: 12px; padding: 10px; background: #f8f8f8; border-radius: 6px; border-left: 3px solid #e74c3c;">`;
             html += `<div style="color: #999; font-size: 11px; margin-bottom: 4px;">${escapeHtml(log.time || '未知时间')}</div>`;
@@ -24048,7 +24058,12 @@ function checkAchievements() {
         totalFruitHarvest: (game.stats && game.stats.totalFruitHarvest) || 0,
         bestFriendCount: Object.values(game.npcs || {}).filter(f => (f || 0) >= 100).length,
         maxSkillLevel: Math.max(0, ...Object.values(game.skills || {}).map(s => (s && s.level) || 0)),
-        totalEvents: (game.eventHistory || []).length
+        totalEvents: (game.eventHistory || []).length,
+        // 添加缺失的成就条件映射
+        totalDay: game.totalDay || 0,
+        totalHoney: game.stats && game.stats.totalHoney || 0,
+        totalMushroom: game.stats && game.stats.totalMushroom || 0,
+        totalPickle: game.stats && game.stats.totalPickle || 0
     };
     
     for (const [key, ach] of Object.entries(ACHIEVEMENT_DATA)) {
@@ -24069,6 +24084,25 @@ function checkAchievements() {
             }
             if (ach.condition === 'hasWell' && conditions.hasWell) {
                 unlockAchievement(key);
+            }
+            // 处理字符串条件
+            if (typeof ach.condition === 'string') {
+                if (ach.condition === 'allBuildingsBuilt') {
+                    const allBuilt = Object.keys(BUILDING_DATA).every(key => {
+                        const building = game.buildings && game.buildings[key];
+                        return building && building.level >= 1;
+                    });
+                    if (allBuilt) unlockAchievement(key);
+                    continue;
+                }
+                if (ach.condition === 'allProcessingBuilt') {
+                    const allBuilt = Object.keys(PROCESSING_DATA).every(key => {
+                        const building = game.processing && game.processing[key];
+                        return building && building.level >= 1;
+                    });
+                    if (allBuilt) unlockAchievement(key);
+                    continue;
+                }
             }
         }
     }
