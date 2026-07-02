@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.35';
+const GAME_VERSION = '1.3.36';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -17991,6 +17991,7 @@ function getNpcBonus(effectType) {
     if (!game.npcMilestones) return total;
     
     for (const [npcKey, milestones] of Object.entries(game.npcMilestones)) {
+        if (!Array.isArray(milestones)) continue;
         const npcData = NPC_MILESTONES[npcKey];
         if (!npcData) continue;
         
