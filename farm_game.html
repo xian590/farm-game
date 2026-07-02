@@ -2875,6 +2875,7 @@
                 <div class="sidebar-tab" data-tab="cooking">🍳 农家烹饪</div>
                 <div class="sidebar-tab" data-tab="community">🏛️ 村公共建设</div>
                 <div class="sidebar-tab" data-tab="collection">📖 农家图鉴</div>
+                <div class="sidebar-tab" data-tab="leaderboard" title="查看排行榜">🏆 排行榜</div>
                 <div class="sidebar-tab" data-tab="achievements">🏆 成就殿堂</div>
             <div class="sidebar-tab" data-tab="processing">🏡 农家副业</div>
                 <div class="sidebar-tab" data-tab="player">👤 角色属性</div>
@@ -3113,7 +3114,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.53';
+const GAME_VERSION = '1.3.54';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -5498,6 +5499,15 @@ const COLLECTION_DATA = {
             { id: 'chestnut_porridge', name: '板栗粥', emoji: '🌰' }
         ]
     }
+};
+
+// 排行榜数据
+const LEADERBOARD_DATA = {
+    richest: { name: '财富榜', emoji: '💰', desc: '看谁最有钱' },
+    harvester: { name: '收获榜', emoji: '🌾', desc: '看谁收获最多' },
+    angler: { name: '钓鱼榜', emoji: '🎣', desc: '看谁钓得最多' },
+    chef: { name: '烹饪榜', emoji: '👨‍🍳', desc: '看谁厨艺最好' },
+    miner: { name: '挖矿榜', emoji: '⛏️', desc: '看谁挖得最深' }
 };
 
 // 成就数据
@@ -9267,7 +9277,7 @@ function initGame(mode) {
         tools: [],
         composting: false,
         compostStartDay: 0,
-        items: { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0, fish: 0 },
+        items: { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0, fish: 0, wood: 0 },
         seeds: { rice_spring: 0, rice_summer: 0, sweet_spring: 0, sweet_autumn: 0, wheat_spring: 0, wheat_autumn: 0, corn_summer: 0, soybean_spring: 0, soybean_summer: 0, potato_spring: 0, potato_autumn: 0, peanut_summer: 0, pepper_summer: 0, pepper_autumn: 0, cabbage_autumn: 0, cabbage_winter: 0, radish_autumn: 0, radish_winter: 0, eggplant_summer: 0, eggplant_autumn: 0, garlic_autumn: 0, garlic_spring: 0 },
         crops: { rice: 0, sweet: 0, wheat: 0, corn: 0, soybean: 0, potato: 0, peanut: 0, pepper: 0, cabbage: 0, radish: 0, eggplant: 0, garlic: 0 },
         npcMilestones: {},  // 已达成的NPC里程碑
@@ -9296,6 +9306,7 @@ function initGame(mode) {
         lastDialogue: {}, // 上次对话日期 {npcKey: day}
         lastChatDay: {}, // 上次聊天日期 {npcKey: day}
         tutorialStep: 0, // 新手引导步骤
+        tutorialCompleted: false, // 新手引导是否完成
         justStarted: true, // 标记刚进入游戏，跳过第一次事件
         marketVisited: false, // 今日是否已赶集
         pendingQuestRewards: [], // 待领取的任务奖励队列
@@ -10730,6 +10741,7 @@ function fixSaveData() {
     if (game.items.pesticide === undefined) game.items.pesticide = 0;
     if (game.items.bun === undefined) game.items.bun = 0;
     if (game.items.medicine === undefined) game.items.medicine = 0;
+    if (game.items.wood === undefined) game.items.wood = 0;
     
     // 补全堆肥相关
     if (game.composting === undefined) game.composting = false;
@@ -11036,6 +11048,7 @@ function fixSaveData() {
     
     // 补全新手教程进度
     if (game.tutorialStep === undefined) game.tutorialStep = 0;
+    if (game.tutorialCompleted === undefined) game.tutorialCompleted = false;
     
     // 补全心情值
     if (game.mood === undefined) game.mood = 50;
@@ -11682,6 +11695,16 @@ function onNewDay() {
     
     addLog(`🌅 第${game.totalDay || game.day}天 - ${getRandomFlavor('newDay')}`, 'info');
     
+    // 新手引导：天数触发的步骤
+    if (!game.tutorialCompleted) {
+        if (game.day === 3 && game.tutorialStep === 5) advanceTutorial();
+        if (game.day === 7 && game.tutorialStep === 7) advanceTutorial();
+        if (game.day === 14 && game.tutorialStep === 8) advanceTutorial();
+        if (game.day === 21 && game.tutorialStep === 9) {
+            advanceTutorial();
+        }
+    }
+    
     // 事件sellBonus每天衰减50%，避免无限叠加
     if (game.sellBonus > 0) {
         game.sellBonus = Math.max(0, game.sellBonus * 0.5);
@@ -12130,12 +12153,33 @@ function onNewDay() {
     if (game.farmStay && game.farmStay.level > 0) {
         const levelData = FARM_STAY_DATA.level[Math.max(0, game.farmStay.level - 1)];
         if (levelData) {
-            // 随机客人数量
-            const guests = Math.floor(Math.random() * levelData.maxGuests) + 1;
-            const income = levelData.dailyIncome * guests;
-            game.money += income;
+            // 计算菜品库存总份数
+            const totalDishes = Object.values(game.farmStayDishes || {}).reduce((sum, v) => sum + (v || 0), 0);
+            const maxGuests = levelData.maxGuests;
+            // 客人数量 = 基础随机数 + 菜品库存加成（每2份菜多1位客人，上限maxGuests）
+            let guests = Math.floor(Math.random() * maxGuests) + 1;
+            guests = Math.min(maxGuests, guests + Math.floor(totalDishes / 2));
+
+            // 消耗菜品（每位客人消耗1份菜，优先消耗库存多的菜品）
+            let remainingGuests = guests;
+            const dishKeys = Object.keys(game.farmStayDishes || {}).sort((a, b) => (game.farmStayDishes[b] || 0) - (game.farmStayDishes[a] || 0));
+            for (const dishKey of dishKeys) {
+                if (remainingGuests <= 0) break;
+                const consume = Math.min(remainingGuests, game.farmStayDishes[dishKey] || 0);
+                game.farmStayDishes[dishKey] -= consume;
+                remainingGuests -= consume;
+            }
+
+            // 客人满意度（根据是否吃饱决定）
+            const satisfaction = remainingGuests > 0 ? 0.5 : 1.0; // 没吃饱则满意度减半
+            const dailyIncome = Math.floor(levelData.dailyIncome * guests * satisfaction * (1 + game.farmStay.reputation * 0.01));
+            game.money += dailyIncome;
             game.farmStay.guests = guests;
-            addLog(`🏡 农家乐今日接待 ${guests} 位客人，收入 ${income} 元`, 'good');
+            if (remainingGuests > 0) {
+                addLog(`🏡 农家乐今日接待 ${guests} 位客人，但菜品不足（缺${remainingGuests}份），收入 ${dailyIncome} 元`, 'warn');
+            } else {
+                addLog(`🏡 农家乐今日接待 ${guests} 位客人，客人吃得满意，收入 ${dailyIncome} 元`, 'good');
+            }
         }
     }
 
@@ -13783,6 +13827,12 @@ function handleEventChoice(optionIdx) {
             if (game.items[itemId] < 0) game.items[itemId] = 0;
         }
     }
+    // 上山砍柴事件额外产出木材
+    if (eventId === 'chop_wood') {
+        const woodAmount = Math.floor(Math.random() * 5) + 3;
+        game.items.wood = (game.items.wood || 0) + woodAmount;
+        addLog(`🪵 砍了${woodAmount}根木材`, 'good');
+    }
     if (effect.npcs) {
         for (const [npcId, val] of Object.entries(effect.npcs)) {
             addNpcFavor(npcId, val);
@@ -14234,6 +14284,13 @@ function showGame() {
     if (typeof updateUI === 'function') {
         updateUI();
     }
+    
+    // 显示新手引导步骤0
+    setTimeout(() => {
+        if (game && game.tutorialStep === 0 && !game.tutorialCompleted) {
+            showTutorial();
+        }
+    }, 1000);
 }
 
 // ==================== 面板渲染 ====================
@@ -14328,6 +14385,9 @@ function renderPanel(tab) {
             break;
         case 'achievements':
             renderAchievementsPanel();
+            break;
+        case 'leaderboard':
+            renderLeaderboardPanel();
             break;
         case 'log':
             renderLogPanel();
@@ -15901,6 +15961,13 @@ function goForaging() {
     if (!game.foragingItems) game.foragingItems = {};
     game.foragingItems[item.id] = (game.foragingItems[item.id] || 0) + amount;
     
+    // 采集时顺手捡木材（30%概率）
+    if (['bamboo_shoot', 'wild_vegetable', 'herb'].includes(item.id) && Math.random() < 0.3) {
+        const woodAmount = Math.floor(Math.random() * 3) + 1;
+        game.items.wood = (game.items.wood || 0) + woodAmount;
+        addLog(`🪵 顺手捡了${woodAmount}根枯树枝`, 'good');
+    }
+    
     // 统计
     if (!game.stats) game.stats = {};
     game.stats.totalForage = (game.stats.totalForage || 0) + 1;
@@ -16921,6 +16988,8 @@ function visitNeighbor() {
     renderPlayerPanel();
     updateTopBar();
     showToast(`${npc.name}好感度+${gain}！`, 'good');
+    
+    if (game.tutorialStep === 6) advanceTutorial();
 }
 
 // 河边钓鱼
@@ -19994,6 +20063,13 @@ function renderFarmStayPanel() {
         const levelData = FARM_STAY_DATA.level[Math.max(0, currentLevel - 1)];
         html += `<div class="shop-category">🏡 当前：${levelData.emoji} ${levelData.name}</div>`;
         html += `<div class="shop-item"><div class="shop-item-info"><div class="shop-item-icon">${levelData.emoji}</div><div><div class="shop-item-name">${levelData.name}</div><div class="shop-item-desc">日收入：${levelData.dailyIncome}元/人，最多${levelData.maxGuests}人</div><div class="shop-item-desc">昨日接待：${(game.farmStay && game.farmStay.guests) || 0}人</div></div></div></div>`;
+        
+        // 菜品库存显示
+        const totalDishes = Object.values(game.farmStayDishes || {}).reduce((sum, v) => sum + (v || 0), 0);
+        html += `<div style="margin: 10px 0; padding: 10px; background: #fff; border-radius: 8px;">
+            <div style="font-size: 14px; font-weight: bold;">🍽️ 当前菜品库存：${totalDishes}份</div>
+            <div style="font-size: 12px; color: #666;">每2份菜可多吸引1位客人</div>
+        </div>`;
     } else {
         html += '<div class="shop-category">🏡 尚未开业</div>';
         html += '<div class="shop-item" style="opacity:0.6;"><div class="shop-item-info"><div class="shop-item-icon">🛖</div><div><div class="shop-item-name">茅草棚</div><div class="shop-item-desc">先从最简单的茅草棚开始</div></div></div></div>';
@@ -20052,7 +20128,7 @@ function renderFarmStayPanel() {
                         </div>
                     </div>
                     <div class="shop-item-price">
-                        <button class="buy-btn" onclick="makeDish('${key}')" ${!hasIngredients ? 'disabled' : ''}>🍳 制作（收入${dish.income}元）</button>
+                        <button class="buy-btn" onclick="makeDish('${key}')" ${!hasIngredients ? 'disabled' : ''}>🍳 制作（加入库存）</button>
                     </div>
                 </div>
             `;
@@ -20177,9 +20253,9 @@ function makeDish(dishKey) {
     
     if (!game.farmStayDishes) game.farmStayDishes = {};
     game.farmStayDishes[dishKey] = (game.farmStayDishes[dishKey] || 0) + 1;
-    game.money += dish.income;
     
-    addLog(`🍽️ 制作了${dish.emoji}${dish.name}，收入${dish.income}元！`, 'good');
+    // 收入在每日结算时通过客人住宿统一计算，制作菜品只增加库存
+    addLog(`🍽️ 制作了${dish.emoji}${dish.name}，已加入菜品库存！`, 'good');
     saveGame();
     renderFarmStayPanel();
     updateTopBar();
@@ -20364,6 +20440,71 @@ function renderLogPanel() {
     `;
 }
 
+// 生成排行榜数据
+function generateLeaderboard(type) {
+    const playerEntry = { name: '你', score: 0, isPlayer: true };
+    switch(type) {
+        case 'richest': playerEntry.score = game.money + game.bankDeposit; break;
+        case 'harvester': playerEntry.score = (game.stats && game.stats.totalHarvest) || 0; break;
+        case 'angler': playerEntry.score = (game.stats && game.stats.totalFish) || 0; break;
+        case 'chef': playerEntry.score = (game.stats && game.stats.totalCooked) || 0; break;
+        case 'miner': playerEntry.score = (game.mineStats && game.mineStats.deepestLayer) || 0; break;
+    }
+    
+    const npcs = [
+        { name: '赵老板', score: Math.floor(5000 + Math.random() * 10000) },
+        { name: '王村长', score: Math.floor(3000 + Math.random() * 8000) },
+        { name: '李老农', score: Math.floor(2000 + Math.random() * 6000) },
+        { name: '张婶', score: Math.floor(1000 + Math.random() * 4000) },
+        { name: '周明', score: Math.floor(1500 + Math.random() * 5000) },
+        { name: '陈阳', score: Math.floor(2500 + Math.random() * 7000) },
+        { name: '林小雨', score: Math.floor(1800 + Math.random() * 5500) },
+        { name: '孙妙青', score: Math.floor(1200 + Math.random() * 4500) },
+        { name: '吴大柱', score: Math.floor(800 + Math.random() * 3000) },
+        { name: '王二蛋', score: Math.floor(500 + Math.random() * 2000) }
+    ];
+    
+    // 根据类型调整NPC分数
+    switch(type) {
+        case 'richest': break; // 已用随机值
+        case 'harvester': npcs.forEach(n => n.score = Math.floor(n.score * 0.5)); break;
+        case 'angler': npcs.forEach(n => n.score = Math.floor(n.score * 0.1 + Math.random() * 50)); break;
+        case 'chef': npcs.forEach(n => n.score = Math.floor(n.score * 0.05 + Math.random() * 30)); break;
+        case 'miner': npcs.forEach(n => n.score = Math.floor(Math.random() * 10)); break;
+    }
+    
+    const all = [...npcs, playerEntry];
+    all.sort((a, b) => b.score - a.score);
+    return all.slice(0, 10); // 前10名
+}
+
+// 渲染排行榜面板
+function renderLeaderboardPanel() {
+    const panel = document.getElementById('content-panel');
+    if (!panel) return;
+    let html = '<div class="panel-title">🏆 排行榜</div>';
+    
+    for (const [key, data] of Object.entries(LEADERBOARD_DATA)) {
+        const list = generateLeaderboard(key);
+        html += `<div class="leaderboard-section" style="margin-bottom: 20px;">`;
+        html += `<div class="leaderboard-header" style="font-size: 18px; font-weight: bold; margin: 10px 0;">${data.emoji} ${data.name} <span style="font-size: 12px; color: #999;">${data.desc}</span></div>`;
+        html += `<div class="leaderboard-list" style="background: #fff; border-radius: 8px; padding: 10px;">`;
+        list.forEach((entry, i) => {
+            const isTop3 = i < 3;
+            const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+            const style = entry.isPlayer ? 'background: #fff9e6; font-weight: bold;' : isTop3 ? 'background: #f5f5f5;' : '';
+            html += `<div style="display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 6px; margin: 4px 0; ${style}">
+                <span>${rankEmoji} ${escapeHtml(entry.name)}</span>
+                <span style="color: #8b5a2b;">${entry.score}${key === 'richest' || key === 'harvester' ? '元' : key === 'miner' ? '层' : '次'}</span>
+            </div>`;
+        });
+        html += `</div></div>`;
+    }
+    
+    panel.innerHTML = html;
+    try { panel._lastRenderFields = JSON.stringify({tab: 'leaderboard', money: game.money}); } catch(e) { panel._lastRenderFields = null; }
+}
+
 // ==================== 游戏操作 ====================
 
 // 种植作物
@@ -20502,6 +20643,8 @@ function plantCrop(fieldIdx, cropKey) {
     saveGame();
     updateUI();
     showToast(`种下了${cropData.name}！`, 'good');
+    
+    if (game.tutorialStep === 1) advanceTutorial();
 }
 
 // 移栽
@@ -20599,6 +20742,8 @@ function waterField(fieldIdx) {
     saveGame();
     updateUI();
     showToast('浇水完成！', 'good');
+    
+    if (game.tutorialStep === 2) advanceTutorial();
 }
 
 // 除草
@@ -20948,6 +21093,8 @@ function harvestCrop(fieldIdx) {
     saveGame();
     updateUI();
     showToast(`收获${yield_}斤${cropData.name}！`, 'good');
+    
+    if (game.tutorialStep === 3) advanceTutorial();
 }
 
 // 出售作物
@@ -21046,6 +21193,8 @@ function _doSellCrop(cropKey, sellAmount, price) {
     }
     updateTopBar();
     showToast(`+${money}元`, 'good');
+    
+    if (game.tutorialStep === 4) advanceTutorial();
 }
 
 // 购买种子
@@ -21083,6 +21232,8 @@ function buySeed(seedKey) {
     }
     updateTopBar();
     showToast(`购买成功！`, 'good');
+    
+    if (game.tutorialStep === 0) advanceTutorial();
 }
 
 // 购买道具
@@ -22059,6 +22210,42 @@ function showModal(title, content, onConfirm) {
     modalFocusTrapped = true;
     // === 焦点管理结束 ===
 }
+
+// ==================== 新手引导系统 ====================
+const TUTORIAL_STEPS = [
+    { title: '👋 新手上路：认识你的状态', content: '小伙子/姑娘，欢迎来到李家村！先看看头顶这栏——钱袋子、体力条、还有日子，可都得盯紧喽。状态不好的时候，记得回家歇歇、吃点好的。<br><br><b>提示：</b>点击顶部状态栏可以查看详细状态。' },
+    { title: '🌾 新手上路：下地干活', content: '种子备好了，该去田里瞧瞧啦！先点击"整地"，把土松一松，再点"播种"把种子埋下去。俗话说：人勤地不懒，一分耕耘一分收获。<br><br><b>提示：</b>点击田地进行整地和播种。' },
+    { title: '💧 新手上路：浇水施肥', content: '庄稼种下去，可不能当甩手掌柜！每天得给地里浇浇水，旱了苗就蔫了。等以后有了化肥，还能让产量往上蹿一蹿。<br><br><b>提示：</b>记得每天给作物浇水。' },
+    { title: '🌾 新手上路：收获时节', content: '看着庄稼从青苗长到金黄，心里美滋滋的吧？收成好了，咱就得想着变现。去侧边栏"售卖"页面，把粮食换成白花花的银子。<br><br><b>提示：</b>收获的作物可以在"售卖"里出售。' },
+    { title: '💰 新手上路：买卖往来', content: '手里有了钱，腰杆也硬了！去侧边栏"商店"逛逛，买点新种子、农具，日子会越过越红火。会花钱的人，才会赚钱。<br><br><b>提示：</b>有钱了就可以去"商店"买更多种子。' },
+    { title: '👥 新手上路：走村串户', content: '在村里待了几天了，别总闷头种地。去侧边栏"村民"页面串串门，跟邻居们唠唠嗑，搞好关系以后好处多着呢！<br><br><b>提示：</b>去认识村里的邻居吧。' },
+    { title: '📚 新手上路：书中自有黄金屋', content: '跟林老师聊过了？他可是村里的大知识分子。常去侧边栏"技能"页面看看书，学点新技术，种地都能种出花来。<br><br><b>提示：</b>看书可以提升技能等级。' },
+    { title: '🏡 新手上路：农家乐开张', content: '日子越过越红火，光种地可不够。去侧边栏"农家乐"页面，接待城里来的客人，做好饭菜，又是一笔额外收入！<br><br><b>提示：</b>农家乐可以赚取额外收入。' },
+    { title: '⛏️ 新手上路：矿洞寻宝', content: '村里后山的矿洞可不是摆设。带上镐头下去转转，说不定能挖到值钱的矿石。富贵险中求嘛！<br><br><b>提示：</b>矿洞里可以挖到珍贵矿石。' },
+    { title: '🎉 恭喜！你已经适应了乡村生活！', content: '转眼三个星期过去了，你从当初那个手忙脚乱的新手，变成了如今样样精通的庄稼好把式。李家村的乡亲们都夸你踏实肯干！<br><br>新手引导到此结束，接下来的路，你自己走。愿你在这片土地上，种出属于自己的幸福！' }
+];
+
+function showTutorial() {
+    if (!game || game.tutorialCompleted) return;
+    const stepIdx = Math.min(game.tutorialStep, 9);
+    if (stepIdx < 0 || stepIdx >= TUTORIAL_STEPS.length) return;
+    
+    const step = TUTORIAL_STEPS[stepIdx];
+    showModal(step.title, step.content, null);
+}
+
+function advanceTutorial() {
+    if (!game || game.tutorialCompleted) return;
+    if (game.tutorialStep >= 10) return;
+    game.tutorialStep++;
+    showTutorial();
+    if (game.tutorialStep >= 10) {
+        game.tutorialCompleted = true;
+    }
+    saveGame();
+}
+
+// ==================== 新手引导系统结束 ====================
 
 function closeEventModal() {
     if (modalClosing) return;
