@@ -3003,8 +3003,8 @@
 <!-- 日常活动按钮区（已废弃，改为在角色属性页面内进行） -->
 <div id="daily-actions" style="display: none;">
     <button onclick="doExercise()" id="btn-exercise" class="action-btn" style="padding: 8px 16px; border-radius: 8px; border: 2px solid #8b5a2b; background: #4a7c59; color: #fff; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" title="消耗20体力，增加健康值" disabled>🏃 锻炼(-20)</button>
-    <button onclick="doChat()" id="btn-chat" class="action-btn" style="padding: 8px 16px; border-radius: 8px; border: 2px solid #8b5a2b; background: #e67e22; color: #fff; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" title="消耗10体力，增加NPC好感度" disabled>👋 串门(-10)</button>
-    <button onclick="doFish()" id="btn-fish" class="action-btn" style="padding: 8px 16px; border-radius: 8px; border: 2px solid #8b5a2b; background: #3498db; color: #fff; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" title="消耗15体力，获得鱼类" disabled>🎣 钓鱼(-15)</button>
+    <button onclick="doChat()" id="btn-chat" class="action-btn" style="padding: 8px 16px; border-radius: 8px; border: 2px solid #8b5a2b; background: #e67e22; color: #fff; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" title="消耗15体力，增加NPC好感度" disabled>👋 串门(-10)</button>
+    <button onclick="doFish()" id="btn-fish" class="action-btn" style="padding: 8px 16px; border-radius: 8px; border: 2px solid #8b5a2b; background: #3498db; color: #fff; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" title="消耗25体力，获得鱼类" disabled>🎣 钓鱼(-15)</button>
     <button onclick="goForaging()" id="btn-foraging" class="action-btn" style="padding: 8px 16px; border-radius: 8px; border: 2px solid #8b5a2b; background: #9b59b6; color: #fff; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" title="消耗15体力，采集野外资源" disabled>🌿 采集(-15)</button>
 </div>
 
@@ -3073,7 +3073,7 @@
                 <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importSaveFile(this)">
             </div>
             <div style="font-size: 11px; color: #999; margin-top: 8px;">
-                v<span id="settings-version">1.0.0</span> | 通过文件导入导出，可在任何浏览器中保存进度
+                v<span id="settings-version"></span> | 通过文件导入导出，可在任何浏览器中保存进度
             </div>
         </div>
         
@@ -3187,7 +3187,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.55';
+const GAME_VERSION = '1.3.56';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -16024,17 +16024,19 @@ function goForaging() {
         return;
     }
     
-    // 每日采集次数限制
-    game.dailyActions.foraging = (game.dailyActions.foraging || 0) + 1;
-    
-    if (game.dailyActions.foraging >= 2) {
-        showToast('今天已经去过后山转了一圈，篮子都装满了，明天再去吧', 'warn');
-        return;
-    }
+    // 检查体力
     if (game.stamina < 15) {
-        showToast('感觉累得不行了，歇会儿再来吧', 'bad');
+        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+        playErrorSound();
         return;
     }
+    // 检查每日上限
+    if (game.dailyActions.foraging >= 1) {
+        showToast('今天已经去过后山了...', 'warn');
+        return;
+    }
+    // 此时才增加计数
+    game.dailyActions.foraging = (game.dailyActions.foraging || 0) + 1;
     
     const seasonData = FORAGING_DATA[game.season];
     if (!seasonData) {
@@ -16992,7 +16994,7 @@ function exercise() {
             return;
         }
         
-        if (game.stamina < 25) {
+        if (game.stamina < 20) {
             showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
             playErrorSound();
             return;
@@ -17005,7 +17007,7 @@ function exercise() {
         }
         
         playClickSound();
-        game.stamina -= 25;
+        game.stamina -= 20;
         game.health = Math.min(game.maxHealth, game.health + 1);
         game.exerciseToday.count++;
         
@@ -17016,7 +17018,8 @@ function exercise() {
         }
         
         // 健康值影响体力上限
-        game.maxStamina = Math.max(1, game.health);
+        // 锻炼只增加健康，不减少体力上限
+        game.maxStamina = Math.max(game.maxStamina || 100, game.health);
         if (game.stamina > game.maxStamina) {
             game.stamina = game.maxStamina;
         }
@@ -17080,11 +17083,6 @@ function visitNeighbor() {
         game.friendship[randomNpc] = Math.min(100, (game.friendship[randomNpc] || 0) + gain);
         game.npcs[randomNpc] = Math.min(100, (game.npcs[randomNpc] || 0) + gain);
         
-        // 检查NPC里程碑
-        if (typeof checkNpcMilestones === 'function') {
-            checkNpcMilestones(randomNpc);
-        }
-        
         addLog(`👋 去${npc.name}家串了个门，聊得挺开心，好感度+${gain}`, 'good');
         checkNpcMilestones(randomNpc);
         saveGame();
@@ -17110,14 +17108,14 @@ function goFishing() {
             return;
         }
         
-        if (game.stamina < 15) {
+        if (game.stamina < 25) {
             showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
             playErrorSound();
             return;
         }
         
         playClickSound();
-        game.stamina -= 15;
+        game.stamina -= 25;
         game.fishToday.count++;
         
         // 增加钓鱼熟练度经验
@@ -20715,7 +20713,7 @@ function plantCrop(fieldIdx, cropKey) {
         }
         
         if (!cropData) return;
-        const plantCost = (cropData.stepCosts && cropData.stepCosts[0]) || 12;
+        const plantCost = (cropData.stepCosts && cropData.stepCosts[0] !== undefined) ? cropData.stepCosts[0] : 12;
         
         if (game.stamina < plantCost) {
             showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
@@ -21122,7 +21120,7 @@ function harvestCrop(fieldIdx) {
         
         // 入库（检查仓库容量限制）
         let storageCap2 = game.storageCapacity || 2000;
-        let currentStorage2 = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
+        const currentStorage2 = getStorageUsed();
         let actualYield = yield_;
         
         if (currentStorage2 + yield_ > storageCap2) {
@@ -22005,9 +22003,9 @@ function addLog(text, type = 'normal') {
     if (isAtBottom) logEl.scrollTop = logEl.scrollHeight;
     
     // 限制日志数量，最多保留200条
-    const firstItem = logEl.firstElementChild;
-    if (firstItem && logEl.children.length > 200) {
-        firstItem.remove();
+    while (logEl.querySelectorAll('.log-item').length > 200) {
+        const firstLog = logEl.querySelector('.log-item');
+        if (firstLog) firstLog.remove();
     }
 }
 
@@ -22350,7 +22348,10 @@ function showModal(title, content, onConfirm) {
         }
     } else {
         if (buttonsContainer) buttonsContainer.style.display = 'flex';
-        if (secondaryBtn) secondaryBtn.style.display = 'inline-block';
+        if (secondaryBtn) {
+            secondaryBtn.style.display = 'inline-block';
+            secondaryBtn.textContent = '取消';
+        }
         if (confirmBtn) {
             confirmBtn.style.display = 'inline-block';
             confirmBtn.textContent = '确定';
@@ -22711,7 +22712,7 @@ function renderCountdownContent() {
         <div class="countdown-item">
             <div class="countdown-item-info">
                 <div class="countdown-item-name">🏃 锻炼身体</div>
-                <div class="countdown-item-desc">消耗25体力，健康+1</div>
+                <div class="countdown-item-desc">消耗20体力，健康+1</div>
             </div>
             <div class="countdown-item-time">${Math.max(0, 3 - exerciseCount)}/3</div>
             <div class="countdown-item-progress">
@@ -22726,7 +22727,7 @@ function renderCountdownContent() {
         <div class="countdown-item">
             <div class="countdown-item-info">
                 <div class="countdown-item-name">👋 串门聊天</div>
-                <div class="countdown-item-desc">消耗10体力，提升好感</div>
+                <div class="countdown-item-desc">消耗15体力，提升好感</div>
             </div>
             <div class="countdown-item-time">${Math.max(0, 3 - visitCount)}/3</div>
             <div class="countdown-item-progress">
