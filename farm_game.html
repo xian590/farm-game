@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.32';
+const GAME_VERSION = '1.3.33';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -11707,6 +11707,7 @@ function onNewDay() {
             }
         }
     }
+    }
     
     // 重置集市访问状态
     game.marketVisited = false;
@@ -15827,17 +15828,6 @@ function sellAllFish() {
         updateUI();
         renderFishingPanel();
     });
-}
-        return;
-    }
-    
-    game.money += totalMoney;
-    addLog(`💰 卖掉了${soldLog.join('、')}，共${totalWeight}斤鱼，获得${totalMoney}元`, 'success');
-    playSound('coin');
-    showToast(`卖掉${totalWeight}斤鱼，获得${totalMoney}元`, 'good');
-    saveGame();
-    updateTopBar();
-    renderFishingPanel();
 }
 
 function sellForagingItem(itemId, amount) {
@@ -20393,11 +20383,11 @@ function harvestCrop(fieldIdx) {
     yield_ = Math.max(0, Math.floor(yield_));
     
     // 入库（检查仓库容量限制）
-    const storageCap = game.storageCapacity || 2000;
-    const currentStorage = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
+    let storageCap2 = game.storageCapacity || 2000;
+    let currentStorage2 = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
     let actualYield = yield_;
     
-    if (currentStorage + yield_ > storageCap) {
+    if (currentStorage2 + yield_ > storageCap2) {
         actualYield = Math.max(0, storageCap - currentStorage);
         const discarded = yield_ - actualYield;
         if (discarded > 0) {
