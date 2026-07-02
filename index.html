@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.33';
+const GAME_VERSION = '1.3.34';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10337,8 +10337,11 @@ function exportSaveFile() {
         a.download = `farm_save_${game.totalDay || game.day}day_${new Date().toISOString().slice(0,10)}.json`;
         document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        // 延迟释放URL，确保浏览器有时间启动下载
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            if (a.parentNode) document.body.removeChild(a);
+        }, 1000);
         showToast('✅ 存档已导出！', 'good');
     } catch(e) {
         console.error('导出失败', e);
@@ -10370,6 +10373,11 @@ function importSaveFile(input) {
             showToast('存档文件解析失败', 'bad');
             console.error('导入失败', err);
         }
+        input.value = '';
+    };
+    reader.onerror = function() {
+        showToast('文件读取失败，请检查文件是否损坏', 'bad');
+        console.error('FileReader error:', reader.error);
         input.value = '';
     };
     reader.readAsText(file);
@@ -13772,10 +13780,6 @@ function safeSetText(id, value) {
 }
 
 // 安全设置元素HTML，防止null错误
-function safeSetHtml(id, html) {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-}
 
 // updateUI 的 requestAnimationFrame 节流
 let _uiUpdatePending = false;
@@ -14063,13 +14067,15 @@ function renderFieldsPanel() {
     if (!hasFieldCards) {
         panel._lastRenderFields = null;
     }
-    const stateSnapshot = game.fields.map(f => ({
-        crop: f.crop, stage: f.stage, step: f.step, level: f.level,
-        fertilized: f.fertilized, prepared: f.prepared,
-        lastWaterDay: f.lastWaterDay, lastWeedDay: f.lastWeedDay,
-        fertilizerType: f.fertilizerType, turnedVine1: f.turnedVine1, turnedVine2: f.turnedVine2
-    }));
-    const stateKey = JSON.stringify(stateSnapshot);
+    // 轻量级状态key：避免JSON.stringify创建大量临时对象和字符串
+    let stateKey = '';
+    for (let i = 0; i < game.fields.length; i++) {
+        const f = game.fields[i];
+        stateKey += (f.crop || '') + '|' + f.stage + '|' + f.step + '|' + f.level + '|' +
+                     (f.fertilized ? '1' : '0') + (f.prepared ? '1' : '0') + '|' +
+                     (f.lastWaterDay || 0) + '|' + (f.lastWeedDay || 0) + '|' +
+                     (f.fertilizerType || '') + '|' + (f.turnedVine1 ? '1' : '0') + (f.turnedVine2 ? '1' : '0') + ';';
+    }
     if (panel._lastRenderFields && panel._lastRenderFields === stateKey && hasFieldCards) {
         // 只更新进度条和状态
         game.fields.forEach((field, idx) => {
@@ -21309,9 +21315,11 @@ ${text}
         a.download = `farm_feedback_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
         document.body.appendChild(a);
         a.click();
-    URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // 延迟释放URL，确保浏览器有时间启动下载
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            if (a.parentNode) document.body.removeChild(a);
+        }, 1000);
         
         // 同时存入localStorage供开发者后台查看
         const FEEDBACK_KEY = 'farm_game_feedback_v1';
