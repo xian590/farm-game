@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.46';
+const GAME_VERSION = '1.3.47';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10324,6 +10324,19 @@ function saveGame() {
         localStorage.setItem(SAVE_KEY, saveData);
     } catch(e) {
         console.error('存档保存失败', e);
+        // 专门处理容量溢出
+        if (e.name === 'QuotaExceededError' || e.name === 'QuotaExceeded') {
+            try {
+                for (let i = 1; i <= 3; i++) {
+                    localStorage.removeItem(SAVE_KEY + '_backup_' + i);
+                }
+                localStorage.setItem(SAVE_KEY, saveData);
+                showToast('⚠️ 存档空间紧张，已清理旧备份', 'warn');
+            } catch(e2) {
+                showToast('💾 存档空间已满！请立即导出存档到文件，避免进度丢失', 'bad');
+                addLog('💾 警告：存档空间已满，请导出存档', 'bad');
+            }
+        }
     } finally {
         // 恢复瞬态字段（无论成败都恢复）
         game.needsRender = _needsRender;
@@ -21721,6 +21734,7 @@ function confirmModal() {
     
     function onMove(e) {
         if (!isDragging || !currentModal) return;
+        if (e.preventDefault) e.preventDefault();
         const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
         const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
         const dx = clientX - startX;
