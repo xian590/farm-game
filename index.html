@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.39';
+const GAME_VERSION = '1.3.40';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9923,7 +9923,7 @@ function calculateOfflineReward() {
     // 离线期间银行利息结算（复利计算）
     if (game.bankDeposit > 0 && gameDays > 0) {
         const compoundRate = Math.pow(1 + BANK_DATA.interestRate, gameDays);
-        const newDeposit = Math.floor(game.bankDeposit * compoundRate);
+        const newDeposit = Math.min(Math.floor(game.bankDeposit * compoundRate), BANK_DATA.maxDeposit);
         const totalInterest = newDeposit - game.bankDeposit;
         if (totalInterest > 0) {
             game.bankDeposit = newDeposit;
@@ -11648,7 +11648,7 @@ function onNewDay() {
     // 银行利息（每日结算）
     if (game.bankDeposit > 0) {
         const interest = Math.floor(game.bankDeposit * BANK_DATA.interestRate);
-        game.bankDeposit += interest;
+        game.bankDeposit = Math.min(game.bankDeposit + interest, BANK_DATA.maxDeposit);
         addLog(`🏦 银行利息结算：存入${interest}元，当前存款${game.bankDeposit}元`, 'good');
     }
     
@@ -19119,9 +19119,12 @@ function renderBankPanel() {
 function bankDepositAll() {
     if (game.money <= 0) { showToast('没有现金可存入', 'bad'); return; }
     if (!game.bankDeposit) game.bankDeposit = 0;
-    game.bankDeposit += game.money;
-    addLog(`🏦 存入${game.money}元到银行`, 'good');
-    game.money = 0;
+    const depositSpace = Math.max(0, BANK_DATA.maxDeposit - game.bankDeposit);
+    const depositAmount = Math.min(game.money, depositSpace);
+    if (depositAmount <= 0) { showToast('银行存款已达上限', 'bad'); return; }
+    game.bankDeposit += depositAmount;
+    game.money -= depositAmount;
+    addLog(`🏦 存入${depositAmount}元到银行`, 'good');
     saveGame();
     renderBankPanel();
     updateTopBar();
@@ -22409,7 +22412,8 @@ function mineLayer(layerKey) {
     if (!game.stats) game.stats = {};
     game.stats.totalDigs = game.mineStats.totalDigs;
     const layerIndex = parseInt(layerKey.replace('layer', ''), 10) - 1;
-    if (layerIndex > (game.mineStats.deepestLayer || 0)) {
+    const currentDeepest = typeof game.mineStats.deepestLayer === 'number' ? game.mineStats.deepestLayer : -1;
+    if (layerIndex > currentDeepest) {
         game.mineStats.deepestLayer = layerIndex;
     }
     
@@ -22834,7 +22838,7 @@ function contributeToProject(projKey, type) {
         const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / Math.max(1, proj.totalProgress / Math.max(1, needStone)));
         const useStone = Math.min(haveStone, remainingNeed, 5); // 一次最多捐5个
         game.mineInventory.stone -= useStone;
-        contributed = useStone * Math.floor(proj.totalProgress / needStone);
+        contributed = useStone * (proj.totalProgress / needStone);
         addLog(`🪨 给${proj.name}捐了${useStone}个石块`, 'good');
     } else if (type === 'money') {
         const needMoney = proj.materials.money || 0;
@@ -22849,7 +22853,7 @@ function contributeToProject(projKey, type) {
         const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / Math.max(1, proj.totalProgress / needMoney));
         const useMoney = Math.min(game.money, remainingNeed, 50); // 一次最多捐50
         game.money -= useMoney;
-        contributed = useMoney * Math.floor(proj.totalProgress / needMoney);
+        contributed = useMoney * (proj.totalProgress / needMoney);
         addLog(`💰 给${proj.name}捐了${useMoney}元`, 'good');
     }
     
