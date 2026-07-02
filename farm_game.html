@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.44';
+const GAME_VERSION = '1.3.45';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10292,6 +10292,12 @@ function useItem(itemId) {
 
 function saveGame() {
     if (!game) return;
+    // 保存前备份瞬态字段（必须在 try 最外层声明，避免 finally 引用 TDZ 变量）
+    const _needsRender = game.needsRender;
+    const _tickCount = game.tickCount;
+    const _lastSave = game._lastSaveTime;
+    const _lastUI = game._lastUITick;
+    const _healthDeath = game._healthDeathChecked;
     try {
         // 自动备份：每5次存档轮转保存最近3个存档
         const saveCount = game._saveCount || 0;
@@ -10308,12 +10314,7 @@ function saveGame() {
         game._saveCount = (saveCount + 1) % 1000;
         
         game.lastSaveTimestamp = Date.now();
-        // 保存前移除瞬态字段（减少存档大小和序列化时间）
-        const _needsRender = game.needsRender;
-        const _tickCount = game.tickCount;
-        const _lastSave = game._lastSaveTime;
-        const _lastUI = game._lastUITick;
-        const _healthDeath = game._healthDeathChecked;
+        // 移除瞬态字段
         delete game.needsRender;
         delete game.tickCount;
         delete game._lastSaveTime;
