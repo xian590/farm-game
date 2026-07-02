@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.51';
+const GAME_VERSION = '1.3.52';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3160,16 +3160,16 @@ const ITEM_EFFECTS = {
 };
 
 const ITEM_DATA = {
-    snack: { name: '粗点心', emoji: '🍬' },
-    liquor: { name: '散装白酒', emoji: '🍶' },
-    cloth: { name: '花布头', emoji: '🧵' },
-    sugar: { name: '红糖', emoji: '🍯' },
-    cigarette: { name: '香烟', emoji: '🚬' },
-    fertilizer: { name: '化肥', emoji: '🧪' },
-    pesticide: { name: '农药', emoji: '☠️' },
-    bun: { name: '馒头', emoji: '🍞' },
-    medicine: { name: '感冒药', emoji: '💊' },
-    organicFertilizer: { name: '有机肥', emoji: '💩' }
+    snack: { name: '粗点心', emoji: '🍬', price: 15 },
+    liquor: { name: '散装白酒', emoji: '🍶', price: 50 },
+    cloth: { name: '花布头', emoji: '🧵', price: 30 },
+    sugar: { name: '红糖', emoji: '🍯', price: 25 },
+    cigarette: { name: '香烟', emoji: '🚬', price: 40 },
+    fertilizer: { name: '化肥', emoji: '🧪', price: 20 },
+    pesticide: { name: '农药', emoji: '☠️', price: 30 },
+    bun: { name: '馒头', emoji: '🍞', price: 10 },
+    medicine: { name: '感冒药', emoji: '💊', price: 35 },
+    organicFertilizer: { name: '有机肥', emoji: '💩', price: 25 }
 };
 
 // ==================== 音频系统 ====================
@@ -3340,6 +3340,7 @@ function playNote(frequency, duration, wave = 'sine', volume = 0.06, targetNode 
 
 // 播放白噪声
 function playNoise(duration, volume = 0.03, filterFreq = 1000) {
+    if (!sfxEnabled) return;
     if (!audioCtx || audioCtx.state === 'closed') return;
     
     // 安全检查
@@ -3862,7 +3863,7 @@ function switchBgm(bgmName) {
         musicGainNode.gain.setValueAtTime(musicGainNode.gain.value, audioCtx.currentTime);
         musicGainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1);
         
-        if (bgmFadeTimer) clearTimeout(bgmFadeTimer);
+        if (bgmFadeTimer) { clearTimeout(bgmFadeTimer); bgmFadeTimer = null; }
         bgmFadeTimer = setTimeout(() => {
             stopMusic();
             musicGainNode.gain.value = musicVolume;
@@ -9314,6 +9315,7 @@ function initGame(mode) {
         lastWorkerWaterDay: 0, // 上次工人浇水天数
         lastWorkerWeedDay: 0, // 上次工人除草天数
         petPoop: 0, // 宠物粪便清理次数
+        mood: 50, // 心情值（0-100）
         animals: {}, // 畜牧
         orchard: [], // 果园
         fruits: {}, // 水果库存
@@ -10403,7 +10405,10 @@ function useItem(itemId) {
     // 加效果
     if (item.use && item.use.stamina) game.stamina = Math.min(game.maxStamina, game.stamina + item.use.stamina);
     if (item.use && item.use.health) game.health = Math.min(game.maxHealth, game.health + item.use.health);
-    if (item.use && item.use.mood) game.mood = Math.min(100, game.mood + item.use.mood);
+    if (item.use && item.use.mood) {
+        const currentMood = game.mood === undefined ? 50 : game.mood;
+        game.mood = Math.min(100, currentMood + item.use.mood);
+    }
     addLog(`使用了${item.icon || ''}${item.name || itemId}`, 'item');
     const effects = [];
     if (item.use && item.use.stamina) effects.push(`体力+${item.use.stamina}`);
@@ -11481,6 +11486,17 @@ function advanceSeason(silent = false) {
         field.lastWeedDay -= dayOffset;
     });
     
+    const dayOffsetGlobal = 28;
+    if (game.lastAutoWeedDay) game.lastAutoWeedDay -= dayOffsetGlobal;
+    if (game.lastWorkerWaterDay) game.lastWorkerWaterDay -= dayOffsetGlobal;
+    if (game.lastWorkerWeedDay) game.lastWorkerWeedDay -= dayOffsetGlobal;
+    if (game.lastChatDay) {
+        for (const k in game.lastChatDay) { if (game.lastChatDay[k]) game.lastChatDay[k] -= dayOffsetGlobal; }
+    }
+    if (game.lastGiftDay) {
+        for (const k in game.lastGiftDay) { if (game.lastGiftDay[k]) game.lastGiftDay[k] -= dayOffsetGlobal; }
+    }
+    
     let removedCount = 0;
     const seasonless = game.agriTechEffects && game.agriTechEffects.seasonless && game.agriTechEffects.seasonless > 0;
     game.fields.forEach(field => {
@@ -11529,6 +11545,8 @@ function advanceSeason(silent = false) {
     if (game.currentSeasonBonus > 0) {
         addLog(`🌟 本季产量加成+${Math.floor(game.currentSeasonBonus * 100)}%！`, 'good');
     }
+    game.weatherDuration = 0;
+    changeWeather();
     addLog(`${SEASON_ICONS[game.season]} ${SEASON_NAMES[game.season]}来了。${getRandomFlavor('season')}`, 'info');
 }
 
@@ -13912,8 +13930,8 @@ function updateProcessingJobs() {
             unlockCollectionItem('processed', job.outputItem);
             
             // 任务检查：累积加工产出100斤
-            const totalProcessed = Object.values(game.processedItems || {}).reduce((sum, v) => sum + (v || 0), 0);
-            if (totalProcessed >= 100 && !game.quests.q24) {
+            game.stats.processingCount = (game.stats.processingCount || 0) + job.outputAmount;
+            if (game.stats.processingCount >= 100 && !game.quests.q24) {
                 game.quests.q24 = true;
                 queueQuestReward('q24', 300, '✅ 任务完成：米香四溢，奖励300元');
             }
@@ -14300,13 +14318,15 @@ function renderFieldsPanel() {
         panel._lastRenderFields = null;
     }
     // 轻量级状态key：避免JSON.stringify创建大量临时对象和字符串
-    let stateKey = '';
+    let stateKey = game.fields.length + ';';
     for (let i = 0; i < game.fields.length; i++) {
         const f = game.fields[i];
-        stateKey += (f.crop || '') + '|' + f.stage + '|' + f.step + '|' + f.level + '|' +
-                     (f.fertilized ? '1' : '0') + (f.prepared ? '1' : '0') + '|' +
-                     (f.lastWaterDay || 0) + '|' + (f.lastWeedDay || 0) + '|' +
-                     (f.fertilizerType || '') + '|' + (f.turnedVine1 ? '1' : '0') + (f.turnedVine2 ? '1' : '0') + ';';
+        stateKey += [
+            i, f.crop || '', f.stage || '', f.step || 0, f.level || '',
+            f.fertilized ? 1 : 0, f.prepared ? 1 : 0,
+            f.lastWaterDay || 0, f.lastWeedDay || 0, f.fertilizerType || '',
+            f.turnedVine1 ? 1 : 0, f.turnedVine2 ? 1 : 0
+        ].join('|') + ';';
     }
     if (panel._lastRenderFields && panel._lastRenderFields === stateKey && hasFieldCards) {
         // 只更新进度条和状态
@@ -14744,10 +14764,10 @@ function renderQuestBox() {
                 progress = hasTools ? 100 : 0;
                 progressText = hasTools ? '已完成' : '未开始';
             } else if (quest.id === 'q8') {
-                // 堆肥任务
-                const hasCompost = game.composting || (game.items && game.items.organicFertilizer > 0);
-                progress = hasCompost ? 100 : 0;
-                progressText = hasCompost ? '已完成' : '未开始';
+                const houseOrder = ['新手房', '进阶房', '精英房', '终极房'];
+                const currentIdx = houseOrder.indexOf(game.house || '新手房');
+                progress = currentIdx >= 1 ? 100 : 0;
+                progressText = currentIdx >= 1 ? '已完成' : '未开始';
             } else if (quest.id === 'q2') {
                 // 育苗任务
                 const isSeedling = game.fields.some(f => f.stage === 'seedling');
@@ -14900,8 +14920,9 @@ function renderSidebarQuests() {
             const hasTools = game.tools && game.tools.length > 0;
             progress = hasTools ? 100 : 0;
         } else if (quest.id === 'q8') {
-            const hasCompost = game.composting || (game.items && game.items.organicFertilizer > 0);
-            progress = hasCompost ? 100 : 0;
+            const houseOrder = ['新手房', '进阶房', '精英房', '终极房'];
+            const currentIdx = houseOrder.indexOf(game.house || '新手房');
+            progress = currentIdx >= 1 ? 100 : 0;
         } else if (quest.id === 'q12') {
             const level = game.skills && game.skills.cropFamiliarity ? game.skills.cropFamiliarity.level : 0;
             progress = Math.min(100, Math.floor(level / 2 * 100));
@@ -15281,7 +15302,7 @@ function renderShopPanel() {
     html += '</div>';
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
     
     // 绑定页签点击（使用事件委托，避免重复绑定）
     if (!panel._shopTabDelegated) {
@@ -15599,7 +15620,7 @@ function renderHousePanel() {
     });
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // 睡觉恢复功能
@@ -15711,7 +15732,7 @@ function renderToolsPanel() {
     });
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function renderCompostPanel() {
@@ -15797,7 +15818,7 @@ function renderCompostPanel() {
     `;
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // 角色属性面板
@@ -15946,7 +15967,7 @@ function renderForagingPanel() {
     html += '</div>';
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // ===== 钓鱼面板 =====
@@ -16020,7 +16041,7 @@ function renderFishingPanel() {
     
     html += '</div>';
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function sellAllFish() {
@@ -16376,7 +16397,7 @@ function renderProcessingPanel() {
     html += '</div>';
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 function rerenderProcessing() {
     if (currentMainTab === 'processing') {
@@ -16676,7 +16697,7 @@ function renderPlayerPanel() {
     });
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // 检查背包里有没有可以喂宠物的食物
@@ -17110,7 +17131,7 @@ function renderSkillsPanel() {
     });
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // 根据经验计算技能等级
@@ -17173,7 +17194,7 @@ function renderTechPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // 重新渲染科技面板
@@ -17257,7 +17278,7 @@ function renderBuildingPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // 重新渲染建筑面板
@@ -17555,7 +17576,7 @@ function renderNpcsPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 
@@ -18282,6 +18303,11 @@ function addNpcFavor(npcId, val) {
     if (currentMainTab === 'npcs' && typeof renderNpcsPanel === 'function') {
         renderNpcsPanel();
     }
+    // 任务检查：村民挚友（q15）
+    if (!game.quests.q15 && newFavor >= 40) {
+        game.quests.q15 = true;
+        queueQuestReward('q15', 300, '✅ 任务完成：打成一片，奖励300元');
+    }
 }
 
 // 获取种子实际价格（应用商店折扣）
@@ -18480,11 +18506,16 @@ function updateStorageCapacity() {
 }
 
 function getSeedPrice(basePrice) {
+    let finalPrice = basePrice;
     const discount = getTechBonus('shopDiscount');
     if (discount > 0) {
-        return Math.max(1, Math.floor(basePrice * (1 - discount)));
+        finalPrice = Math.max(1, Math.floor(basePrice * (1 - discount)));
     }
-    return basePrice;
+    const npcDiscount = (typeof getNpcBonus === 'function') ? getNpcBonus('buyDiscount') : 0;
+    if (npcDiscount > 0) {
+        finalPrice = Math.max(1, Math.floor(finalPrice * (1 - npcDiscount)));
+    }
+    return finalPrice;
 }
 
 function chatWithNpc(npcKey) {
@@ -19084,7 +19115,7 @@ function renderPetsPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // 领养宠物
@@ -19329,7 +19360,7 @@ function renderAutomationPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function buyAutomation(deviceId) {
@@ -19405,7 +19436,7 @@ function renderBankPanel() {
     `;
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function bankDepositAll() {
@@ -19487,7 +19518,7 @@ function renderNeighborPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function unlockNeighborHelp(helpId) {
@@ -19516,7 +19547,7 @@ function renderMarketPanel() {
         const nextMarketDay = MARKET_DATA.openDay.find(d => d > game.day);
         html += '<div class="empty-state">📅 下次赶集日是第' + (nextMarketDay || '下月首') + '天</div>';
         panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
         return;
     }
     
@@ -19563,7 +19594,7 @@ function renderMarketPanel() {
     });
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function buyMarketItem(itemId, price) {
@@ -19658,7 +19689,7 @@ function renderAgriTechPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function upgradeAgriTech() {
@@ -19765,7 +19796,7 @@ function renderAnimalsPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function renderOrchardPanel() {
@@ -19845,7 +19876,7 @@ function renderOrchardPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function renderVillagePanel() {
@@ -19906,7 +19937,7 @@ function renderVillagePanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function renderFarmStayPanel() {
@@ -19988,7 +20019,7 @@ function renderFarmStayPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function investVillageProject(projectKey) {
@@ -21016,10 +21047,12 @@ function buyItem(itemKey) {
     }
     const price = itemData.price || 0;
     const name = itemData.name || itemKey;
+    const npcDiscount = (typeof getNpcBonus === 'function') ? getNpcBonus('buyDiscount') : 0;
+    const npcFinalPrice = npcDiscount > 0 ? Math.max(1, Math.floor(price * (1 - npcDiscount))) : price;
     // 社区建设加成（村卫生站：药品购买半价）
-    let finalPrice = price;
+    let finalPrice = npcFinalPrice;
     if (itemKey === 'medicine' && game.medicineDiscount) {
-        finalPrice = Math.floor(price * (1 - game.medicineDiscount));
+        finalPrice = Math.floor(npcFinalPrice * (1 - game.medicineDiscount));
     }
     if (game.money < finalPrice) {
         showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
@@ -21452,6 +21485,23 @@ function checkQuests() {
     if (game.totalDay > 50 && !game.quests.q50) {
         game.quests.q50 = true;
         queueQuestReward('q50', 500, '✅ 任务完成：年过半百，奖励500元');
+    }
+    
+    // q16: 小有积蓄（总资产达到5000元）
+    if (!game.quests.q16) {
+        const totalAssets = (game.stats && game.stats.totalEarned) || 0;
+        if (totalAssets >= 5000) {
+            game.quests.q16 = true;
+            queueQuestReward('q16', 500, '✅ 任务完成：小有积蓄，奖励500元');
+        }
+    }
+    
+    // q17: 德高望重（声望达到100点）
+    if (!game.quests.q17) {
+        if (game.reputation >= 100) {
+            game.quests.q17 = true;
+            queueQuestReward('q17', 1000, '✅ 任务完成：德高望重，奖励1000元');
+        }
     }
     
     // q34: 村中知己（2个村民达到友好40+）
@@ -22766,7 +22816,7 @@ function renderExplorePanel() {
     html += `</div>`;
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function isMineLayerUnlocked(layerKey) {
@@ -22956,7 +23006,7 @@ function renderCookingPanel() {
     
     html += '</div>';
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function canCookFood(foodKey) {
@@ -23197,7 +23247,7 @@ function renderCommunityPanel() {
     
     html += '</div>';
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 function isCommunityProjectUnlocked(projKey) {
@@ -23434,7 +23484,7 @@ function renderCollectionPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 
@@ -23476,7 +23526,14 @@ function checkAchievements() {
         collectionCount: getCollectionCount(),
         npcMetCount: getNpcMetCount(),
         hasCompost: game.composting || false,
-        hasWell:(game.buildings && game.buildings.well) >= 1 || false
+        hasWell:(game.buildings && game.buildings.well) >= 1 || false,
+        // 补充缺失的成就条件字段
+        totalAnimals: Object.values(game.animals || {}).reduce((sum, arr) => sum + (arr || []).length, 0),
+        totalOrchards: (game.orchard || []).length,
+        totalFruitHarvest: (game.stats && game.stats.totalFruitHarvest) || 0,
+        bestFriendCount: Object.values(game.npcs || {}).filter(f => (f || 0) >= 100).length,
+        maxSkillLevel: Math.max(0, ...Object.values(game.skills || {}).map(s => (s && s.level) || 0)),
+        totalEvents: (game.eventHistory || []).length
     };
     
     for (const [key, ach] of Object.entries(ACHIEVEMENT_DATA)) {
@@ -23607,7 +23664,7 @@ function renderAchievementsPanel() {
     }
     
     panel.innerHTML = html;
-    try { panel._lastRenderFields = JSON.stringify(game.fields); } catch(e) { panel._lastRenderFields = null; }
+    try { panel._lastRenderFields = JSON.stringify({tab: currentMainTab, money: game.money, day: game.day}); } catch(e) { panel._lastRenderFields = null; }
 }
 
 // ========== 批量操作 ==========
