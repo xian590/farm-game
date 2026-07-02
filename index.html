@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.36';
+const GAME_VERSION = '1.3.37';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9151,7 +9151,12 @@ function skipStory() {
     // 检查是否有存档，有存档直接加载，不进入模式选择
     const save = localStorage.getItem('farm_game_save_v1');
     if (save) {
-        loadGame();
+        const loaded = loadGame();
+        if (!loaded) {
+            showToast('⚠️ 存档读取失败，开始新游戏', 'bad');
+            showSelectMode();
+            return;
+        }
         showGame();
         startGameLoop();
         showToast('📂 已加载存档，第' + (game.totalDay || game.day) + '天', 'good');
@@ -9610,7 +9615,7 @@ function calculateOfflineReward() {
             if (field.stage === 'idle' && field.prepared) {
                 const seasonCrops = Object.keys(CROP_DATA).filter(key => CROP_DATA[key].season === game.season);
                 for (const cropKey of seasonCrops) {
-                    if (game.seeds[cropKey] > 0) {
+                    if (game.seeds && game.seeds[cropKey] > 0) {
                         game.seeds[cropKey]--;
                         field.crop = cropKey;
                         field.stage = 'seedling';
@@ -9887,7 +9892,7 @@ function calculateOfflineReward() {
                 if (field.stage === 'idle' && field.prepared) {
                     const seasonCrops = Object.keys(CROP_DATA).filter(key => CROP_DATA[key].season === game.season);
                     for (const cropKey of seasonCrops) {
-                        if (game.seeds[cropKey] > 0) {
+                        if (game.seeds && game.seeds[cropKey] > 0) {
                             game.seeds[cropKey]--;
                             field.crop = cropKey;
                             field.stage = 'seedling';
@@ -9972,7 +9977,7 @@ function calculateOfflineReward() {
     // 计算成熟的作物
     const maturedCrops = [];
     game.fields.forEach((field, idx) => {
-        if (field.crop && field.stage === 'mature' && beforeFields[idx].stage !== 'mature') {
+        if (field.crop && field.stage === 'mature' && beforeFields[idx] && beforeFields[idx].stage !== 'mature') {
             maturedCrops.push({
                 fieldIdx: idx,
                 crop: field.crop,
@@ -9990,10 +9995,10 @@ function calculateOfflineReward() {
         let weededCount = 0;
         game.fields.forEach(field => {
             if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-                if (field.lastWaterDay > ((beforeFields[game.fields.indexOf(field)] && beforeFields[game.fields.indexOf(field)].lastWaterDay) || 0)) {
+                if (field.lastWaterDay > ((beforeFields[idx] && beforeFields[idx].lastWaterDay) || 0)) {
                     wateredCount++;
                 }
-                if (field.lastWeedDay > ((beforeFields[game.fields.indexOf(field)] && beforeFields[game.fields.indexOf(field)].lastWeedDay) || 0)) {
+                if (field.lastWeedDay > ((beforeFields[idx] && beforeFields[idx].lastWeedDay) || 0)) {
                     weededCount++;
                 }
             }
@@ -13124,6 +13129,7 @@ function triggerRandomEvent() {
     });
     
     let random = Math.random() * totalWeight;
+    if (totalWeight <= 0) return;
     let selectedEvent = null;
     
     for (const event of availableEvents) {
@@ -13205,6 +13211,7 @@ function triggerNightEvent() {
     
     // 按概率权重选择事件
     const totalWeight = availableEvents.reduce((sum, e) => sum + e.probability, 0);
+    if (totalWeight <= 0) return;
     let rand = Math.random() * totalWeight;
     let selectedEvent = null;
     
@@ -18341,7 +18348,7 @@ function showGiftModal(npcKey) {
     
     gifts.forEach(gift => {
         const owned = game.items[gift.key] || 0;
-        const likeLevel = npc.likes[gift.key] || 1;
+        const likeLevel = (npc.likes || {})[gift.key] || 1;
         const likeDesc = likeLevel >= 8 ? '❤️ 非常喜欢' : likeLevel >= 5 ? '💛 喜欢' : likeLevel >= 3 ? '💚 一般' : '💔 不喜欢';
         const canGive = owned > 0;
         
@@ -18405,7 +18412,7 @@ function giveGift(npcKey, giftKey) {
     game.items[giftKey] = owned - 1;
     
     // 计算好感度加成
-    const likeLevel = npc.likes[giftKey] || 1;
+    const likeLevel = (npc.likes || {})[giftKey] || 1;
     const gain = likeLevel; // 喜欢等级就是好感度加成
     
     const oldFriendship = game.npcs[npcKey] || 0;
