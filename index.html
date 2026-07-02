@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.43';
+const GAME_VERSION = '1.3.44';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10004,12 +10004,12 @@ function calculateOfflineReward() {
         const npcName = npc.name;
         let wateredCount = 0;
         let weededCount = 0;
-        game.fields.forEach(field => {
+        game.fields.forEach((field, fieldIdx) => {
             if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-                if (field.lastWaterDay > ((beforeFields[idx] && beforeFields[idx].lastWaterDay) || 0)) {
+                if (field.lastWaterDay > ((beforeFields[fieldIdx] && beforeFields[fieldIdx].lastWaterDay) || 0)) {
                     wateredCount++;
                 }
-                if (field.lastWeedDay > ((beforeFields[idx] && beforeFields[idx].lastWeedDay) || 0)) {
+                if (field.lastWeedDay > ((beforeFields[fieldIdx] && beforeFields[fieldIdx].lastWeedDay) || 0)) {
                     weededCount++;
                 }
             }
@@ -10856,7 +10856,7 @@ function fixSaveData() {
     for (const [key, val] of Object.entries(defaultSeeds)) {
         if (game.seeds[key] === undefined) game.seeds[key] = val;
     }
-    if (!game.items) game.items = { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0 };
+    if (!game.items) game.items = { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0, fish: 0 };
     
     // 补全锻炼相关
     if (!game.exerciseToday) game.exerciseToday = { day: 0, count: 0 };
@@ -20846,6 +20846,19 @@ function roundGameState() {
         if (f.yieldLoss !== undefined) {
             if (!isFinite(f.yieldLoss)) f.yieldLoss = 0;
             f.yieldLoss = Math.round(f.yieldLoss * 1000) / 1000;
+        }
+    });
+    
+    // 补全其他关键数值字段的 NaN/Infinity 修复
+    const numberFields = [
+        'bankDeposit', 'researchPoints', 'storageCapacity', 'mood',
+        'sellBonus', 'pestReduction', 'nextSeasonBonus', 'currentSeasonBonus',
+        'disasterRate', 'weatherDuration'
+    ];
+    numberFields.forEach(key => {
+        if (game[key] !== undefined) {
+            if (!isFinite(game[key])) game[key] = 0;
+            game[key] = Math.round(game[key] * 10) / 10;
         }
     });
 }
