@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.38';
+const GAME_VERSION = '1.3.39';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10049,7 +10049,7 @@ function calculateOfflineReward() {
             let sellBonusTotal = game.sellBonus || 0;
             const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
             if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-            const finalPrice = price * (1 + sellBonusTotal);
+            const finalPrice = price * (1 + Math.max(0, sellBonusTotal));
             const money = Math.floor(amount * finalPrice);
             game.crops[cropType] = 0;
             game.money += money;
@@ -11955,7 +11955,9 @@ function checkHealthDeath() {
 }
 
 function changeWeather() {
-    if (!game.weather) game.weather = 'sunny';
+    if (!game.weather || !WEATHER_DATA[game.weather]) {
+        game.weather = 'sunny';
+    }
     
     // 天气持续时间递减
     if (game.weatherDuration === undefined) game.weatherDuration = 0;
@@ -11970,7 +11972,7 @@ function changeWeather() {
             const w = WEATHER_DATA[nextWeather];
             addLog(`${w.emoji} 天气变为：${w.name}`, 'info');
         }
-        const wData = WEATHER_DATA[game.weather];
+        const wData = WEATHER_DATA[game.weather] || WEATHER_DATA.sunny;
         const minD = wData.duration[0];
         const maxD = wData.duration[1];
         const weatherRange = Math.max(0, maxD - minD);
@@ -15587,7 +15589,6 @@ function goForaging() {
         return;
     }
     
-    game.dailyActions.foraging++;
     const seasonData = FORAGING_DATA[game.season];
     if (!seasonData) {
         showToast('这个季节没什么可采集的', 'warn');
@@ -15609,6 +15610,7 @@ function goForaging() {
         return;
     }
     
+    game.dailyActions.foraging++;
     game.stamina -= item.staminaCost;
     if (!game.foragingItems) game.foragingItems = {};
     game.foragingItems[item.id] = (game.foragingItems[item.id] || 0) + amount;
@@ -15818,7 +15820,7 @@ function sellAllFish() {
         let sellBonusTotal = game.sellBonus || 0;
         const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
         if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-        const bonusMul = 1 + Math.min(2.0, sellBonusTotal);
+        const bonusMul = 1 + Math.max(0, Math.min(2.0, sellBonusTotal));
         
         let totalMoney = 0;
         let soldLog = [];
@@ -15864,7 +15866,7 @@ function sellForagingItem(itemId, amount) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const finalPrice = price * (1 + Math.min(2.0, sellBonusTotal));
+    const finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
     const money = Math.floor(finalPrice * amount);
     
     game.foragingItems[itemId] -= amount;
@@ -17859,7 +17861,7 @@ function sellProcessedItem(itemKey, amount) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const price = basePrice * (1 + Math.min(2.0, sellBonusTotal));
+    const price = basePrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
     const money = Math.floor(price * amount);
     
     game.processedItems[itemKey] -= amount;
@@ -19297,7 +19299,7 @@ function sellMarketCrop(cropId, price) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const finalPrice = price * (1 + Math.min(2.0, sellBonusTotal));
+    const finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
     const money = Math.floor(finalPrice);
     
     game.crops[cropId]--;
@@ -19847,7 +19849,7 @@ function sellAnimalProduct(productKey, amount) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const price = (prices[productKey] || 5) * (1 + Math.min(2.0, sellBonusTotal));
+    const price = (prices[productKey] || 5) * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
     const money = Math.floor(price * amount);
     
     game.animalProducts[productKey] -= amount;
@@ -19903,7 +19905,7 @@ function sellFruit(fruitKey, amount) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const price = data.fruitPrice * (1 + Math.min(2.0, sellBonusTotal));
+    const price = data.fruitPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
     const money = Math.floor(price * amount);
     
     game.fruits[fruitKey] -= amount;
@@ -20554,7 +20556,7 @@ function _doSellCrop(cropKey, sellAmount, price) {
     if (npcSellBonus > 0) {
         sellBonusTotal += npcSellBonus;
     }
-    const finalPrice = price * (1 + Math.min(2.0, sellBonusTotal));
+    const finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
     let money = Math.floor(sellAmount * finalPrice);
     
     game.crops[cropKey] -= sellAmount;
@@ -22437,7 +22439,7 @@ function sellOres() {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const bonusMul = 1 + Math.min(2.0, sellBonusTotal);
+    const bonusMul = 1 + Math.max(0, Math.min(2.0, sellBonusTotal));
     
     for (const [oreKey, amount] of Object.entries(game.mineInventory || {})) {
         if (amount > 0) {
@@ -22695,7 +22697,7 @@ function sellFood(foodKey) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const price = food.sellPrice * (1 + Math.min(2.0, sellBonusTotal));
+    const price = food.sellPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
     const money = Math.floor(price);
     
     game.cookedFoods[foodKey] = have - 1;
