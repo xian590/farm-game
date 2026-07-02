@@ -3113,7 +3113,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.40';
+const GAME_VERSION = '1.3.41';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -8925,16 +8925,27 @@ document.addEventListener('keydown', function(e) {
         const overlay = document.getElementById('modal-overlay');
         if (overlay && overlay.style.display === 'flex') {
             e.preventDefault();
-            // 判断是事件弹窗还是普通弹窗
-            const confirmBtn = document.getElementById('modal-confirm');
-            const titleEl = document.getElementById('modal-title');
-            // 事件弹窗的确认按钮文字是"知道了"或"接受"，普通弹窗是"确定"
-            const isEventModal = confirmBtn && (confirmBtn.textContent === '知道了' || confirmBtn.textContent === '接受');
+            const isEventModal = game && game.currentEvent !== null;
             if (isEventModal) {
                 closeEventModal();
             } else {
                 closeModal();
             }
+        }
+    }
+    if (e.key === 'Tab' && modalFocusTrapped) {
+        const modal = document.querySelector('.modal-content');
+        if (!modal) return;
+        const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
         }
     }
 });
@@ -18701,13 +18712,13 @@ function renderPetsPanel() {
                     <div class="shop-item-info">
                         <div class="shop-item-icon" style="opacity: 0.3;">${pet.emoji}</div>
                         <div>
-                            <div class="shop-item-name">${pet.name} 🔒</div>
-                            <div class="shop-item-desc">${pet.breed} · ${pet.desc}</div>
+                            <div class="shop-item-name">${escapeHtml(pet.name)} 🔒</div>
+                            <div class="shop-item-desc">${escapeHtml(pet.breed)} · ${escapeHtml(pet.desc)}</div>
                             <div class="shop-item-desc" style="color: #e67e22; margin-top: 4px; font-size: 12px;">
                                 💰 每日饲料费：${pet.dailyFoodCost}元
                             </div>
                             <div class="shop-item-desc" style="color: #999; margin-top: 4px;">
-                                ${unlockText}
+                                ${escapeHtml(unlockText)}
                             </div>
                         </div>
                     </div>
@@ -22200,7 +22211,10 @@ document.addEventListener('keydown', function(e) {
         }
     }
     if (e.key === 'Escape') {
-        closeModal();
+        const overlay = document.getElementById('modal-overlay');
+        if (overlay && overlay.style.display === 'flex') {
+            // 由第一个监听器处理，避免重复
+        }
     }
 });
 
