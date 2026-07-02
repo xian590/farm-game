@@ -2765,6 +2765,13 @@
 </style>
 </head>
 <body>
+<div id="page-loader" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg, #f5f0e6, #e8dfcc);transition:opacity 0.5s ease;">
+    <div style="font-size:48px;margin-bottom:20px;">🌾</div>
+    <div style="font-size:20px;font-weight:bold;color:#5d4037;margin-bottom:15px;">正在加载李家村...</div>
+    <div style="width:200px;height:6px;background:#d4c9a8;border-radius:3px;overflow:hidden;">
+        <div id="loader-bar" style="width:0%;height:100%;background:linear-gradient(90deg, #27ae60, #2ecc71);border-radius:3px;transition:width 0.3s ease;"></div>
+    </div>
+</div>
 
 <!-- 开头故事 -->
 <div id="story-container" onclick="nextStoryPage()">
@@ -3187,7 +3194,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.57';
+const GAME_VERSION = '1.3.58';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4157,7 +4164,7 @@ const CROP_DATA = {
     rice_spring: {
         name: '早稻',
         emoji: '🌾',
-        seedPrice: 60,
+        seedPrice: 45,
         baseYield: 150,
         growDays: 5,
         seedlingDays: 1,
@@ -5131,132 +5138,132 @@ const PROCESSED_ITEMS = {
     riceGrain: {
         id: 'riceGrain', name: '糙米', emoji: '🍚',
         desc: '石磨碾的糙米，带着米糠香，城里人爱买这个。',
-        basePrice: 4.0, type: 'processed'
+        basePrice: 3, type: 'processed'
     },
     driedSweetPotato: {
         id: 'driedSweetPotato', name: '红薯干', emoji: '🍠',
         desc: '晒了三天的红薯干，甜得很，赶集的时候抢手得很。',
-        basePrice: 4.0, type: 'processed'
+        basePrice: 3, type: 'processed'
     },
     // === 鱼塘加工品 ===
     driedFish: {
         id: 'driedFish', name: '鱼干', emoji: '🐟',
         desc: '腌制后晒干的鱼，保存时间长，嚼劲十足。',
-        basePrice: 8.0, type: 'processed'
+        basePrice: 6, type: 'processed'
     },
     fishBall: {
         id: 'fishBall', name: '鱼丸', emoji: '🍡',
         desc: '手工打制的鱼丸，Q弹鲜嫩，逢年过节抢手。',
-        basePrice: 15.0, type: 'processed'
+        basePrice: 11, type: 'processed'
     },
     fishSoup: {
         id: 'fishSoup', name: '鲜鱼汤', emoji: '🍲',
         desc: '现熬的鲜鱼汤，汤白味浓，城里餐馆抢着收。',
-        basePrice: 20.0, type: 'processed'
+        basePrice: 15, type: 'processed'
     },
     // === 稻米深加工 ===
     polishedRice: {
         id: 'polishedRice', name: '精米', emoji: '✨',
         desc: '精挑细选的精米，粒粒饱满，能卖好价钱。',
-        basePrice: 8.0, type: 'processed'
+        basePrice: 6, type: 'processed'
     },
     riceWine: {
         id: 'riceWine', name: '米酒', emoji: '🍶',
         desc: '自家酿的米酒，甜丝丝的，度数不高但好喝。',
-        basePrice: 20.0, type: 'processed'
+        basePrice: 15, type: 'processed'
     },
     riceCake: {
         id: 'riceCake', name: '米糕', emoji: '🥮',
         desc: '蒸出来的米糕，软软糯糯，老人小孩都爱吃。',
-        basePrice: 10.0, type: 'processed'
+        basePrice: 8, type: 'processed'
     },
     // === 红薯深加工 ===
     sweetPotatoStarch: {
         id: 'sweetPotatoStarch', name: '红薯粉', emoji: '💨',
         desc: '红薯打浆沉淀后做的淀粉，勾芡做粉条都好使。',
-        basePrice: 8.0, type: 'processed'
+        basePrice: 6, type: 'processed'
     },
     sweetPotatoNoodles: {
         id: 'sweetPotatoNoodles', name: '红薯粉条', emoji: '🍜',
         desc: '手工漏制的红薯粉条，爽滑劲道，是火锅的绝配。',
-        basePrice: 18.0, type: 'processed'
+        basePrice: 14, type: 'processed'
     },
     // === 小麦加工品 ===
     flour: {
         id: 'flour', name: '面粉', emoji: '🥖',
         desc: '石磨磨出的面粉，又白又细，能做馒头面条。',
-        basePrice: 5.0, type: 'processed'
+        basePrice: 4, type: 'processed'
     },
     noodles: {
         id: 'noodles', name: '手工面条', emoji: '🍜',
         desc: '手擀面，筋道爽滑，煮出来不糊汤。',
-        basePrice: 12.0, type: 'processed'
+        basePrice: 9, type: 'processed'
     },
     // === 大豆加工品 ===
     tofu: {
         id: 'tofu', name: '豆腐', emoji: '🧊',
         desc: '嫩豆腐，又白又滑，煎炒炖煮都好吃。',
-        basePrice: 10.0, type: 'processed'
+        basePrice: 8, type: 'processed'
     },
     soyMilk: {
         id: 'soyMilk', name: '豆浆', emoji: '🥛',
         desc: '现磨豆浆，豆香浓郁，热腾腾喝一碗暖身。',
-        basePrice: 6.0, type: 'processed'
+        basePrice: 4, type: 'processed'
     },
     // === 玉米加工品 ===
     cornOil: {
         id: 'cornOil', name: '玉米油', emoji: '🌽',
         desc: '金黄透亮的玉米油，炒菜香喷喷，城里人抢着买。',
-        basePrice: 10.0, type: 'processed'
+        basePrice: 8, type: 'processed'
     },
     // === 土豆加工品 ===
     potatoChips: {
         id: 'potatoChips', name: '薯片', emoji: '🥔',
         desc: '土豆切成薄片油炸，金黄酥脆，孩子们的最爱。',
-        basePrice: 8.0, type: 'processed'
+        basePrice: 6, type: 'processed'
     },
     potatoStarch: {
         id: 'potatoStarch', name: '土豆淀粉', emoji: '💨',
         desc: '土豆打浆沉淀做的淀粉，白净细腻，做菜勾芡好使。',
-        basePrice: 10.0, type: 'processed'
+        basePrice: 8, type: 'processed'
     },
     // === 花生加工品 ===
     peanutOil: {
         id: 'peanutOil', name: '花生油', emoji: '🥜',
         desc: '花生榨油，香味浓郁，炒菜最香。',
-        basePrice: 12.0, type: 'processed'
+        basePrice: 9, type: 'processed'
     },
     peanutCandy: {
         id: 'peanutCandy', name: '花生糖', emoji: '🍬',
         desc: '花生和麦芽糖熬制，香甜酥脆，过年必备。',
-        basePrice: 10.0, type: 'processed'
+        basePrice: 8, type: 'processed'
     },
     // === 辣椒加工品 ===
     chiliSauce: {
         id: 'chiliSauce', name: '辣椒酱', emoji: '🌶️',
         desc: '新鲜辣椒发酵制成，香辣下饭，无辣不欢。',
-        basePrice: 8.0, type: 'processed'
+        basePrice: 6, type: 'processed'
     },
     chiliOil: {
         id: 'chiliOil', name: '辣椒油', emoji: '🌶️',
         desc: '干辣椒炸油，红亮亮的，拌面拌菜都香。',
-        basePrice: 10.0, type: 'processed'
+        basePrice: 8, type: 'processed'
     },
     // === 新增加工品 ===
     honey: {
         id: 'honey', name: '蜂蜜', emoji: '🍯',
         desc: '自家蜜蜂采的蜜，纯天然无添加，甜而不腻。',
-        basePrice: 15.0, type: 'processed'
+        basePrice: 11, type: 'processed'
     },
     mushroom: {
         id: 'mushroom', name: '栽培蘑菇', emoji: '🍄',
         desc: '菌菇房里种出的蘑菇，比野生的更均匀，口感也好。',
-        basePrice: 4.0, type: 'processed'
+        basePrice: 3, type: 'processed'
     },
     pickle: {
         id: 'pickle', name: '腌咸菜', emoji: '🥒',
         desc: '老坛子腌的咸菜，酸脆爽口，下饭神器。',
-        basePrice: 3.5, type: 'processed'
+        basePrice: 3, type: 'processed'
     }
 };
 
@@ -9125,6 +9132,12 @@ function showMigrationNotice() {
 
 // ==================== 初始化 ====================
 window.onload = function() {
+    // 在加载完成后移除loader
+    const loader = document.getElementById('page-loader');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 500);
+    }
     loadAudioSettings();
     loadGameSpeed();
     
@@ -9324,6 +9337,8 @@ function getModeName(mode) {
 
 // ==================== 游戏初始化 ====================
 function initGame(mode) {
+    const loaderBar = document.getElementById('loader-bar');
+    if (loaderBar) loaderBar.style.width = '30%';
     const configs = {
         easy: { money: 3000, maxHealth: 200, maxStamina: 200, disasterRate: 0.6, startHealth: 120, startStamina: 100 },
         normal: { money: 1500, maxHealth: 200, maxStamina: 200, disasterRate: 1.0, startHealth: 100, startStamina: 80 },
@@ -9370,14 +9385,14 @@ function initGame(mode) {
         tools: [],
         composting: false,
         compostStartDay: 0,
-        items: { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0, fish: 0, wood: 0 },
+        items: { fertilizer: 0, pesticide: 0, bun: 2, medicine: 0, organicFertilizer: 0, fish: 0, wood: 0 },
         seeds: { rice_spring: 0, rice_summer: 0, sweet_spring: 0, sweet_autumn: 0, wheat_spring: 0, wheat_autumn: 0, corn_summer: 0, soybean_spring: 0, soybean_summer: 0, potato_spring: 0, potato_autumn: 0, peanut_summer: 0, pepper_summer: 0, pepper_autumn: 0, cabbage_autumn: 0, cabbage_winter: 0, radish_autumn: 0, radish_winter: 0, eggplant_summer: 0, eggplant_autumn: 0, garlic_autumn: 0, garlic_spring: 0 },
         crops: { rice: 0, sweet: 0, wheat: 0, corn: 0, soybean: 0, potato: 0, peanut: 0, pepper: 0, cabbage: 0, radish: 0, eggplant: 0, garlic: 0 },
         npcMilestones: {},  // 已达成的NPC里程碑
         buildings: {},  // 已建造的建筑 { id: level }
         storageCapacity: 3000,  // 粮食储存上限（初始3000斤，每扩地+1000斤）
         processedItems: { riceGrain: 0, driedSweetPotato: 0, driedFish: 0, fishBall: 0, fishSoup: 0, polishedRice: 0, riceWine: 0, riceCake: 0, sweetPotatoStarch: 0, sweetPotatoNoodles: 0, flour: 0, noodles: 0, tofu: 0, soyMilk: 0, cornOil: 0, potatoChips: 0, potatoStarch: 0, peanutOil: 0, peanutCandy: 0, chiliSauce: 0, chiliOil: 0, honey: 0, mushroom: 0, pickle: 0 },
-        cookedFoods: {}, // 已烹饪的食物 { foodId: amount }
+        cookedFoods: { egg: 1 }, // 已烹饪的食物 { foodId: amount }
         communityProjects: {}, // 社区建设进度 { projectId: { progress, completed } }
         collection: {}, // 收藏图鉴 { categoryId: { itemId: true } }
         foragingItems: {},
@@ -14332,6 +14347,8 @@ function switchTab(tabName) {
 }
 
 function showGame() {
+    const loaderBar2 = document.getElementById('loader-bar');
+    if (loaderBar2) loaderBar2.style.width = '70%';
     if (game) game.started = true;
     const savedStyle = safeStorageGet('farm_bgm_style') || 'game';
     switchBgm(savedStyle);
@@ -14392,6 +14409,10 @@ function showGame() {
             showTutorial();
         }
     }, 1000);
+    
+    const loaderBar3 = document.getElementById('loader-bar');
+    if (loaderBar3) loaderBar3.style.width = '100%';
+    showToast('🎁 新手礼包：2个馒头+1个鸡蛋已放入背包！', 'good');
 }
 
 // ==================== 面板渲染 ====================
@@ -14600,7 +14621,7 @@ const QUEST_DATA = {
     q13: { name: '扩土开疆', desc: '租下第二块田', reward: '300元', icon: '🗺️', category: '成长任务' },
     q14: { name: '田间能手', desc: '田间管理达到3级', reward: '300元', icon: '🌾', category: '成长任务' },
     q15: { name: '村民挚友', desc: '和任意村民达到友好', reward: '300元', icon: '🤝', category: '成长任务' },
-    q16: { name: '小有积蓄', desc: '总资产达到5000元', reward: '500元', icon: '💎', category: '成长任务' },
+    q16: { name: '小有积蓄', desc: '总资产达到5000元', reward: '1000元', icon: '💎', category: '成长任务' },
     q17: { name: '德高望重', desc: '声望达到100点', reward: '500元', icon: '⭐', category: '成长任务' },
     // 日常活动任务
     q18: { name: '强身健体', desc: '点击【农家副业】中的锻炼按钮，消耗体力提升健康', reward: '80元', icon: '🏃', category: '日常任务' },
@@ -14632,9 +14653,9 @@ const QUEST_DATA = {
     q39: { name: '工具大师', desc: '农具精通达到5级', reward: '500元', icon: '🔧', category: '技能任务' },
     q40: { name: '堆肥专家', desc: '堆肥技能达到5级', reward: '500元', icon: '💩', category: '技能任务' },
     // 财富任务
-    q41: { name: '万元户', desc: '总资产达到10000元', reward: '1000元', icon: '💰', category: '财富任务' },
-    q42: { name: '腰缠万贯', desc: '总资产达到20000元', reward: '2000元', icon: '💎', category: '财富任务' },
-    q43: { name: '富甲一方', desc: '总资产达到50000元', reward: '5000元', icon: '👑', category: '财富任务' },
+    q41: { name: '万元户', desc: '总资产达到10000元', reward: '2000元', icon: '💰', category: '财富任务' },
+    q42: { name: '腰缠万贯', desc: '总资产达到20000元', reward: '4000元', icon: '💎', category: '财富任务' },
+    q43: { name: '富甲一方', desc: '总资产达到50000元', reward: '10000元', icon: '👑', category: '财富任务' },
     // 后期综合任务
     q44: { name: '双宠之家', desc: '领养第二只宠物', reward: '300元', icon: '🐾', category: '综合任务' },
     q45: { name: '科技兴农', desc: '研究任意一项科技', reward: '200元', icon: '🔬', category: '综合任务' },
@@ -14653,7 +14674,7 @@ const MILESTONE_DATA = {
         name: '第一桶金',
         emoji: '💰',
         desc: '总资产达到5000元',
-        reward: 200,
+        reward: 500,
         check: () => {
             // 计算总资产：现金 + 库存价值（包含所有作物）
             let cropValue = 0;
@@ -17829,7 +17850,7 @@ function hireWorker(npcKey) {
     }
     
     if (game.money < npc.hireFee) {
-        showToast(`钱不够，雇佣费需要${npc.hireFee}元`, 'bad');
+        showToast(`💰 金钱不足，雇佣费需要${npc.hireFee}元`, 'bad');
         return;
     }
     
@@ -18134,7 +18155,7 @@ function buildProcessing(key) {
         
         // 检查金钱
         if (game.money < building.buildCost) {
-            showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -18171,7 +18192,7 @@ function upgradeProcessing(buildingKey) {
         if (currentLevel >= 3) { showToast('已满级', 'warn'); return; }
         const cost = building.upgradeCost && building.upgradeCost[Math.max(0, currentLevel - 1)] !== undefined ? building.upgradeCost[Math.max(0, currentLevel - 1)] : 0;
         if (cost <= 0) { showToast('升级数据异常', 'bad'); return; }
-        if (game.money < cost) { showToast('资金不足', 'bad'); return; }
+        if (game.money < cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= cost;
         game.builtProcessing[buildingKey] = currentLevel + 1;
@@ -18649,7 +18670,7 @@ function buildBuilding(buildingId) {
     
     // 检查金钱
     if (game.money < building.cost) {
-        showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+        showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
         playErrorSound();
         return;
     }
@@ -18687,7 +18708,7 @@ function upgradeBuilding(buildingId) {
     
     const upgradeCost = building.upgradeCost[currentLevel];
     if (!upgradeCost || upgradeCost <= 0 || game.money < upgradeCost) {
-        showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+        showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
         playErrorSound();
         return;
     }
@@ -18978,8 +18999,18 @@ function giveGift(npcKey, giftKey) {
         queueQuestReward('q15', 300, '✅ 任务完成：打成一片，奖励300元');
     }
     
-    // 记录今天已经送过礼
+    // 连续送礼检测
     if (!game.lastGiftDay) game.lastGiftDay = {};
+    if (game.lastGiftDay[npcKey] && game.lastGiftDay[npcKey] === game.day - 1) {
+        // 连续送礼，好感度加成50%
+        const comboGain = Math.floor(gain * 1.5);
+        const extraGain = comboGain - gain;
+        game.npcs[npcKey] = Math.min(100, oldFriendship + comboGain);
+        if (!game.friendship[npcKey]) game.friendship[npcKey] = 0;
+        game.friendship[npcKey] = Math.min(100, game.friendship[npcKey] + comboGain);
+        addLog('🎁 连续送礼！' + npc.name + ' 格外开心，好感度 +' + extraGain, 'good');
+    }
+    // 记录今天已经送过礼
     game.lastGiftDay[npcKey] = today;
     
     // 检查是否升级了好感度等级
@@ -19414,7 +19445,7 @@ function feedPet(petKey) {
     }
     
     if (game.money < pet.dailyFoodCost) {
-        showToast('钱包里钱不够，连宠物都快养不起了，先去卖点东西换点钱', 'bad');
+        showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
         playErrorSound();
         return;
     }
@@ -19587,7 +19618,7 @@ function buyAutomation(deviceId) {
     const device = AUTOMATION_DATA[deviceId];
     if (!device) return;
     if (game.automation && game.automation[deviceId] > 0) { showToast('已拥有该设备', 'bad'); return; }
-    if (game.money < device.cost) { showToast('资金不足', 'bad'); return; }
+    if (game.money < device.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
     
     game.money -= device.cost;
     if (!game.automation) game.automation = {};
@@ -19606,7 +19637,7 @@ function upgradeAutomation(deviceId) {
     if (currentLevel >= device.maxLevel) return;
     
     const cost = device.levelUpCost[currentLevel];
-    if (game.money < cost) { showToast('资金不足', 'bad'); return; }
+    if (game.money < cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
     
     game.money -= cost;
     game.automation[deviceId] = currentLevel + 1;
@@ -19820,7 +19851,7 @@ function renderMarketPanel() {
 function buyMarketItem(itemId, price) {
     const item = MARKET_DATA.specialItems.find(i => i.id === itemId);
     if (item && item.stock !== undefined && item.stock <= 0) { showToast('该商品已售罄', 'bad'); return; }
-    if (game.money < price) { showToast('钱不够', 'bad'); return; }
+    if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
     game.money -= price;
     if (!game.items) game.items = {};
     game.items[itemId] = (game.items[itemId] || 0) + 1;
@@ -19833,7 +19864,7 @@ function buyMarketItem(itemId, price) {
 
 function buyCrop(cropId, price) {
     withClickLock('buyCrop_' + cropId, () => {
-        if (game.money < price) { showToast('钱不够', 'bad'); return; }
+        if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
         if (getStorageUsed() + 1 > game.storageCapacity) {
             showToast('仓库满了，先腾点地方', 'bad');
             return;
@@ -19923,7 +19954,7 @@ function renderAgriTechPanel() {
 function upgradeAgriTech() {
     const nextLevel = AGRI_TECH_DATA.levels[game.agriTechLevel || 0];
     if (!nextLevel) return;
-    if (game.money < nextLevel.cost) { showToast('资金不足', 'bad'); return; }
+    if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
     
     game.money -= nextLevel.cost;
     if (!game.agriTechLevel) game.agriTechLevel = 0;
@@ -20261,7 +20292,7 @@ function investVillageProject(projectKey) {
     withClickLock('investVillageProject_' + projectKey, () => {
         const project = VILLAGE_PROJECTS[projectKey];
         if (!project) return;
-        if (game.money < project.cost) { showToast('资金不足', 'bad'); return; }
+        if (game.money < project.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
         if (game.reputation < project.requireReputation) { showToast('声望不足', 'bad'); return; }
         
         game.money -= project.cost;
@@ -20296,7 +20327,7 @@ function upgradeFarmStay() {
     const currentLevel =(game.farmStay && game.farmStay.level) || 0;
     if (currentLevel >= FARM_STAY_DATA.level.length) return;
     const nextLevel = FARM_STAY_DATA.level[currentLevel];
-    if (game.money < nextLevel.cost) { showToast('资金不足', 'bad'); return; }
+    if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
     
     game.money -= nextLevel.cost;
     if (!game.farmStay) game.farmStay = { level: 0, guests: 0, reputation: 0 };
@@ -20387,7 +20418,7 @@ function buyAnimal(animalKey) {
     withClickLock('buyAnimal_' + animalKey, () => {
         const data = ANIMAL_DATA[animalKey];
         if (!data) return;
-        if (game.money < data.buyCost) { showToast('资金不足', 'bad'); return; }
+        if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= data.buyCost;
         if (!game.animals) game.animals = {};
@@ -20487,7 +20518,7 @@ function sellAnimalProduct(productKey, amount) {
 function buyTree(treeKey) {
     const data = ORCHARD_DATA[treeKey];
     if (!data) return;
-    if (game.money < data.buyCost) { showToast('资金不足', 'bad'); return; }
+    if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
     
     game.money -= data.buyCost;
     if (!game.orchard) game.orchard = [];
@@ -21347,7 +21378,7 @@ function buySeed(seedKey) {
         }
         const actualSeedPrice = getSeedPrice(cropData.seedPrice);
         if (game.money < actualSeedPrice) {
-            showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -21400,7 +21431,7 @@ function buyItem(itemKey) {
             finalPrice = Math.max(1, Math.floor(finalPrice * (1 - techDiscount)));
         }
         if (game.money < finalPrice) {
-            showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -21442,7 +21473,7 @@ function buyTool(toolKey) {
         }
         
         if (game.money < finalPrice) {
-            showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -21476,7 +21507,7 @@ function startCompost() {
     }
     
     if (game.money < 50) {
-        showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+        showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
         playErrorSound();
         return;
     }
@@ -21669,7 +21700,7 @@ function rentNewField() {
     withClickLock('rentNewField', () => {
         const rent = getNextFieldRent();
         if (game.money < rent) {
-            showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -21732,7 +21763,7 @@ function expandStorage() {
     withClickLock('expandStorage', () => {
         const cost = 500;
         if (game.money < cost) {
-            showToast('钱不够，扩建需要500元', 'bad');
+            showToast('💰 金钱不足，需要 500 元', 'bad');
             playErrorSound();
             return;
         }
@@ -21811,7 +21842,7 @@ function upgradeHouse(targetHouse) {
         
         const houseData = HOUSE_DATA[targetHouse];
         if (game.money < houseData.upgradeCost) {
-            showToast('钱包里钱不够，先去卖点东西换点钱', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -22402,7 +22433,21 @@ function showTutorial() {
     if (stepIdx < 0 || stepIdx >= TUTORIAL_STEPS.length) return;
     
     const step = TUTORIAL_STEPS[stepIdx];
-    showModal(step.title, step.content, null);
+    showModal(step.title, step.content, () => {
+        // 确认按钮：知道了
+    });
+    // 设置 secondary 按钮为"跳过全部引导"
+    const modalSecondary = document.querySelector('.modal-btn.secondary');
+    if (modalSecondary) {
+        modalSecondary.style.display = 'inline-block';
+        modalSecondary.textContent = '跳过引导';
+        modalSecondary.onclick = () => {
+            game.tutorialCompleted = true;
+            game.tutorialStep = 10;
+            closeModal();
+            showToast('已跳过新手引导', 'info');
+        };
+    }
 }
 
 function advanceTutorial() {
@@ -23730,7 +23775,7 @@ function contributeToProject(projKey, type) {
                 return;
             }
             if (game.money < 10) {
-                showToast('钱不够，先赚点钱再来', 'bad');
+                showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
                 return;
             }
             const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / Math.max(1, proj.totalProgress / needMoney));
