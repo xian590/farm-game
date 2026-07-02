@@ -219,7 +219,7 @@
         .mode-subtitle {
             font-size: 13px;
             text-align: left;
-            color: #999;
+            color: #666;
             margin-bottom: 12px;
         }
 
@@ -713,7 +713,7 @@
 
         .field-level {
             font-size: 12px;
-            color: #999;
+            color: #666;
             background: #f0f0f0;
             padding: 3px 8px;
             border-radius: 10px;
@@ -860,7 +860,7 @@
 
         .shop-item-desc {
             font-size: 12px;
-            color: #999;
+            color: #666;
         }
 
         .shop-item-price {
@@ -1028,7 +1028,7 @@
         }
 
         .log-time {
-            color: #a89880;
+            color: #7a6a50;
             margin-right: 10px;
             font-size: 12px;
             font-family: monospace;
@@ -2331,7 +2331,7 @@
         
         .quest-item-progress-text {
             font-size: 11px;
-            color: #adb5bd;
+            color: #6c757d;
         }
         
         .quest-all-done {
@@ -2765,6 +2765,15 @@
 </style>
 </head>
 <body>
+<noscript>
+    <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:#f5f0e6;">
+        <div style="text-align:center;padding:40px;">
+            <div style="font-size:48px;margin-bottom:20px;">🌾</div>
+            <div style="font-size:20px;font-weight:bold;color:#5d4037;margin-bottom:10px;">需要启用 JavaScript</div>
+            <div style="font-size:14px;color:#666;">李家村农场游戏需要浏览器启用 JavaScript 才能运行。<br>请在浏览器设置中开启 JavaScript 后刷新页面。</div>
+        </div>
+    </div>
+</noscript>
 <div id="page-loader" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg, #f5f0e6, #e8dfcc);transition:opacity 0.5s ease;">
     <div style="font-size:48px;margin-bottom:20px;">🌾</div>
     <div style="font-size:20px;font-weight:bold;color:#5d4037;margin-bottom:15px;">正在加载李家村...</div>
@@ -3194,7 +3203,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.58';
+const GAME_VERSION = '1.3.59';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9045,15 +9054,31 @@ function formatPercent(value) {
 // 全局 Escape 键关闭弹窗支持
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        const overlay = document.getElementById('modal-overlay');
-        if (overlay && overlay.style.display === 'flex') {
+        const modalOverlay = document.getElementById('modal-overlay');
+        const settingsOverlay = document.getElementById('settings-overlay');
+        const countdownOverlay = document.getElementById('countdown-overlay');
+        const backpackOverlay = document.getElementById('backpack-overlay');
+        const errorLogOverlay = document.getElementById('error-log-overlay');
+        
+        if (modalOverlay && modalOverlay.style.display === 'flex') {
             e.preventDefault();
-            const isEventModal = game && game.currentEvent !== null;
-            if (isEventModal) {
+            if (game && game.currentEvent !== null) {
                 closeEventModal();
             } else {
                 closeModal();
             }
+        } else if (settingsOverlay && settingsOverlay.style.display === 'flex') {
+            e.preventDefault();
+            closeSettings();
+        } else if (countdownOverlay && countdownOverlay.style.display === 'flex') {
+            e.preventDefault();
+            closeCountdownModal();
+        } else if (backpackOverlay && backpackOverlay.style.display === 'flex') {
+            e.preventDefault();
+            closeBackpackModal();
+        } else if (errorLogOverlay && errorLogOverlay.style.display === 'flex') {
+            e.preventDefault();
+            closeErrorLogModal();
         }
     }
     if (e.key === 'Tab' && modalFocusTrapped) {
@@ -11334,7 +11359,7 @@ function loadGame() {
     }
     // 尝试从备份恢复
     for (let i = 1; i <= 3; i++) {
-        const backup = localStorage.getItem(SAVE_KEY + '_backup_' + i);
+        const backup = safeStorageGet(SAVE_KEY + '_backup_' + i);
         if (backup) {
             try {
                 game = JSON.parse(backup);
@@ -11371,7 +11396,7 @@ function exportSave() {
         showToast('当前没有游戏存档！', 'bad');
         return;
     }
-    const saveData = localStorage.getItem(SAVE_KEY);
+    const saveData = safeStorageGet(SAVE_KEY);
     if (!saveData) {
         showToast('存档不存在！', 'bad');
         return;
@@ -11680,6 +11705,10 @@ function advanceSeason(silent = false) {
     } else {
         // 没有作物枯萎时，事件由 onNewDay 处理
     }
+    
+    // 季节切换后更新BGM
+    const seasonBgms = { spring: 'spring', summer: 'summer', autumn: 'autumn', winter: 'winter' };
+    switchBgm(seasonBgms[game.season] || 'default');
     
     // 季租扣除（每28天扣一次整季租金）
     const houseData = HOUSE_DATA[game.house];
@@ -12383,6 +12412,17 @@ function changeWeather() {
         const maxD = wData.duration[1];
         const weatherRange = Math.max(0, maxD - minD);
     game.weatherDuration = minD + Math.floor(Math.random() * (weatherRange + 1));
+    }
+    
+    // 根据天气切换BGM
+    if (game.weather === 'rainy' || game.weather === 'storm') {
+        switchBgm('rainy');
+    } else if (game.weather === 'snow') {
+        switchBgm('winter');
+    } else {
+        // 根据季节切换BGM
+        const seasonBgms = { spring: 'spring', summer: 'summer', autumn: 'autumn', winter: 'winter' };
+        switchBgm(seasonBgms[game.season] || 'default');
     }
 }
 
@@ -13750,6 +13790,11 @@ function showEventModal(event) {
     }
     
     overlayEl.style.display = 'flex';
+    if (event.type === 'disaster') {
+        playDisasterSound();
+    } else {
+        playEventSound();
+    }
 }
 
 function getSkillName(skillKey) {
