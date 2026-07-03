@@ -560,17 +560,8 @@
         }
         
         /* 按钮脉冲效果 */
-        .action-btn.highlight {
-            background: linear-gradient(135deg, #e67e22, #d35400);
-            animation: pulse 1.5s 3;
-            box-shadow: 0 0 15px rgba(230, 126, 34, 0.4);
-        }
         
         /* 模态框动画 */
-        .modal-overlay {
-            animation: fadeIn 0.2s ease forwards;
-        }
-        
         .modal-content {
             animation: popIn 0.3s ease forwards;
         }
@@ -2072,7 +2063,7 @@
                 bottom: 180px;
                 left: 0;
                 right: 0;
-                z-index: 999;
+                z-index: 1001;
                 max-height: 100px;
                 min-height: 80px;
                 border-radius: 12px 12px 0 0;
@@ -3239,7 +3230,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.84';
+const GAME_VERSION = '1.3.85';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9227,13 +9218,28 @@ document.addEventListener('keydown', function(e) {
         } else if (errorLogOverlay && errorLogOverlay.style.display === 'flex') {
             e.preventDefault();
             closeErrorLogModal();
+        } else {
+            // 新增：关闭故事容器
+            const storyContainer = document.getElementById('story-container');
+            if (storyContainer && storyContainer.style.display !== 'none') {
+                e.preventDefault();
+                closeStory();
+                return;
+            }
+            // 新增：选择容器（模式选择是必须的，Escape不关闭）
+            const selectContainer = document.getElementById('select-container');
+            if (selectContainer && selectContainer.style.display !== 'none') {
+                // 选择容器通常不需要Escape关闭
+            }
         }
     }
     if (e.key === ' ' || e.key === 'Enter') {
         // 故事页面按空格/回车翻页
         const storyContainer = document.getElementById('story-container');
         if (storyContainer && storyContainer.style.display !== 'none') {
+            e.preventDefault(); // 阻止默认滚动行为
             nextStoryPage();
+            return;
         }
     }
     if (e.key === 'Tab' && modalFocusTrapped) {
@@ -10940,6 +10946,17 @@ function importSaveFile(input) {
                 showToast('存档中的金钱数据无效', 'bad');
                 return;
             }
+            // 验证 season
+            const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
+            if (!validSeasons.includes(data.season)) {
+                showToast('存档季节数据无效', 'bad');
+                return;
+            }
+            // 验证 fields 是数组
+            if (!Array.isArray(data.fields)) {
+                showToast('存档田地数据无效', 'bad');
+                return;
+            }
             if (data.version && typeof data.version === 'string') {
                 // 版本兼容性检查：如果版本太旧，提示可能不兼容
                 const versionParts = data.version.split('.');
@@ -11731,10 +11748,27 @@ function doImportSave() {
             showToast('存档中的金钱数据无效', 'bad');
             return;
         }
+        // 验证 season
+        const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
+        if (!validSeasons.includes(data.season)) {
+            showToast('存档季节数据无效', 'bad');
+            return;
+        }
+        // 验证 fields 是数组
+        if (!Array.isArray(data.fields)) {
+            showToast('存档田地数据无效', 'bad');
+            return;
+        }
         if (data.version && typeof data.version === 'string') {
             const versionParts = data.version.split('.');
             if (versionParts[0] === '1' && parseInt(versionParts[1]) < 3) {
                 showToast('⚠️ 旧版本存档，部分功能可能不兼容', 'warn');
+            }
+            // 高版本存档检查
+            const currentVersion = GAME_VERSION.split('.');
+            const saveVersion = data.version.split('.');
+            if (parseInt(saveVersion[1]) > parseInt(currentVersion[1])) {
+                showToast('⚠️ 该存档来自更高版本，可能无法完全兼容', 'warn');
             }
         }
         game = data;
