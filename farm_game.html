@@ -3239,7 +3239,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.80';
+const GAME_VERSION = '1.3.81';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -13333,10 +13333,10 @@ const STORY_EVENTS = [
         emoji: '👨‍🌾',
         description: '李老农路过你家地，蹲下来看了看，给你指点了两句种地的门道。',
         options: [
-            { text: '听李大爷说说', effect: { skills: {fieldManage: 3, cropFamiliar: 2}, npcs: {lidegen: 2}, mood: 2 }, result: '李老农给你讲了讲怎么防病虫害、怎么施肥，你听了受益匪浅。田间管理经验+3，作物熟悉度经验+2，李老农好感+2' }
+            { text: '听李大爷说说', effect: { skills: {fieldManage: 3, cropFamiliar: 2}, npcs: {lilaonong: 2}, mood: 2 }, result: '李老农给你讲了讲怎么防病虫害、怎么施肥，你听了受益匪浅。田间管理经验+3，作物熟悉度经验+2，李老农好感+2' }
         ],
         probability: 0.04,
-        requiresNpc: { id: 'lidegen', minFavor: 20 },
+        requiresNpc: { id: 'lilaonong', minFavor: 20 },
         requiresCrop: true
     },
     {
@@ -13385,7 +13385,7 @@ const STORY_EVENTS = [
             { text: '谢谢赵老板', effect: { zhaoBonusNoticed: true, mood: 3 }, result: '你谢过赵老板，以后卖粮给他价格高5%。心情+3' }
         ],
         probability: 0.05,
-        requiresNpc: { id: 'zhaoyoucai', minFavor: 30 },
+        requiresNpc: { id: 'zhaolaoban', minFavor: 30 },
         requiresNotMet: 'zhaoBonusNoticed'
     },
     {
@@ -13406,10 +13406,10 @@ const STORY_EVENTS = [
         emoji: '🧧',
         description: '村长给你打电话，说今年的农业补贴下来了，你是种粮大户，给你发了补贴。',
         options: [
-            { text: '谢谢村长', effect: { money: 80, npcs: {wangbaoguo: 2}, mood: 5 }, result: '你去村部领了80块补贴，村长说以后有好事还想着你。钱+80，村长好感+2，心情+5' }
+            { text: '谢谢村长', effect: { money: 80, npcs: {wangcunzhang: 2}, mood: 5 }, result: '你去村部领了80块补贴，村长说以后有好事还想着你。钱+80，村长好感+2，心情+5' }
         ],
         probability: 0.005,
-        requiresNpc: { id: 'wangbaoguo', minFavor: 30 }
+        requiresNpc: { id: 'wangcunzhang', minFavor: 30 }
     },
     {
         id: 'wangbaoguo_seeds',
@@ -13417,10 +13417,10 @@ const STORY_EVENTS = [
         emoji: '🌱',
         description: '村长给你送过来两袋免费的种子，说镇上发的优质种子，给你留了两袋。',
         options: [
-            { text: '谢谢村长', effect: { items: {seed: 2}, npcs: {wangbaoguo: 2}, mood: 3 }, result: '你谢过村长，获得优质种子×2，村长好感+2，心情+3' }
+            { text: '谢谢村长', effect: { items: {seed: 2}, npcs: {wangcunzhang: 2}, mood: 3 }, result: '你谢过村长，获得优质种子×2，村长好感+2，心情+3' }
         ],
         probability: 0.005,
-        requiresNpc: { id: 'wangbaoguo', minFavor: 30 }
+        requiresNpc: { id: 'wangcunzhang', minFavor: 30 }
     },
     {
         id: 'sunmiaoqing_cookies',
@@ -13859,11 +13859,14 @@ function triggerRandomEvent() {
         return;
     }
     
+    // 计算当前季节已进行的天数
+    const seasonDay = ((game.totalDay - 1) % 112) % 28 + 1; // 当前季节的第几天
+    
     // 1. 先尝试触发故事事件
     const availableStoryEvents = STORY_EVENTS.filter(e => {
-        // 天数检查（使用totalDay累计天数，避免季节切换重置）
-        if (e.minDay != null && game.totalDay < e.minDay) return false;
-        if (e.maxDay !== undefined && e.maxDay !== null && game.totalDay >= e.maxDay) return false;
+        // 天数检查（使用季节天数，避免季节切换重置）
+        if (e.minDay != null && seasonDay < e.minDay) return false;
+        if (e.maxDay !== undefined && e.maxDay !== null && seasonDay > e.maxDay) return false;
         
         // 季节检查
         if (e.seasons && e.seasons.length > 0 && !e.seasons.includes(game.season)) return false;
@@ -13942,9 +13945,9 @@ function triggerRandomEvent() {
         // 季节检查
         if (!e.seasons.includes(game.season)) return false;
         
-        // 日期检查（使用totalDay累计天数，避免季节切换重置）
-        if (e.minDay !== undefined && game.totalDay < e.minDay) return false;
-        if (e.maxDay !== undefined && game.totalDay > e.maxDay) return false;
+        // 日期检查（使用季节天数，避免季节切换重置）
+        if (e.minDay !== undefined && seasonDay < e.minDay) return false;
+        if (e.maxDay !== undefined && seasonDay > e.maxDay) return false;
         
         // 作物前置条件检查
         if (cropRequiredEvents.includes(e.id) && !hasCrops) return false;
@@ -14111,7 +14114,7 @@ function triggerNightEvent() {
     
     if (effect.staminaRecover) {
         // 体力恢复（直接加减体力）
-        game.stamina = Math.min(game.maxStamina, game.stamina + effect.staminaRecover);
+        game.stamina = Math.max(0, Math.min(game.maxStamina, game.stamina + effect.staminaRecover));
         if (effect.staminaRecover < 0) {
             logText += `（体力${effect.staminaRecover}）`;
         } else {
@@ -14174,9 +14177,8 @@ function triggerNightEvent() {
 
 // 显示故事事件弹窗（用于 STORY_EVENTS 数组中的事件）
 function showEventPopup(event) {
-    const eventId = 'story_' + event.name.replace(/[\s\u{1F300}-\u{1F9FF}]/gu, '_');
-    // 创建副本，避免修改原事件对象
-    const eventCopy = { ...event, id: eventId };
+    const eventId = event.id;
+    const eventCopy = { ...event };
     if (!window.STORY_EVENTS_MAP) window.STORY_EVENTS_MAP = {};
     window.STORY_EVENTS_MAP[eventId] = eventCopy;
     if (game) game.currentEvent = eventId;
@@ -18113,7 +18115,7 @@ function renderBuildingPanel() {
             const currentLevel = game.buildings[building.id] || 0;
             const isBuilt = currentLevel > 0;
             const isMaxLevel = currentLevel >= building.maxLevel;
-            const nextCost = isBuilt ? building.upgradeCost[currentLevel - 1] || 0 : building.cost;
+            const nextCost = isBuilt ? building.upgradeCost[currentLevel] || 0 : building.cost;
             const canAfford = game.money >= nextCost;
             
             html += `
@@ -18329,11 +18331,9 @@ function checkMilestones() {
 }
 
 function isNpcKnown(npcKey) {
-    // 初始5个NPC默认已认识
     const defaultKnown = ['wangcunzhang', 'lilaonong', 'zhangshen', 'wangerdan', 'zhaolaoban'];
     if (defaultKnown.includes(npcKey)) return true;
     
-    // 其他NPC根据met标志或已有好感度判断
     const metFlags = {
         chenyang: 'metChenyang',
         linxiaoyu: 'metLinxiaoyu',
@@ -18341,11 +18341,9 @@ function isNpcKnown(npcKey) {
     };
     if (metFlags[npcKey] && game[metFlags[npcKey]]) return true;
     
-    // 如果已经有好感度，也算认识
-    if (((game.npcs && game.npcs[npcKey]) || 0) > 0) return true;
-    if (((game.friendship && game.friendship[npcKey]) || 0) > 0) return true;
+    if ((game.npcs && game.npcs[npcKey] !== undefined) || (game.friendship && game.friendship[npcKey] !== undefined)) return true;
     
-    return false;
+    return true;
 }
 
 function renderNpcsPanel() {
@@ -24358,6 +24356,12 @@ function cookFood(foodKey) {
     
     if (!canCookFood(foodKey)) {
         showToast('材料不够，做不了这道菜', 'bad');
+        return;
+    }
+    
+    // 检查体力
+    if (game.stamina < food.staminaCost) {
+        showToast('体力不足，无法烹饪！', 'bad');
         return;
     }
     
