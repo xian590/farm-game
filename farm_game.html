@@ -3239,7 +3239,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.77';
+const GAME_VERSION = '1.3.78';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9362,6 +9362,15 @@ window.onload = function() {
             game = null;
         }
     }
+    
+    // 多标签页冲突检测
+    window.addEventListener('storage', function(e) {
+        if (e.key === SAVE_KEY && e.newValue) {
+            // 其他标签页修改了存档，提示用户刷新
+            showToast('检测到其他标签页已保存，请刷新页面同步', 'warn');
+        }
+    });
+    
     // 新玩家，显示故事
     showStory();
 };
@@ -9682,7 +9691,16 @@ function calculateOfflineReward() {
     if (!game || !game.lastSaveTimestamp) return null;
     if (!game.fields) game.fields = [];
     
-    const now = Date.now();
+    // 保存当前状态备份
+    const backup = {
+        day: game.day, totalDay: game.totalDay, time: game.time,
+        money: game.money, health: game.health, stamina: game.stamina,
+        fields: JSON.parse(JSON.stringify(game.fields || [])),
+        crops: {...game.crops}, animals: JSON.parse(JSON.stringify(game.animals || {}))
+    };
+    
+    try {
+        const now = Date.now();
     const offlineMs = now - game.lastSaveTimestamp;
     const offlineSeconds = Math.max(0, offlineMs / 1000);
     
@@ -9697,7 +9715,7 @@ function calculateOfflineReward() {
     
     // 最多离线7天游戏时间（无论离线多久，最多推进7天）
     // 避免玩家离线太久导致游戏内时间跳跃过大
-    const MAX_OFFLINE_DAYS = 7; // 最多7天
+    const MAX_OFFLINE_DAYS = 1; // 最多1天（24小时）
     const maxGameHours = MAX_OFFLINE_DAYS * 24; // 168游戏小时
     const actualGameHours = Math.min(gameHours, maxGameHours);
     
@@ -10551,6 +10569,21 @@ function calculateOfflineReward() {
         capped: gameHours > maxGameHours,
         totalOfflineSell
     };
+    } catch (e) {
+        console.error('离线收益计算失败', e);
+        // 回滚到备份状态
+        game.day = backup.day;
+        game.totalDay = backup.totalDay;
+        game.time = backup.time;
+        game.money = backup.money;
+        game.health = backup.health;
+        game.stamina = backup.stamina;
+        game.fields = backup.fields;
+        game.crops = backup.crops;
+        game.animals = backup.animals;
+        showToast('离线收益计算异常，已回滚到上次状态', 'bad');
+        return null;
+    }
 }
 
 function showOfflineReward(reward) {
@@ -10615,7 +10648,7 @@ function showOfflineReward(reward) {
     
     if (reward.capped) {
         content += `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef; color: #e67e22; font-size: 13px;">`;
-        content += `💡 离线最多推进7天，记得常回村看看~`;
+        content += `💡 离线最多推进1天（24小时），记得常回村看看~`;
         content += `</div>`;
     }
     
@@ -10864,7 +10897,7 @@ function exportSaveFile() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `farm_save_${game.totalDay || game.day}day_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `farm_save_v${GAME_VERSION}_${game.totalDay || game.day}day_${new Date().toISOString().slice(0,10)}.json`;
             document.body.appendChild(a);
             a.click();
             // 延迟释放URL，确保浏览器有时间启动下载
@@ -10907,6 +10940,12 @@ function importSaveFile(input) {
                 const versionParts = data.version.split('.');
                 if (versionParts[0] === '1' && parseInt(versionParts[1]) < 3) {
                     showToast('⚠️ 旧版本存档，部分功能可能不兼容', 'warn');
+                }
+                // 高版本存档检查
+                const currentVersion = GAME_VERSION.split('.');
+                const saveVersion = data.version.split('.');
+                if (parseInt(saveVersion[1]) > parseInt(currentVersion[1])) {
+                    showToast('⚠️ 该存档来自更高版本，可能无法完全兼容', 'warn');
                 }
             }
             showModal('确认导入', '确定要导入此存档吗？当前进度将被覆盖！', () => {
