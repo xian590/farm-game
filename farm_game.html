@@ -3178,7 +3178,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.74';
+const GAME_VERSION = '1.3.75';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -5638,9 +5638,12 @@ const COLLECTION_DATA = {
         desc: '河边垂钓的收获，每条鱼都有自己的故事。',
         items: [
             { id: 'carp', name: '鲤鱼', emoji: '🐟' },
-            { id: 'catfish', name: '鲶鱼', emoji: '🐡' },
-            { id: 'crucian', name: '鲫鱼', emoji: '🐠' },
-            { id: 'grass_carp', name: '草鱼', emoji: '🐟' }
+            { id: 'catfish', name: '鲶鱼', emoji: '🐠' },
+            { id: 'crucian', name: '鲫鱼', emoji: '🐡' },
+            { id: 'grass_carp', name: '草鱼', emoji: '🐬' },
+            { id: 'perch', name: '鲈鱼', emoji: '🦈' },
+            { id: 'eel', name: '鳗鱼', emoji: '🐍' },
+            { id: 'salmon', name: '三文鱼', emoji: '🐟' }
         ]
     },
     foods: {
@@ -5813,17 +5816,17 @@ const ACHIEVEMENT_DATA = {
     // 综合类
     survive7: {
         id: 'survive7', name: '站稳脚跟', emoji: '📅', category: 'general',
-        desc: '在乡下活过7天', condition: 'day >= 7',
+        desc: '在乡下活过7天', condition: 'totalDay >= 7',
         reward: { money: 100 }
     },
     survive30: {
         id: 'survive30', name: '落地生根', emoji: '📅', category: 'general',
-        desc: '在乡下活过30天', condition: 'day >= 30',
+        desc: '在乡下活过30天', condition: 'totalDay >= 30',
         reward: { money: 500, reputation: 10 }
     },
     survive100: {
         id: 'survive100', name: '老农民', emoji: '📅', category: 'general',
-        desc: '在乡下活过100天', condition: 'day >= 100',
+        desc: '在乡下活过100天', condition: 'totalDay >= 100',
         reward: { money: 2000, reputation: 50 }
     },
     
@@ -5897,7 +5900,7 @@ const ACHIEVEMENT_DATA = {
     // 新成就：综合类进阶
     survive365: {
         id: 'survive365', name: '扎根乡土', emoji: '📅', category: 'general',
-        desc: '在乡下活过365天', condition: 'day >= 365',
+        desc: '在乡下活过365天', condition: 'totalDay >= 365',
         reward: { money: 10000, reputation: 100 }
     },
     
@@ -5911,7 +5914,7 @@ const ACHIEVEMENT_DATA = {
     // 新成就：技能类
     skillMaster: {
         id: 'skillMaster', name: '全才农夫', emoji: '📚', category: 'general',
-        desc: '任意技能达到满级', condition: 'maxSkillLevel >= 15',
+        desc: '任意技能达到满级', condition: 'maxSkillLevel >= 10',
         reward: { money: 1000, reputation: 25 }
     },
     
@@ -10315,6 +10318,16 @@ function calculateOfflineReward() {
             // 更新游戏天数统计
             if (!game.stats) game.stats = {};
             game.stats.daysPlayed = (game.stats.daysPlayed || 0) + 1;
+            
+            // 重置日常任务
+            if (game.quests) {
+                ['q18', 'q19', 'q20'].forEach(qid => {
+                    if (game.quests[qid]) {
+                        game.quests[qid].completed = false;
+                        game.quests[qid].progress = 0;
+                    }
+                });
+            }
         }
     }
     
@@ -14742,6 +14755,11 @@ function updateUI() {
 }
 
 function switchTab(tabName) {
+    const panel = document.getElementById('content-panel');
+    if (panel) {
+        // 保存当前滚动位置
+        panel.dataset.scrollTop = panel.scrollTop;
+    }
     const tab = document.querySelector(`.sidebar-tab[data-tab="${tabName}"]`);
     if (!tab || tab.classList.contains('locked')) return;
     playTabSound();
@@ -14749,6 +14767,10 @@ function switchTab(tabName) {
     tab.classList.add('active');
     currentMainTab = tabName;
     renderPanel(currentMainTab);
+    // 恢复滚动位置（如果之前保存过）
+    if (panel && panel.dataset.scrollTop) {
+        panel.scrollTop = parseInt(panel.dataset.scrollTop);
+    }
 }
 
 function showGame() {
