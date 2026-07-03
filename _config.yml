@@ -1,0 +1,37 @@
+# Jekyll 配置（用于 GitHub Pages 优化）
+# 此文件适用于将 farm_game.html 部署到 GitHub Pages 时使用
+# 单 HTML 文件无需复杂配置，保持基础设置即可
+
+# 网站标题
+title: "李家村 - 农耕模拟器"
+
+# 网站描述
+description: "一个温馨的农耕模拟游戏，体验中国传统农村生活"
+
+# 网站基础 URL（部署后修改为实际域名）
+# baseurl: "/farm-game"  # 如果使用 GitHub Pages 的仓库路径
+# url: "https://yourusername.github.io"  # 你的 GitHub Pages 域名
+
+# 关闭 Jekyll 处理（纯 HTML 文件无需 Jekyll 构建）
+# 使用空 front matter 或此配置确保文件原样输出
+
+# 排除文件（无需构建的文件）
+exclude:
+  - "deploy-guide.md"
+  - "upload_to_cos.py"
+  - "vercel.json"
+  - "_headers"
+  - "README.md"
+
+# 默认布局（单 HTML 文件不需要）
+# 但保留此配置以防 Jekyll 添加默认模板
+
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: none
+
+# 关闭插件（纯静态 HTML 不需要）
+plugins: []

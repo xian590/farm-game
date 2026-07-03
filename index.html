@@ -1471,16 +1471,12 @@
         }
         
         .settings-btn:hover {
-            background: #fff;
-            transform: scale(1.05);
+            transform: scale(1.05) rotate(30deg);
+            background: #e8dfcc;
         }
 
         .settings-btn:active {
             transform: scale(0.95);
-        }
-
-        .settings-btn:hover {
-            transform: rotate(30deg);
         }
 
         /* 设置面板 */
@@ -1595,20 +1591,6 @@
             transition: all 0.2s;
         }
 
-        .bgm-btn:hover {
-            border-color: #8b7355;
-            background: #f5f0e6;
-        }
-
-        .bgm-btn.active {
-            border-color: #27ae60;
-            background: #27ae60;
-            color: white;
-            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.4);
-            transform: scale(1.05);
-            font-weight: bold;
-        }
-
         /* 飘字提示 */
         .toast {
             position: fixed;
@@ -1645,8 +1627,8 @@
 
         /* 任务追踪器 - 专业设计 */
         .quest-tracker {
-            background: #ffffff;
-            border: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+            border: 2px solid #ffc107;
             border-radius: 16px;
             padding: 0;
             margin-bottom: 16px;
@@ -1669,6 +1651,7 @@
         .quest-tracker-title {
             font-weight: bold;
             color: #856404;
+            margin-bottom: 12px;
             font-size: 16px;
             display: flex;
             align-items: center;
@@ -1826,26 +1809,6 @@
 
         .quest-item:not(.done)::before {
             content: "⬜ ";
-        }
-        
-        /* 任务追踪器 */
-        .quest-tracker {
-            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
-            border: 2px solid #ffc107;
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(255, 193, 7, 0.15);
-        }
-        
-        .quest-tracker-title {
-            font-weight: bold;
-            color: #856404;
-            margin-bottom: 12px;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         
         .quest-all-done {
@@ -2758,6 +2721,22 @@
             opacity: 0.6;
         }
 
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+            50% { opacity: 1; transform: translateX(-50%) translateY(-30px) scale(1.1); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-60px) scale(0.9); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes popOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+
 </style>
 </head>
 <body>
@@ -2872,35 +2851,9 @@
             </div>
         </div>
         <div class="stats-right">
-            <div class="stat-item">
-                <span class="stat-icon">🌾</span>
-                <span>水稻：</span>
-                <span class="stat-value" id="stat-rice">0</span>
-                <span>斤</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-icon">🍠</span>
-                <span>红薯：</span>
-                <span class="stat-value" id="stat-sweet">0</span>
-                <span>斤</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-icon">🌾</span>
-                <span>小麦：</span>
-                <span class="stat-value" id="stat-wheat">0</span>
-                <span>斤</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-icon">🌽</span>
-                <span>玉米：</span>
-                <span class="stat-value" id="stat-corn">0</span>
-                <span>斤</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-icon">🌱</span>
-                <span>大豆：</span>
-                <span class="stat-value" id="stat-soybean">0</span>
-                <span>斤</span>
+            <div class="stat-item" id="inventory-toggle" style="cursor:pointer;" onclick="toggleInventoryPreview()">
+                <span class="stat-icon">📦</span>
+                <span class="stat-value" id="stat-inventory">0/50</span>
             </div>
             <div class="stat-item">
                 <span class="stat-icon">📦</span>
@@ -3199,7 +3152,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.61';
+const GAME_VERSION = '1.3.62';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -11723,6 +11676,19 @@ function advanceSeason(silent = false) {
     const seasonBgms = { spring: 'spring', summer: 'summer', autumn: 'autumn', winter: 'winter' };
     switchBgm(seasonBgms[game.season] || 'default');
     
+    // 季节背景色变化
+    const seasonColors = {
+        spring: '#f0f7f0',  // 淡绿
+        summer: '#fff9f0',  // 淡黄
+        autumn: '#fdf5ec',  // 淡橙
+        winter: '#f0f5f7'   // 淡蓝
+    };
+    const panel = document.getElementById('content-panel');
+    if (panel) {
+        panel.style.backgroundColor = seasonColors[game.season] || '#f5f0e6';
+        panel.style.transition = 'background-color 1s ease';
+    }
+    
     // 季租扣除（每28天扣一次整季租金）
     const houseData = HOUSE_DATA[game.house];
     if (houseData && houseData.rent > 0) {
@@ -14311,11 +14277,7 @@ function updateUI() {
     safeSetText('stat-max-stamina', game.maxStamina);
     safeSetText('stat-health', formatNumber(game.health, 1));
     safeSetText('stat-max-health', game.maxHealth);
-    safeSetText('stat-rice', Math.floor(game.crops.rice || 0));
-    safeSetText('stat-sweet', Math.floor(game.crops.sweet || 0));
-    safeSetText('stat-wheat', Math.floor(game.crops.wheat || 0));
-    safeSetText('stat-corn', Math.floor(game.crops.corn || 0));
-    safeSetText('stat-soybean', Math.floor(game.crops.soybean || 0));
+    safeSetText('stat-inventory', `${getStorageUsed()}/${game.storageCapacity || 50}`);
     
     // 仓库容量显示（汇总所有库存类型）
     const storageCap = game.storageCapacity || 2000;
@@ -14459,6 +14421,19 @@ function showGame() {
     // 确保UI正确显示初始数值
     if (typeof updateUI === 'function') {
         updateUI();
+    }
+    
+    // 初始化季节背景色
+    const seasonColors = {
+        spring: '#f0f7f0',  // 淡绿
+        summer: '#fff9f0',  // 淡黄
+        autumn: '#fdf5ec',  // 淡橙
+        winter: '#f0f5f7'   // 淡蓝
+    };
+    const panel = document.getElementById('content-panel');
+    if (panel && game && game.season) {
+        panel.style.backgroundColor = seasonColors[game.season] || '#f5f0e6';
+        panel.style.transition = 'background-color 1s ease';
     }
     
     // 显示新手引导步骤0
@@ -21307,6 +21282,9 @@ function harvestCrop(fieldIdx) {
         
         addLog(`🌾 收割了${cropData.name}，收获${actualYield}斤！${flavorText}`, 'good');
         
+        // 浮动数字效果
+        showFloatingText(`+${actualYield}斤 ${cropData.emoji}`, fieldIdx);
+        
         // 检查任务
         if (!game.quests.q4) {
             game.quests.q4 = true;
@@ -21730,6 +21708,23 @@ function getStorageUsed() {
     return total;
 }
 
+function showFloatingText(text, fieldIdx) {
+    const fieldEl = document.querySelector(`[data-field-index="${fieldIdx}"]`);
+    if (!fieldEl) return;
+    const floatEl = document.createElement('div');
+    floatEl.textContent = text;
+    floatEl.style.cssText = 'position:absolute;left:50%;top:20%;transform:translateX(-50%);font-size:20px;font-weight:bold;color:#27ae60;pointer-events:none;z-index:100;animation:floatUp 1.5s ease-out forwards;';
+    fieldEl.style.position = 'relative';
+    fieldEl.appendChild(floatEl);
+    setTimeout(() => floatEl.remove(), 1500);
+}
+
+function toggleInventoryPreview() {
+    const used = getStorageUsed();
+    const cap = game.storageCapacity || 50;
+    showToast(`库存：${used}/${cap}斤\n点击"仓库"查看详情`, 'info');
+}
+
 // 只更新顶部状态栏，不重新渲染面板
 function updateTopBar() {
     if (!game) return;
@@ -21738,11 +21733,7 @@ function updateTopBar() {
     safeSetText('stat-max-stamina', game.maxStamina);
     safeSetText('stat-health', Math.floor(game.health));
     safeSetText('stat-max-health', game.maxHealth);
-    safeSetText('stat-rice', Math.floor(game.crops.rice || 0));
-    safeSetText('stat-sweet', Math.floor(game.crops.sweet || 0));
-    safeSetText('stat-wheat', Math.floor(game.crops.wheat || 0));
-    safeSetText('stat-corn', Math.floor(game.crops.corn || 0));
-    safeSetText('stat-soybean', Math.floor(game.crops.soybean || 0));
+    safeSetText('stat-inventory', `${getStorageUsed()}/${game.storageCapacity || 50}`);
     
     // 仓库容量显示（汇总所有库存类型）
     const storageCap = game.storageCapacity || 2000;
@@ -22561,32 +22552,45 @@ function closeModal() {
     if (modalClosing) return;
     modalClosing = true;
     playClickSound();
-    const overlay = document.getElementById('modal-overlay');
-    if (overlay) overlay.style.display = 'none';
-    modalCallback = null;
-    if (game) game.currentEvent = null;
-    // 恢复原始按钮结构
-    const buttonsContainer = document.querySelector('.modal-buttons');
-    if (buttonsContainer) {
-        buttonsContainer.style.display = 'flex';
-        buttonsContainer.innerHTML = `
-            <button class="modal-btn secondary" onclick="closeModal()">取消</button>
-            <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
-        `;
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (!modalOverlay) {
+        modalClosing = false;
+        return;
     }
-    // === 焦点恢复 ===
-    modalFocusTrapped = false;
-    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
-        const prev = previousActiveElement;
-        setTimeout(() => {
-            if (prev && typeof prev.focus === 'function') {
-                try { prev.focus(); } catch(e) {}
-            }
-        }, 0);
-        previousActiveElement = null;
-    }
-    // === 焦点恢复结束 ===
-    setTimeout(() => { modalClosing = false; }, 300);
+    // 添加退出动画
+    modalOverlay.style.animation = 'fadeOut 0.2s ease forwards';
+    const modalContent = modalOverlay.querySelector('.modal-content');
+    if (modalContent) modalContent.style.animation = 'popOut 0.2s ease forwards';
+    setTimeout(() => {
+        modalOverlay.style.display = 'none';
+        modalOverlay.style.animation = '';
+        if (modalContent) modalContent.style.animation = '';
+        
+        modalCallback = null;
+        if (game) game.currentEvent = null;
+        // 恢复原始按钮结构
+        const buttonsContainer = document.querySelector('.modal-buttons');
+        if (buttonsContainer) {
+            buttonsContainer.style.display = 'flex';
+            buttonsContainer.innerHTML = `
+                <button class="modal-btn secondary" onclick="closeModal()">取消</button>
+                <button class="modal-btn primary" id="modal-confirm" onclick="confirmModal()">确定</button>
+            `;
+        }
+        // === 焦点恢复 ===
+        modalFocusTrapped = false;
+        if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+            const prev = previousActiveElement;
+            setTimeout(() => {
+                if (prev && typeof prev.focus === 'function') {
+                    try { prev.focus(); } catch(e) {}
+                }
+            }, 0);
+            previousActiveElement = null;
+        }
+        // === 焦点恢复结束 ===
+        setTimeout(() => { modalClosing = false; }, 300);
+    }, 200);
 }
 
 function confirmModal() {

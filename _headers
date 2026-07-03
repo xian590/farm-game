@@ -1,0 +1,10 @@
+# Cloudflare Pages 缓存头配置
+# 放置于项目根目录，Cloudflare Pages 会自动读取
+
+# 规则 1: HTML 文件不缓存（确保内容更新立即生效）
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 规则 2: 静态资源缓存 1 小时
+/*
+  Cache-Control: public, max-age=3600, immutable
