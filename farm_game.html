@@ -3153,7 +3153,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.68';
+const GAME_VERSION = '1.3.69';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -5368,7 +5368,7 @@ const MINE_DATA = {
         name: '中层矿洞',
         emoji: '⛏️',
         desc: '需要镐子才能挖得动，铁矿石不少。',
-        unlockCondition: '农具精通Lv2 + 镐子',
+        unlockCondition: '农具精通Lv2',
         staminaCost: 30,
         yields: [
             { ore: 'stone', min: 2, max: 5, probability: 0.4 },
@@ -9330,7 +9330,7 @@ function initGame(mode) {
     const configs = {
         easy: { money: 3000, maxHealth: 200, maxStamina: 200, disasterRate: 0.6, startHealth: 120, startStamina: 100 },
         normal: { money: 1500, maxHealth: 200, maxStamina: 200, disasterRate: 1.0, startHealth: 100, startStamina: 80 },
-        hard: { money: 5000, maxHealth: 200, maxStamina: 200, disasterRate: 1.5, startHealth: 80, startStamina: 60 }
+        hard: { money: 800, maxHealth: 200, maxStamina: 200, disasterRate: 1.5, startHealth: 80, startStamina: 60 }
     };
     const cfg = configs[mode];
 
@@ -12434,6 +12434,7 @@ function onNewDay() {
             const satisfaction = remainingGuests > 0 ? 0.5 : 1.0; // 没吃饱则满意度减半
             const dailyIncome = Math.floor(levelData.dailyIncome * guests * satisfaction * (1 + game.farmStay.reputation * 0.01));
             game.money += dailyIncome;
+            game.stats.totalEarned = (game.stats.totalEarned || 0) + dailyIncome;
             game.farmStay.guests = guests;
             if (remainingGuests > 0) {
                 addLog(`🏡 农家乐今日接待 ${guests} 位客人，但菜品不足（缺${remainingGuests}份），收入 ${dailyIncome} 元`, 'warn');
@@ -16971,6 +16972,22 @@ function renderPlayerPanel() {
     html += '<div class="shop-category">当前加成总览</div>';
     const bonuses = [];
     
+    // 统计信息展示区域
+    html += `<div style="margin: 15px 0; padding: 15px; background: #f8f4e8; border-radius: 12px;">
+    <div style="font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #5d4037;">📊 累计统计</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
+        <div>💰 总收入：${(game.stats.totalEarned || 0).toFixed(1)}元</div>
+        <div>🌾 总收获：${game.stats.totalHarvest || 0}斤</div>
+        <div>💵 总售卖：${game.stats.totalSell || 0}斤</div>
+        <div>🎣 总钓鱼：${game.stats.totalFish || 0}条</div>
+        <div>🍄 总采集：${game.stats.totalForage || 0}次</div>
+        <div>⚒️ 总加工：${game.stats.totalProcessed || 0}次</div>
+        <div>👨‍🍳 总烹饪：${game.stats.totalCooked || 0}次</div>
+        <div>⛏️ 总挖矿：${game.stats.totalDigs || 0}次</div>
+        <div>📅 游戏天数：${game.stats.daysPlayed || 0}天</div>
+    </div>
+</div>`;
+    
     // 科技加成
     const shopDiscount = getTechBonus('shopDiscount');
     if (shopDiscount > 0) bonuses.push({ icon: '🏷️', name: '科技折扣', value: `-${Math.floor(shopDiscount*100)}%`, desc: '种子购买价格' });
@@ -20551,7 +20568,7 @@ function renderFarmStayPanel() {
             let hasIngredients = true;
             for (const [ingredient, amount] of Object.entries(dish.cost)) {
                 let have = 0;
-                if (ingredient === 'fish') have =(game.items && game.items.fish) || 0;
+                if (ingredient === 'fish') have = Object.values(game.fishInventory || {}).reduce((sum, v) => sum + (v || 0), 0);
                 else if (ingredient === 'fruit') {
                     have = Object.values(game.fruits || {}).reduce((s, v) => s + (v || 0), 0);
                 }
@@ -20794,6 +20811,8 @@ function sellAnimal(animalKey, idx) {
     const weightFactor = (animal.weight || 50) / 100;
     const price = Math.floor(data.sellPrice * weightFactor);
     game.money += price;
+    game.stats.totalEarned = (game.stats.totalEarned || 0) + price;
+    game.stats.totalSell = (game.stats.totalSell || 0) + 1;
     game.animals[animalKey].splice(idx, 1);
     
     addLog(`💰 卖掉${data.emoji}${animal.name}，获得${price}元`, 'good');
@@ -20961,26 +20980,33 @@ function generateLeaderboard(type) {
         case 'miner': playerEntry.score = (game.mineStats && game.mineStats.deepestLayer) || 0; break;
     }
     
+    // 使用game.totalDay作为seed，使NPC分数在一天内稳定
+    const seed = game.totalDay || 1;
+    const seededRandom = (index) => {
+        const x = Math.sin(seed * 9999 + index * 1234) * 10000;
+        return x - Math.floor(x);
+    };
+    
     const npcs = [
-        { name: '赵老板', score: Math.floor(5000 + Math.random() * 10000) },
-        { name: '王村长', score: Math.floor(3000 + Math.random() * 8000) },
-        { name: '李老农', score: Math.floor(2000 + Math.random() * 6000) },
-        { name: '张婶', score: Math.floor(1000 + Math.random() * 4000) },
-        { name: '周明', score: Math.floor(1500 + Math.random() * 5000) },
-        { name: '陈阳', score: Math.floor(2500 + Math.random() * 7000) },
-        { name: '林小雨', score: Math.floor(1800 + Math.random() * 5500) },
-        { name: '孙妙青', score: Math.floor(1200 + Math.random() * 4500) },
-        { name: '吴大柱', score: Math.floor(800 + Math.random() * 3000) },
-        { name: '王二蛋', score: Math.floor(500 + Math.random() * 2000) }
+        { name: '赵老板', score: Math.floor(5000 + seededRandom(0) * 10000) },
+        { name: '王村长', score: Math.floor(3000 + seededRandom(1) * 8000) },
+        { name: '李老农', score: Math.floor(2000 + seededRandom(2) * 6000) },
+        { name: '张婶', score: Math.floor(1000 + seededRandom(3) * 4000) },
+        { name: '周明', score: Math.floor(1500 + seededRandom(4) * 5000) },
+        { name: '陈阳', score: Math.floor(2500 + seededRandom(5) * 7000) },
+        { name: '林小雨', score: Math.floor(1800 + seededRandom(6) * 5500) },
+        { name: '孙妙青', score: Math.floor(1200 + seededRandom(7) * 4500) },
+        { name: '吴大柱', score: Math.floor(800 + seededRandom(8) * 3000) },
+        { name: '王二蛋', score: Math.floor(500 + seededRandom(9) * 2000) }
     ];
     
     // 根据类型调整NPC分数
     switch(type) {
         case 'richest': break; // 已用随机值
         case 'harvester': npcs.forEach(n => n.score = Math.floor(n.score * 0.5)); break;
-        case 'angler': npcs.forEach(n => n.score = Math.floor(n.score * 0.1 + Math.random() * 50)); break;
-        case 'chef': npcs.forEach(n => n.score = Math.floor(n.score * 0.05 + Math.random() * 30)); break;
-        case 'miner': npcs.forEach(n => n.score = Math.floor(Math.random() * 10)); break;
+        case 'angler': npcs.forEach(n => n.score = Math.floor(n.score * 0.1 + seededRandom(10) * 50)); break;
+        case 'chef': npcs.forEach(n => n.score = Math.floor(n.score * 0.05 + seededRandom(11) * 30)); break;
+        case 'miner': npcs.forEach(n => n.score = Math.floor(seededRandom(12) * 10)); break;
     }
     
     const all = [...npcs, playerEntry];
@@ -23715,7 +23741,12 @@ function mineLayer(layerKey) {
         return;
     }
     
-    game.stamina -= layer.staminaCost;
+    // 工具精通减免体力消耗
+    const toolMasteryLevel = game.skills && game.skills.toolMastery || 0;
+    const staminaDiscount = 1 - (toolMasteryLevel * 0.03); // 每级减3%
+    const staminaCost = Math.max(1, Math.floor(layer.staminaCost * staminaDiscount));
+    
+    game.stamina -= staminaCost;
     
     // 挖掘结果
     let totalOres = [];
