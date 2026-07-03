@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.91';
+const GAME_VERSION = '1.3.92';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -15426,7 +15426,7 @@ const MILESTONE_DATA = {
             if (!game.npcs) return false;
             let count = 0;
             for (const key in game.npcs) {
-                if (game.npcs[key] >= 40) count++;
+                if (game.npcs[key] && game.npcs[key].friendship >= 40) count++;
             }
             return count >= 3;
         }
@@ -24996,7 +24996,7 @@ function getNpcMetCount() {
     let count = 0;
     if (game.npcs) {
         for (const [key, val] of Object.entries(game.npcs || {})) {
-            if (val > 0 || (typeof val === 'object' && val.favor > 0)) count++;
+            if (val > 0 || val === 0 || (typeof val === 'object' && val.friendship >= 0)) count++;
         }
     }
     return count;
