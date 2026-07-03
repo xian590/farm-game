@@ -3170,7 +3170,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.72';
+const GAME_VERSION = '1.3.73';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10673,6 +10673,9 @@ function useItem(itemId) {
 
 function saveGame() {
     if (!game) return;
+    if (game._savePending) return;
+    game._savePending = true;
+    setTimeout(() => { game._savePending = false; }, 500);
     // 保存前备份瞬态字段（必须在 try 最外层声明，避免 finally 引用 TDZ 变量）
     const _needsRender = game.needsRender;
     const _tickCount = game.tickCount;
@@ -10684,10 +10687,12 @@ function saveGame() {
     const _skipNextWorkerProcess = game._skipNextWorkerProcess;
     const _questRewardTimeout = game._questRewardTimeout;
     const _loadGameSpeedTimeout = game._loadGameSpeedTimeout;
+    const _saveCount = game._saveCount;
+    let saveCount;
     let saveData; // 提升到 try 外，供 catch 块使用
     try {
         // 自动备份：每5次存档轮转保存最近3个存档
-        const saveCount = game._saveCount || 0;
+        saveCount = (game._saveCount || 0) + 1;
         if (saveCount % 5 === 0) {
             try {
                 const b2 = safeStorageGet(SAVE_KEY + '_backup_2');
@@ -10745,10 +10750,11 @@ function saveGame() {
         if (_skipNextWorkerProcess !== undefined) game._skipNextWorkerProcess = _skipNextWorkerProcess;
         if (_questRewardTimeout !== undefined) game._questRewardTimeout = _questRewardTimeout;
         if (_loadGameSpeedTimeout !== undefined) game._loadGameSpeedTimeout = _loadGameSpeedTimeout;
+        if (_saveCount !== undefined) game._saveCount = _saveCount;
     }
     
-    // _saveCount 在序列化后递增，避免污染存档
-    game._saveCount = ((game._saveCount || 0) + 1) % 1000;
+    // 保存新的 saveCount
+    game._saveCount = saveCount % 1000;
     
     if (typeof checkMilestones === 'function' && game.day > 0) {
         try { checkMilestones(); } catch(e) { console.error('checkMilestones失败', e); }
@@ -11893,9 +11899,6 @@ function gameTick() {
         game.day++;
         const baseDay = (game.totalDay || game.day || 1);
     game.totalDay = baseDay + 1;
-    if (game.day > 28) {
-        advanceSeason();
-    }
         advanceSeason(); // 先检查季节变化
         onNewDay();      // 然后执行新的一天逻辑
     }
@@ -14952,12 +14955,13 @@ function renderFieldsPanel() {
     if (panel._lastRenderFields && panel._lastRenderFields === stateKey && hasFieldCards) {
         // 只更新进度条和状态
         game.fields.forEach((field, idx) => {
+            const cropData = CROP_DATA[field.crop];
             const card = panel.querySelector(`.field-card[data-idx="${idx}"]`);
             if (card) {
                 const progressBar = card.querySelector('.field-progress-bar');
                 if (progressBar) progressBar.style.width = field.growProgress + '%';
                 const statusText = card.querySelector('.field-status');
-                if (statusText) statusText.textContent = getStageDesc(field.stage);
+                if (statusText) statusText.textContent = getStageDesc(field.stage, cropData ? cropData.type : undefined);
             }
         });
         return;
