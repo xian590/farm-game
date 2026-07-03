@@ -3239,7 +3239,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.79';
+const GAME_VERSION = '1.3.80';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9523,6 +9523,7 @@ function initGame(mode) {
 
     game = {
         saveVersion: 1,
+        version: GAME_VERSION,
         mode: mode,
         money: cfg.money,
         maxHealth: cfg.maxHealth,
@@ -9560,6 +9561,7 @@ function initGame(mode) {
         tools: [],
         composting: false,
         compostStartDay: 0,
+        compostStartTotalDay: 0,
         items: { fertilizer: 0, pesticide: 0, bun: 2, medicine: 0, organicFertilizer: 0, fish: 0, wood: 0 },
         seeds: { rice_spring: 0, rice_summer: 0, sweet_spring: 0, sweet_autumn: 0, wheat_spring: 0, wheat_autumn: 0, corn_summer: 0, soybean_spring: 0, soybean_summer: 0, potato_spring: 0, potato_autumn: 0, peanut_summer: 0, pepper_summer: 0, pepper_autumn: 0, cabbage_autumn: 0, cabbage_winter: 0, radish_autumn: 0, radish_winter: 0, eggplant_summer: 0, eggplant_autumn: 0, garlic_autumn: 0, garlic_spring: 0 },
         crops: { rice: 0, sweet: 0, wheat: 0, corn: 0, soybean: 0, potato: 0, peanut: 0, pepper: 0, cabbage: 0, radish: 0, eggplant: 0, garlic: 0 },
@@ -9572,6 +9574,7 @@ function initGame(mode) {
         collection: {}, // 收藏图鉴 { categoryId: { itemId: true } }
         foragingItems: {},
         mineInventory: { stone: 0, coal: 0, iron: 0, copper: 0, crystal: 0 },
+        fishInventory: {},
         mineStats: { totalDigs: 0, deepestLayer: 0 },
         builtProcessing: {},
         bankDeposit: 0, // 银行存款
@@ -9663,7 +9666,13 @@ function initGame(mode) {
             totalProcessed: 0,
             totalCooked: 0,
             totalDigs: 0,
-            daysPlayed: 0
+            daysPlayed: 0,
+            totalFruitHarvest: 0,
+            totalHoney: 0,
+            totalMushroom: 0,
+            totalPickle: 0,
+            processingCount: 0,
+            fishCaught: 0
         },
         animalProducts: {}, // 动物产品
         // 注意：以下字段已在上面 "新增：缺失字段补全" 部分定义，不要重复
@@ -10840,6 +10849,7 @@ function saveGame() {
         if (game.processingJobs) {
             game.processingJobs.forEach(job => { delete job._loggedFull; });
         }
+        game.version = GAME_VERSION;
         game.lastSaveTimestamp = Date.now();
         saveData = JSON.stringify(game);
         safeStorageSet(SAVE_KEY, saveData);
@@ -10898,6 +10908,7 @@ function exportSaveFile() {
         const backups = {};
         transientKeys.forEach(k => { backups[k] = game[k]; delete game[k]; });
         try {
+            game.version = GAME_VERSION;
             const saveData = JSON.stringify(game, null, 2);
             const blob = new Blob([saveData], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -11094,7 +11105,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
     if (!game.skills || typeof game.skills !== 'object' || Array.isArray(game.skills)) game.skills = {};
     if (!game.npcs || typeof game.npcs !== 'object' || Array.isArray(game.npcs)) game.npcs = {};
     if (!game.friendship || typeof game.friendship !== 'object' || Array.isArray(game.friendship)) game.friendship = {};
-    if (!game.items || typeof game.items !== 'object' || Array.isArray(game.items)) game.items = { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0, fish: 0, wood: 0 };
+    if (!game.items || typeof game.items !== 'object' || Array.isArray(game.items)) game.items = { fertilizer: 0, pesticide: 0, bun: 2, medicine: 0, organicFertilizer: 0, fish: 0, wood: 0 };
     
     // 补全items和dailyActions（只补全缺失字段，不覆盖当天数据）
     if (!game.items) game.items = {};
@@ -11108,7 +11119,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
     if (game.items.organicFertilizer === undefined) game.items.organicFertilizer = 0;
     if (game.items.fertilizer === undefined) game.items.fertilizer = 0;
     if (game.items.pesticide === undefined) game.items.pesticide = 0;
-    if (game.items.bun === undefined) game.items.bun = 0;
+    if (game.items.bun === undefined) game.items.bun = 2;
     if (game.items.medicine === undefined) game.items.medicine = 0;
     if (game.items.wood === undefined) game.items.wood = 0;
     
@@ -11147,7 +11158,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
     if (!game.processedItems) game.processedItems = { riceGrain: 0, driedSweetPotato: 0, driedFish: 0, fishBall: 0, fishSoup: 0, polishedRice: 0, riceWine: 0, riceCake: 0, sweetPotatoStarch: 0, sweetPotatoNoodles: 0, flour: 0, noodles: 0, tofu: 0, soyMilk: 0, cornOil: 0, potatoChips: 0, potatoStarch: 0, peanutOil: 0, peanutCandy: 0, chiliSauce: 0, chiliOil: 0, honey: 0, mushroom: 0, pickle: 0 };
     if (!game.builtProcessing) game.builtProcessing = {};
     if (!game.dailyProcessed) game.dailyProcessed = {};
-    if (!game.cookedFoods) game.cookedFoods = {};
+    if (!game.cookedFoods) game.cookedFoods = { egg: 1 };
     if (!game.communityProjects) game.communityProjects = {};
     if (!game.collection) game.collection = {};
     
@@ -11450,7 +11461,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
     for (const [key, val] of Object.entries(defaultSeeds)) {
         if (game.seeds[key] === undefined) game.seeds[key] = val;
     }
-    if (!game.items) game.items = { fertilizer: 0, pesticide: 0, bun: 0, medicine: 0, organicFertilizer: 0, fish: 0 };
+    if (!game.items) game.items = { fertilizer: 0, pesticide: 0, bun: 2, medicine: 0, organicFertilizer: 0, fish: 0 };
     
     // 补全锻炼相关
     if (!game.exerciseToday) game.exerciseToday = { day: 0, count: 0 };
@@ -11916,10 +11927,10 @@ function advanceSeason(silent = false) {
     if (game.lastWorkerWaterDay) game.lastWorkerWaterDay -= dayOffsetGlobal;
     if (game.lastWorkerWeedDay) game.lastWorkerWeedDay -= dayOffsetGlobal;
     if (game.lastChatDay) {
-        for (const k in game.lastChatDay) { if (game.lastChatDay[k]) game.lastChatDay[k] -= dayOffsetGlobal; }
+        for (const k in game.lastChatDay) { if (game.lastChatDay[k]) game.lastChatDay[k] = Math.max(0, game.lastChatDay[k] - dayOffsetGlobal); }
     }
     if (game.lastGiftDay) {
-        for (const k in game.lastGiftDay) { if (game.lastGiftDay[k]) game.lastGiftDay[k] -= dayOffsetGlobal; }
+        for (const k in game.lastGiftDay) { if (game.lastGiftDay[k]) game.lastGiftDay[k] = Math.max(0, game.lastGiftDay[k] - dayOffsetGlobal); }
     }
     
     let removedCount = 0;
