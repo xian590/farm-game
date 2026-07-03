@@ -2073,7 +2073,7 @@
                 left: 0;
                 right: 0;
                 z-index: 999;
-                max-height: 120px;
+                max-height: 100px;
                 min-height: 80px;
                 border-radius: 12px 12px 0 0;
                 transition: height 0.3s ease, max-height 0.3s ease;
@@ -2923,6 +2923,14 @@
                 <div class="sidebar-tab" data-tab="cooking">🍳 农家烹饪</div>
                 <div class="sidebar-tab" data-tab="community">🏛️ 村公共建设</div>
                 <div class="sidebar-tab" data-tab="collection">📖 农家图鉴</div>
+                <div class="sidebar-tab" data-tab="log" title="查看事件日志">
+    <span class="tab-emoji">📜</span>
+    <span class="tab-text">日志</span>
+</div>
+                <div class="sidebar-tab" data-tab="log" title="查看事件日志">
+    <span class="tab-emoji">📜</span>
+    <span class="tab-text">日志</span>
+</div>
                 <div class="sidebar-tab" data-tab="leaderboard" title="查看排行榜">🏆 排行榜</div>
                 <div class="sidebar-tab" data-tab="achievements">🏆 成就殿堂</div>
             <div class="sidebar-tab" data-tab="processing">🏡 农家副业</div>
@@ -3170,7 +3178,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.73';
+const GAME_VERSION = '1.3.74';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -18634,13 +18642,13 @@ function buildProcessing(key) {
         
         // 检查是否已经建造
         if (game.builtProcessing && game.builtProcessing[key] > 0) {
-            showToast('已经建造过了');
+            showToast('已经建造过了', 'warn');
             return;
         }
         
         // 检查解锁条件
         if (!isProcessingUnlocked(key)) {
-            showToast('还未解锁');
+            showToast('还未解锁', 'warn');
             return;
         }
         
@@ -18904,7 +18912,7 @@ function sellProcessedItem(itemKey, amount) {
     
     const have =(game.processedItems && game.processedItems[itemKey]) || 0;
     if (have < amount) {
-        showToast('库存不足');
+        showToast('库存不足', 'bad');
         return;
     }
     
@@ -18952,7 +18960,7 @@ function researchTech(techId) {
     
     // 检查是否已经研究过
     if (game.unlockedTechs && game.unlockedTechs[techId]) {
-        showToast('已经研究过了');
+        showToast('已经研究过了', 'warn');
         return;
     }
     
@@ -18960,7 +18968,7 @@ function researchTech(techId) {
     if (tech.requires && tech.requires.length > 0) {
         for (const req of tech.requires) {
             if (!game.unlockedTechs || !game.unlockedTechs[req]) {
-                showToast('需要先研究前置科技');
+                showToast('需要先研究前置科技', 'warn');
                 return;
             }
         }
@@ -18968,7 +18976,7 @@ function researchTech(techId) {
     
     // 检查研究点
     if (game.researchPoints < tech.cost) {
-        showToast('农技经验不足');
+        showToast('农技经验不足', 'bad');
         return;
     }
     
@@ -19170,7 +19178,7 @@ function buildBuilding(buildingId) {
     // 检查是否已经建造
     const currentLevel = game.buildings[buildingId] || 0;
     if (currentLevel > 0) {
-        showToast('已经建造过了');
+        showToast('已经建造过了', 'warn');
         return;
     }
     
@@ -19208,7 +19216,7 @@ function upgradeBuilding(buildingId) {
     
     const currentLevel = game.buildings[buildingId] || 0;
     if (currentLevel >= building.maxLevel) {
-        showToast('已达最高等级');
+        showToast('已达最高等级', 'warn');
         return;
     }
     
@@ -20064,7 +20072,7 @@ function collectPoop() {
 function renderAutomationPanel() {
     const panel = document.getElementById('content-panel');
     if (!panel) return;
-    let html = '<div class="panel-title">🤖 自动化设备</div>';
+    let html = '<div class="panel-title">🤖 自动化</div>';
     html += '<p class="panel-desc">花钱买个省心，设备自动干活，你只管数钱。</p>';
     
     // 已购买的设备
@@ -20161,11 +20169,11 @@ function renderBankPanel() {
     // 检查银行解锁条件
     const totalAssets = game.money + calculateCropValue() + (game.bankDeposit || 0);
     if (totalAssets < BANK_DATA.depositUnlock) {
-        panel.innerHTML = '<div class="panel-title">🏦 农村信用社</div><div style="padding:20px;text-align:center;color:#999;">🏦 银行服务需要总资产达到 ' + BANK_DATA.depositUnlock + ' 元后解锁<br>当前总资产：' + totalAssets.toFixed(1) + ' 元</div>';
+        panel.innerHTML = '<div class="panel-title">🏦 银行</div><div style="padding:20px;text-align:center;color:#999;">🏦 银行服务需要总资产达到 ' + BANK_DATA.depositUnlock + ' 元后解锁<br>当前总资产：' + totalAssets.toFixed(1) + ' 元</div>';
         return;
     }
     
-    let html = '<div class="panel-title">🏦 农村信用社</div>';
+    let html = '<div class="panel-title">🏦 银行</div>';
     html += '<p class="panel-desc">钱多了放银行，每日单利。日利率0.02%。</p>';
     
     // 当前存款
@@ -20231,7 +20239,7 @@ function bankWithdrawAll() {
 function renderNeighborPanel() {
     const panel = document.getElementById('content-panel');
     if (!panel) return;
-    let html = '<div class="panel-title">🤝 邻里互助</div>';
+    let html = '<div class="panel-title">🤝 邻里</div>';
     html += '<p class="panel-desc">远亲不如近邻。跟村里人处好了，农忙时邻居都会来搭把手。</p>';
     
     // 当前总好感度
@@ -20501,7 +20509,7 @@ function upgradeAgriTech() {
 function renderAnimalsPanel() {
     const panel = document.getElementById('content-panel');
     if (!panel) return;
-    let html = '<div class="panel-title">🐷 畜牧养殖</div>';
+    let html = '<div class="panel-title">🐷 畜牧</div>';
     html += '<p class="panel-desc">养点畜生，积少成多。猪牛羊鸡鸭鹅，想养什么养什么。</p>';
     
     // 已养的动物
@@ -20585,7 +20593,7 @@ function renderAnimalsPanel() {
 function renderOrchardPanel() {
     const panel = document.getElementById('content-panel');
     if (!panel) return;
-    let html = '<div class="panel-title">🌳 果园种植</div>';
+    let html = '<div class="panel-title">🌳 果园</div>';
     html += '<p class="panel-desc">果树种下去，年年有收成。一次种植，多年收获。</p>';
     
     // 已种植的果树
@@ -21260,7 +21268,7 @@ function renderLeaderboardPanel() {
             const style = entry.isPlayer ? 'background: #fff9e6; font-weight: bold;' : isTop3 ? 'background: #f5f5f5;' : '';
             html += `<div style="display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 6px; margin: 4px 0; ${style}">
                 <span>${rankEmoji} ${escapeHtml(entry.name)}</span>
-                <span style="color: #8b5a2b;">${entry.score}${key === 'richest' || key === 'harvester' ? '元' : key === 'miner' ? '层' : '次'}</span>
+                <span style="color: #8b5a2b;">${key === 'richest' || key === 'harvester' ? '¥' + entry.score : entry.score + (key === 'miner' ? '层' : '次')}</span>
             </div>`;
         });
         html += `</div></div>`;
