@@ -3152,7 +3152,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.63';
+const GAME_VERSION = '1.3.64';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9771,7 +9771,12 @@ function calculateOfflineReward() {
                 const cropSkillLevel =(game.skills.cropFamiliarity && game.skills.cropFamiliarity.level) || 0;
                 if (cropSkillLevel > 0) yield_ *= (1 + cropSkillLevel * 0.03);
                 if (field.fertilized) {
-                    yield_ *= (field.fertilizerType === 'organic' ? 1.08 : 1.05);
+                    let fertMultiplier = (field.fertilizerType === 'organic' ? 1.08 : 1.05);
+                    const fertilizerEfficiency = game.agriTechEffects && game.agriTechEffects.fertilizerEfficiency;
+                    if (fertilizerEfficiency > 0) {
+                        fertMultiplier *= (1 + fertilizerEfficiency);
+                    }
+                    yield_ *= fertMultiplier;
                 }
                 const daysSinceWeed = game.day - field.lastWeedDay;
                 if (daysSinceWeed < 7) yield_ *= 1.08;
@@ -10097,7 +10102,12 @@ function calculateOfflineReward() {
                     const cropSkillLevel = (game.skills.cropFamiliarity && game.skills.cropFamiliarity.level) || 0;
                     if (cropSkillLevel > 0) yield_ *= (1 + cropSkillLevel * 0.03);
                     if (field.fertilized) {
-                        yield_ *= (field.fertilizerType === 'organic' ? 1.08 : 1.05);
+                        let fertMultiplier = (field.fertilizerType === 'organic' ? 1.08 : 1.05);
+                        const fertilizerEfficiency = game.agriTechEffects && game.agriTechEffects.fertilizerEfficiency;
+                        if (fertilizerEfficiency > 0) {
+                            fertMultiplier *= (1 + fertilizerEfficiency);
+                        }
+                        yield_ *= fertMultiplier;
                     }
                     const daysSinceWeed = game.day - field.lastWeedDay;
                     if (daysSinceWeed < 7) yield_ *= 1.08;
@@ -10199,10 +10209,10 @@ function calculateOfflineReward() {
         }
     }
     
-    // 离线期间银行利息结算（复利计算）
+    // 离线期间银行利息结算（单利计算）
     if (game.bankDeposit > 0 && gameDays > 0) {
-        const compoundRate = Math.pow(1 + BANK_DATA.interestRate, gameDays);
-        const newDeposit = Math.min(Math.floor(game.bankDeposit * compoundRate), BANK_DATA.maxDeposit);
+        const simpleInterest = Math.floor(game.bankDeposit * BANK_DATA.interestRate * gameDays);
+        const newDeposit = Math.min(game.bankDeposit + simpleInterest, BANK_DATA.maxDeposit);
         const totalInterest = newDeposit - game.bankDeposit;
         if (totalInterest > 0) {
             game.bankDeposit = newDeposit;
@@ -12092,7 +12102,7 @@ function onNewDay() {
         });
     }
     
-    // 银行利息（每日结算）
+    // 银行利息（每日单利结算）
     if (game.bankDeposit > 0) {
         const interest = Math.floor(game.bankDeposit * BANK_DATA.interestRate);
         game.bankDeposit = Math.min(BANK_DATA.maxDeposit, game.bankDeposit + interest);
@@ -12111,6 +12121,20 @@ function onNewDay() {
     
     // 重置每日加工上限
     game.dailyProcessed = {};
+    
+    // 重置日常任务
+    if (game.quests) {
+        ['q18', 'q19', 'q20'].forEach(qid => {
+            if (game.quests[qid]) {
+                game.quests[qid] = false;
+            }
+        });
+    }
+    
+    // 同步农业科技效果到全局变量
+    if (game.agriTechEffects) {
+        game.pestReduction = game.agriTechEffects.pestReduction || 0;
+    }
     
     // 重置每日活动记录
     game.visitToday = { day: game.day, count: 0 };
@@ -12298,6 +12322,10 @@ function onNewDay() {
             if (tree.mature) {
                 tree.daysSinceHarvest++;
                 const data = ORCHARD_DATA[tree.type];
+                if (data && data.season && data.season !== game.season) {
+                    // 非当季不结果
+                    return;
+                }
                 if (data && tree.daysSinceHarvest >= 7) {
                     tree.ready = true;
                 }
@@ -12320,7 +12348,7 @@ function onNewDay() {
             if (!project) continue;
             
             if (project.effect === 'dailyIncome') {
-                const incomes = [50, 100, 200];
+                const incomes = [350, 700, 1400];
                 const income = incomes[Math.max(0, level - 1)] || 0;
                 game.money += income;
                 addLog(`🏪 ${project.name} 今日收入 ${income} 元`, 'good');
@@ -13612,8 +13640,11 @@ function triggerRandomEvent() {
         if (e.id === 'theft' && petTheftReduction > 0) {
             weight *= (1 - petTheftReduction);
         }
-        if (e.id === 'pest' && game.pestReduction > 0) {
-            weight *= (1 - game.pestReduction);
+        if (e.id === 'pest') {
+            const pestReductionTotal = (game.pestReduction || 0) + ((typeof getTechBonus === 'function') ? getTechBonus('pestReduction') : 0);
+            if (pestReductionTotal > 0) {
+                weight *= (1 - pestReductionTotal);
+            }
         }
         totalWeight += weight;
     });
@@ -13631,8 +13662,11 @@ function triggerRandomEvent() {
         if (event.id === 'theft' && petTheftReduction > 0) {
             weight *= (1 - petTheftReduction);
         }
-        if (event.id === 'pest' && game.pestReduction > 0) {
-            weight *= (1 - game.pestReduction);
+        if (event.id === 'pest') {
+            const pestReductionTotal = (game.pestReduction || 0) + ((typeof getTechBonus === 'function') ? getTechBonus('pestReduction') : 0);
+            if (pestReductionTotal > 0) {
+                weight *= (1 - pestReductionTotal);
+            }
         }
         random -= weight;
         if (random <= 0) {
@@ -18150,8 +18184,8 @@ function processDailyProcessing() {
             conveyorBonus = [0.5, 1.0, 2.0][conveyorLevel - 1] || 0;
         }
         let effectiveCapacity = dailyCapacity;
-        if (processingSpeedBonus > 0 || buildingProcessingBonus > 0 || conveyorBonus > 0) {
-            effectiveCapacity = Math.floor(dailyCapacity * (1 + processingSpeedBonus + buildingProcessingBonus + conveyorBonus));
+        if (processingSpeedBonus > 0 || buildingProcessingBonus > 0 || conveyorBonus > 0 || (game.processingBonus || 0) > 0) {
+            effectiveCapacity = Math.floor(dailyCapacity * (1 + processingSpeedBonus + buildingProcessingBonus + conveyorBonus + (game.processingBonus || 0)));
         }
         let batches;
         if (!building.inputAmount || building.inputAmount <= 0) {
@@ -19774,8 +19808,16 @@ function upgradeAutomation(deviceId) {
 function renderBankPanel() {
     const panel = document.getElementById('content-panel');
     if (!panel) return;
+    
+    // 检查银行解锁条件
+    const totalAssets = game.money + calculateCropValue() + (game.bankDeposit || 0);
+    if (totalAssets < BANK_DATA.depositUnlock) {
+        panel.innerHTML = '<div class="panel-title">🏦 农村信用社</div><div style="padding:20px;text-align:center;color:#999;">🏦 银行服务需要总资产达到 ' + BANK_DATA.depositUnlock + ' 元后解锁<br>当前总资产：' + totalAssets.toFixed(1) + ' 元</div>';
+        return;
+    }
+    
     let html = '<div class="panel-title">🏦 农村信用社</div>';
-    html += '<p class="panel-desc">钱多了放银行，利滚利。日利率0.02%，利滚利。</p>';
+    html += '<p class="panel-desc">钱多了放银行，每日单利。日利率0.02%。</p>';
     
     // 当前存款
     html += `<div class="shop-item"><div class="shop-item-info"><div class="shop-item-icon">🏦</div><div><div class="shop-item-name">当前存款</div><div class="shop-item-desc">${game.bankDeposit || 0} 元</div></div></div></div>`;
@@ -20231,7 +20273,7 @@ function renderOrchardPanel() {
                     </div>
                 </div>
                 <div class="shop-item-price">
-                    <button class="buy-btn" onclick="buyTree('${key}')" ${game.money < data.buyCost ? 'disabled' : ''}>💰 ${data.buyCost}元购买</button>
+                    <button class="buy-btn" onclick="buyTree('${key}')" ${game.money < data.buyCost || !seasonMatch ? 'disabled' : ''}>💰 ${data.buyCost}元购买</button>
                 </div>
             </div>
         `;
@@ -20440,6 +20482,29 @@ function investVillageProject(projectKey) {
                 ? (currentLevel === 1 ? 2000 : 5000) 
                 : 0;
             game.storageCapacity = (game.storageCapacity || 2000) + bonusAmount;
+        }
+        
+        // 应用其他效果
+        if (project.effect) {
+            switch(project.effect) {
+                case 'sellBonus':
+                    game.sellBonus = (game.sellBonus || 0) + project.value;
+                    addLog(`💰 市场繁荣！售价加成 +${project.value}%`, 'good');
+                    break;
+                case 'reputationBonus':
+                    if (!game.farmStay) game.farmStay = { level: 0, guests: 0, reputation: 0 };
+                    game.farmStay.reputation = (game.farmStay.reputation || 0) + project.value;
+                    addLog(`⭐ 农家乐声望 +${project.value}`, 'good');
+                    break;
+                case 'processingBonus':
+                    game.processingBonus = (game.processingBonus || 0) + project.value;
+                    addLog(`⚙️ 加工产能加成 +${project.value}%`, 'good');
+                    break;
+                case 'fishCapacity':
+                    game.fishCapacity = (game.fishCapacity || 0) + project.value;
+                    addLog(`🎣 鱼塘容量 +${project.value}`, 'good');
+                    break;
+            }
         }
         
         addLog(`🎉 投资了${project.emoji}${project.name}！声望+5`, 'good');
@@ -20671,6 +20736,10 @@ function sellAnimalProduct(productKey, amount) {
 function buyTree(treeKey) {
     const data = ORCHARD_DATA[treeKey];
     if (!data) return;
+    if (data.season && data.season !== game.season) {
+        showToast('🌸 ' + data.name + '只能在' + SEASON_NAMES[data.season] + '种植，现在是' + SEASON_NAMES[game.season], 'warn');
+        return;
+    }
     if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
     
     game.money -= data.buyCost;
@@ -21027,6 +21096,12 @@ function waterField(fieldIdx) {
         const npcWaterBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('waterStaminaReduce') : 0;
         if (npcWaterBonus > 0) {
             waterCost = Math.max(1, Math.floor(waterCost * (1 - npcWaterBonus)));
+        }
+        
+        // 农业科技：节水灌溉减少浇水体力消耗
+        const waterEfficiency = game.agriTechEffects && game.agriTechEffects.waterEfficiency;
+        if (waterEfficiency > 0) {
+            waterCost = Math.max(1, Math.floor(waterCost * (1 - waterEfficiency)));
         }
         
         // 社区每日首次浇水免费
@@ -21507,7 +21582,7 @@ function _doSellCrop(cropKey, sellAmount, price) {
         const totalAssets = (game.stats && game.stats.totalEarned) || 0;
         if (totalAssets >= 5000) {
             game.quests.q16 = true;
-            queueQuestReward('q16', 500, '✅ 任务完成：小有积蓄，奖励500元');
+            queueQuestReward('q16', 1000, '✅ 任务完成：小有积蓄，奖励1000元');
         }
     }
     
@@ -21810,6 +21885,7 @@ function getStorageUsed() {
     }
     let total = 0;
     total += Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
+    total += Object.values(game.fruits || {}).reduce((sum, v) => sum + (v || 0), 0);
     // 写入缓存
     if (game) {
         game._storageCacheTick = game.tickCount;
@@ -22051,7 +22127,7 @@ function checkQuests() {
         const totalAssets = (game.stats && game.stats.totalEarned) || 0;
         if (totalAssets >= 5000) {
             game.quests.q16 = true;
-            queueQuestReward('q16', 500, '✅ 任务完成：小有积蓄，奖励500元');
+            queueQuestReward('q16', 1000, '✅ 任务完成：小有积蓄，奖励1000元');
         }
     }
     
@@ -22059,7 +22135,7 @@ function checkQuests() {
     if (!game.quests.q17) {
         if (game.reputation >= 100) {
             game.quests.q17 = true;
-            queueQuestReward('q17', 1000, '✅ 任务完成：德高望重，奖励1000元');
+            queueQuestReward('q17', 500, '✅ 任务完成：德高望重，奖励500元');
         }
     }
     
@@ -23466,7 +23542,8 @@ function isMineLayerUnlocked(layerKey) {
     } else if (layerKey === 'layer2') {
         return ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) >= 2;
     } else if (layerKey === 'layer3') {
-        return ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) >= 5 && game.money >= 5000;
+        const totalAssets = game.money + calculateCropValue() + (game.bankDeposit || 0);
+        return ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) >= 5 && totalAssets >= 5000;
     }
     return false;
 }
