@@ -3153,7 +3153,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.67';
+const GAME_VERSION = '1.3.68';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3219,7 +3219,7 @@ const ITEM_DATA = {
     sugar: { name: '红糖', emoji: '🍯', price: 25 },
     cigarette: { name: '香烟', emoji: '🚬', price: 40 },
     fertilizer: { name: '化肥', emoji: '🧪', price: 20 },
-    pesticide: { name: '农药', emoji: '☠️', price: 30 },
+    pesticide: { name: '农药', emoji: '☠️', price: 50 },
     bun: { name: '馒头', emoji: '🍞', price: 10 },
     medicine: { name: '感冒药', emoji: '💊', price: 35 },
     organicFertilizer: { name: '有机肥', emoji: '💩', price: 25 }
@@ -4417,7 +4417,7 @@ const HOUSE_DATA = {
     '进阶房': {
         name: '进阶房',
         emoji: '🏠',
-        desc: '青砖瓦房，干净整洁。有个小院子，还能晒晒太阳。',
+        desc: '青砖瓦房，干净整洁。有个小院子，还能晒晒太阳。升级后仓库容量+500斤。',
         staminaRegen: 17,
         healthRegen: 2,
         rent: 350,
@@ -4427,7 +4427,7 @@ const HOUSE_DATA = {
     '精英房': {
         name: '精英房',
         emoji: '🏡',
-        desc: '宽敞明亮的大瓦房，家具齐全。还有个大院子，能养花种菜。',
+        desc: '宽敞明亮的大瓦房，家具齐全。还有个大院子，能养花种菜。升级后仓库容量+500斤，体力上限+20，健康上限+10。',
         staminaRegen: 22,
         healthRegen: 3,
         rent: 550,
@@ -4437,7 +4437,7 @@ const HOUSE_DATA = {
     '终极房': {
         name: '终极房',
         emoji: '🏯',
-        desc: '豪华大院，雕梁画栋。村里最好的房子，住进去连做梦都香。',
+        desc: '豪华大院，雕梁画栋。村里最好的房子，住进去连做梦都香。升级后仓库容量+500斤，体力上限+20，健康上限+10。',
         staminaRegen: 30,
         healthRegen: 5,
         rent: 800,
@@ -4447,7 +4447,7 @@ const HOUSE_DATA = {
     '豪宅': {
         name: '豪宅',
         emoji: '🏰',
-        desc: '三层小楼，带花园和池塘。全村人都羡慕的房子。',
+        desc: '三层小楼，带花园和池塘。全村人都羡慕的房子。升级后仓库容量+500斤，体力上限+20，健康上限+10。',
         staminaRegen: 40,
         healthRegen: 8,
         rent: 1200,
@@ -4457,7 +4457,7 @@ const HOUSE_DATA = {
     '庄园': {
         name: '庄园',
         emoji: '🌄',
-        desc: '占地几十亩的大庄园，亭台楼阁一应俱全。这是你的王国。',
+        desc: '占地几十亩的大庄园，亭台楼阁一应俱全。这是你的王国。升级后仓库容量+500斤，体力上限+20，健康上限+10。',
         staminaRegen: 55,
         healthRegen: 12,
         rent: 2000,
@@ -4981,7 +4981,7 @@ const MARKET_DATA = {
     specialItems: [
         { id: 'fertilizer', name: '化肥', emoji: '🧪', price: 30, stock: 10, desc: '庄稼长得快' },
         { id: 'organicFertilizer', name: '有机肥', emoji: '💩', price: 50, stock: 5, desc: '绿色无污染' },
-        { id: 'pesticide', name: '农药', emoji: '☠️', price: 40, stock: 8, desc: '除虫效果好' },
+        { id: 'pesticide', name: '农药', emoji: '☠️', price: 50, stock: 8, desc: '除虫效果好' },
         { id: 'snack', name: '粗点心', emoji: '🍬', price: 5, stock: 20, desc: '补充体力' },
         { id: 'medicine', name: '感冒药', emoji: '💊', price: 25, stock: 5, desc: '治感冒' },
         { id: 'liquor', name: '散装白酒', emoji: '🍶', price: 20, stock: 10, desc: '送礼佳品' },
@@ -14383,9 +14383,6 @@ function updateProcessingJobs() {
 function growCrops() {
     if (!game || !game.fields) return;
     let growRate = 1.0;
-    if (game.neighborHelp && game.neighborHelp.seedShare) {
-        growRate += 0.05;
-    }
     // 农业科技：土壤改良 - 生长速度加成
     if (game.agriTechEffects && game.agriTechEffects.growthSpeed) {
         growRate += game.agriTechEffects.growthSpeed;
@@ -15611,6 +15608,9 @@ function renderFieldCard(field, idx) {
             const fertText = field.fertilizerType === 'organic' ? '🌱 已施有机肥' : '🧪 已施化肥';
             statusTags.push(`<span style="background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 10px; font-size: 11px;">${fertText}</span>`);
         }
+        if (field.yieldLoss > 0) {
+            statusTags.push(`<span style="background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 10px; font-size: 11px;">🐛 受害-${Math.floor(field.yieldLoss * 100)}%</span>`);
+        }
         if (statusTags.length > 0) {
             html += `<div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px;">${statusTags.join('')}</div>`;
         }
@@ -15967,7 +15967,7 @@ function renderSeedsTab() {
 function renderItemsTab() {
     const items = [
         { key: 'fertilizer', name: '化肥', emoji: '🧪', price: 50, desc: '作物产量+5%' },
-        { key: 'pesticide', name: '农药', emoji: '💊', price: 80, desc: '治疗病虫害' },
+        { key: 'pesticide', name: '农药', emoji: '💊', price: ITEM_DATA.pesticide ? ITEM_DATA.pesticide.price : 50, desc: '治疗病虫害' },
         { key: 'bun', name: '肉包子', emoji: '🥟', price: 20, desc: '体力+20，健康+5' },
         { key: 'medicine', name: '感冒药', emoji: '💊', price: 100, desc: '健康+30' }
     ];
@@ -21426,6 +21426,10 @@ function harvestCrop(fieldIdx) {
         staminaCost *= Math.max(0.1, 1 - toolSkillLevelHarvest * 0.03);
         staminaCost = Math.max(1, Math.floor(staminaCost));
         
+        if (game.neighborHelp && game.neighborHelp.toolShare) {
+            staminaCost = Math.floor(staminaCost * 0.85); // 减免15%
+        }
+        
         if (game.stamina < staminaCost) {
             showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
             playErrorSound();
@@ -21498,6 +21502,11 @@ function harvestCrop(fieldIdx) {
         if (game.neighborHelp && game.neighborHelp.harvestHelp) {
             yield_ *= 1.1;
             addLog('🌾 邻居来帮你收庄稼，产量增加了10%', 'good');
+        }
+        
+        // 邻里互助：种子分享
+        if (game.neighborHelp && game.neighborHelp.seedShare) {
+            yield_ = Math.floor(yield_ * 1.05); // 产量+5%
         }
         
         // 随机波动 ±10%
@@ -22217,6 +22226,21 @@ function upgradeHouse(targetHouse) {
         playCoinSound();
         game.money -= houseData.upgradeCost;
         game.house = targetHouse;
+        game.houseLevel = targetIndex;
+        
+        // 房屋升级属性提升
+        const houseLevel = game.houseLevel || 0;
+        if (houseLevel >= 2) {
+            game.storageCapacity += 500; // 每升一级+500
+        }
+        if (houseLevel >= 3) {
+            game.maxStamina = Math.min(300, game.maxStamina + 20); // 精英房+20体力上限
+            game.maxHealth = Math.min(300, game.maxHealth + 10); // 精英房+10健康上限
+        }
+        if (houseLevel >= 4) {
+            game.maxStamina = Math.min(300, game.maxStamina + 20); // 大师房再+20
+            game.maxHealth = Math.min(300, game.maxHealth + 10); // 大师房再+10
+        }
         
         // 任务检查：升级到进阶房
         if (targetHouse === '进阶房' && !game.quests.q8) {
