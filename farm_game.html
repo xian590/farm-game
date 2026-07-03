@@ -3239,7 +3239,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.81';
+const GAME_VERSION = '1.3.82';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -6035,7 +6035,7 @@ const ACHIEVEMENT_DATA = {
     // 新成就：冬季类
     firstWinter: {
         id: 'firstWinter', name: '越冬勇士', emoji: '❄️', category: 'general',
-        desc: '成功度过第一个冬天', condition: 'totalDay >= 84',
+        desc: '成功度过第一个冬天', condition: 'totalDay >= 85',
         reward: { money: 300, reputation: 10 }
     },
     
@@ -9817,21 +9817,8 @@ function calculateOfflineReward() {
             game.money += 15;
         }
         // 宠物每日饲料消耗（离线期间也要扣）
-        if (game.pets) {
-            for (const [petId, pet] of Object.entries(game.pets || {})) {
-                if (!pet || typeof pet !== 'object') continue;
-                const petData = PET_DATA[petId];
-                if (!petData) continue;
-                const foodCost = petData.dailyFoodCost || 0;
-                if (foodCost > 0) {
-                    if (game.money >= foodCost) {
-                        game.money -= foodCost;
-                    } else {
-                        game.money = 0;
-                        pet.affection = Math.max(0, (pet.affection || 0) - 2);
-                    }
-                }
-            }
+        if (typeof deductPetFood === 'function') {
+            deductPetFood();
         }
         // 自动化设备离线运行
         if (game.automation) {
@@ -10145,21 +10132,8 @@ function calculateOfflineReward() {
             }
             
             // 宠物每日饲料消耗（离线期间也要扣）
-            if (game.pets) {
-                for (const [petId, pet] of Object.entries(game.pets || {})) {
-                    if (!pet || typeof pet !== 'object') continue;
-                    const petData = PET_DATA[petId];
-                    if (!petData) continue;
-                    const foodCost = petData.dailyFoodCost || 0;
-                    if (foodCost > 0) {
-                        if (game.money >= foodCost) {
-                            game.money -= foodCost;
-                        } else {
-                            game.money = 0;
-                            pet.affection = Math.max(0, (pet.affection || 0) - 2);
-                        }
-                    }
-                }
+            if (typeof deductPetFood === 'function') {
+                deductPetFood();
             }
             
             // 自动化设备离线运行
@@ -11593,6 +11567,18 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
             field.step = sanitizeNumber(field.step, 0);
         });
     }
+    
+    // 重新应用科技效果
+    if (typeof getTechBonus === 'function') {
+        const healthBonus = getTechBonus('healthMax');
+        if (healthBonus > 0) {
+            game.maxHealth = Math.min(200, 100 + healthBonus);
+        }
+        const staminaBonus = getTechBonus('staminaMax');
+        if (staminaBonus > 0) {
+            game.maxStamina = Math.min(200, 100 + staminaBonus);
+        }
+    }
 }
 
 function loadGame() {
@@ -12108,6 +12094,30 @@ function getStaminaRegenRate() {
     return Math.floor(finalRate);
 }
 
+// 统一宠物饲料扣除函数
+function deductPetFood() {
+    let totalCost = 0;
+    for (const [petId, pet] of Object.entries(game.pets || {})) {
+        if (!pet || typeof pet !== 'object' || pet.dead) continue;
+        const petData = PET_DATA[petId];
+        if (!petData) continue;
+        const foodCost = petData.dailyFoodCost || 0;
+        if (foodCost > 0) {
+            if (game.money >= foodCost) {
+                game.money -= foodCost;
+                totalCost += foodCost;
+            } else {
+                game.money = 0;
+                pet.affection = Math.max(0, (pet.affection || 0) - 2);
+                addLog(`🐕 ${petData.name}没饲料吃了，好感度-2`, 'bad');
+            }
+        }
+    }
+    if (totalCost > 0) {
+        addLog(`🐕 宠物饲料费共-${totalCost}元`, 'info');
+    }
+}
+
 function onNewDay() {
     // 刚进入游戏时不触发事件（避免加载存档后立刻弹出事件）
     if (game.justStarted) {
@@ -12357,23 +12367,8 @@ function onNewDay() {
     }
     
     // 宠物每日饲料消耗
-    if (game.pets) {
-        for (const [petId, pet] of Object.entries(game.pets || {})) {
-            if (!pet || typeof pet !== 'object') continue;
-            const petData = PET_DATA[petId];
-            if (!petData) continue;
-            const foodCost = petData.dailyFoodCost || 0;
-            if (foodCost > 0) {
-                if (game.money >= foodCost) {
-                    game.money -= foodCost;
-                    addLog(`🐕 ${petData.name}的饲料费-${foodCost}元`, 'info');
-                } else {
-                    game.money = 0;
-                    pet.affection = Math.max(0, (pet.affection || 0) - 2);
-                    addLog(`🐕 ${petData.name}没饲料吃了，好感度-2`, 'bad');
-                }
-            }
-        }
+    if (typeof deductPetFood === 'function') {
+        deductPetFood();
     }
     
     // 房屋租金每日扣除（已租房）——改为季租，在advanceSeason中扣除
@@ -18176,6 +18171,12 @@ function addSkillExp(skillKey, amount) {
     const skill = game.skills[skillKey];
     if (!skill) return;
     
+    // 满级限制：不再增加经验
+    if (skill.level >= 10) {
+        skill.exp = SKILL_EXP_TABLE[10];
+        return;
+    }
+    
     const oldLevel = skill.level || 0;
     if (skill.exp === undefined || !isFinite(skill.exp)) skill.exp = 0;
     skill.exp += amount;
@@ -19847,7 +19848,7 @@ function getPetEffect(effectType) {
         const pet = PET_DATA[petKey];
         if (!pet || pet.effectType !== effectType) continue;
         
-        const friendship = petData.affection || petData.friendship || 0;
+        const friendship = petData.affection || 0;
         // 根据好感度计算效果：0好感度=基础效果，90好感度=最大效果
         const ratio = Math.min(1, friendship / 90);
         const effect = pet.baseEffect + (pet.maxEffect - pet.baseEffect) * ratio;
@@ -19908,10 +19909,11 @@ function renderPetsPanel() {
             let unlockText = '';
             let canUnlock = false;
             if (petKey === 'ahua') {
-                // 阿花（猫）：需要触发流浪猫事件并喂食3次
+                // 阿花（猫）：需要触发流浪猫事件并喂食3次，且到达解锁天数
                 const visits =(game.petEvents && game.petEvents.strayCatVisits) || 0;
-                canUnlock = visits >= 3;
-                unlockText = canUnlock ? '阿花决定留下来了！' : `需要在门口遇到流浪猫并喂食 (${visits}/3)`;
+                const unlockDay = pet.unlockDay || 5;
+                canUnlock = visits >= 3 && (game.totalDay || game.day) >= unlockDay;
+                unlockText = canUnlock ? '阿花决定留下来了！' : `需要在门口遇到流浪猫并喂食 (${visits}/3)，且第${unlockDay}天后才能领养`;
             } else if (petKey === 'dahuang') {
                 // 大黄（狗）：使用PET_DATA中的unlockDay
                 const unlockDay = pet.unlockDay || 7;
@@ -19944,7 +19946,7 @@ function renderPetsPanel() {
         } else {
             // 已拥有
             const petData = game.pets[petKey];
-            const friendship = petData.affection || petData.friendship || 0;
+            const friendship = petData.affection || 0;
             const today = game.day;
             const fedToday = petData.lastFedDay === today;
             const pettedToday = petData.lastPettedDay === today;
@@ -20045,7 +20047,6 @@ function adoptPet(petKey) {
     playBonusSound();
     game.pets[petKey] = {
         affection: 10,
-        friendship: 10,
         lastFedDay: 0,
         lastPettedDay: 0,
         lastPlayedDay: 0
@@ -21277,6 +21278,10 @@ function harvestFruit(treeIdx) {
     tree.daysSinceHarvest = 0;
     if (!game.fruits) game.fruits = {};
     game.fruits[tree.type] = (game.fruits[tree.type] || 0) + data.yield;
+    
+    // 统计水果收获数量
+    if (!game.stats) game.stats = {};
+    game.stats.totalFruitHarvest = (game.stats.totalFruitHarvest || 0) + data.yield;
     
     addLog(`🍎 ${data.name}收获了${data.yield}斤${data.emoji}，存入库中`, 'good');
     saveGame();
@@ -24847,7 +24852,7 @@ function checkAchievements() {
         totalAnimals: Object.values(game.animals || {}).reduce((sum, arr) => sum + (arr || []).length, 0),
         totalOrchards: (game.orchard || []).length,
         totalFruitHarvest: (game.stats && game.stats.totalFruitHarvest) || 0,
-        bestFriendCount: Object.values(game.npcs || {}).filter(f => (f || 0) >= 100).length,
+        bestFriendCount: Object.values(game.npcs || {}).filter(f => (f || 0) >= 90).length,
         maxSkillLevel: Math.max(0, ...Object.values(game.skills || {}).map(s => (s && s.level) || 0)),
         totalEvents: (game.eventHistory || []).length,
         // 添加缺失的成就条件映射
