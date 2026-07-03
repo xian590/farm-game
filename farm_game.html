@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.93';
+const GAME_VERSION = '1.3.95';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -12074,7 +12074,7 @@ function advanceSeason(silent = false) {
     }
     
     // 季节切换后更新BGM
-    const seasonBgms = { spring: 'spring', summer: 'summer', autumn: 'autumn', winter: 'winter' };
+    const seasonBgms = { spring: 'warm', summer: 'game', autumn: 'harvest', winter: 'winter' };
     switchBgm(seasonBgms[game.season] || 'default');
     
     // 季节背景色变化
