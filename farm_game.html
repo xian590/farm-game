@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.95';
+const GAME_VERSION = '1.3.96';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10460,9 +10460,8 @@ function calculateOfflineReward() {
             // 重置日常任务
             if (game.quests) {
                 ['q18', 'q19', 'q20'].forEach(qid => {
-                    if (game.quests[qid]) {
-                        game.quests[qid].completed = false;
-                        game.quests[qid].progress = 0;
+                    if (game.quests[qid] !== undefined) {
+                        game.quests[qid] = false;
                     }
                 });
             }
@@ -10779,11 +10778,11 @@ function updateDailyButtons() {
     if (game.fishToday.day !== game.day) game.fishToday = { day: game.day, count: 0 };
     
     const btnExercise = document.getElementById('btn-exercise');
-    if (btnExercise) btnExercise.disabled = (game.exerciseToday.count >= 3) || game.stamina < 25;
+    if (btnExercise) btnExercise.disabled = (game.exerciseToday.count >= 3) || game.stamina < 20;
     const btnChat = document.getElementById('btn-chat');
     if (btnChat) btnChat.disabled = (game.visitToday.count >= 3) || game.stamina < 15;
     const btnFish = document.getElementById('btn-fish');
-    if (btnFish) btnFish.disabled = (game.fishToday.count >= 2) || game.stamina < 15;
+    if (btnFish) btnFish.disabled = (game.fishToday.count >= 2) || game.stamina < 25;
     const btnForaging = document.getElementById('btn-foraging');
     if (btnForaging) btnForaging.disabled = game.dailyActions.foraging >= 1 || game.stamina < 15;
 }
@@ -16001,7 +16000,15 @@ function renderFieldCard(field, idx) {
             html += `<div class="field-status" style="text-align: center; color: #999; margin-bottom: 12px;">荒地，需要先整地</div>`;
             html += `<div class="field-progress"><div class="field-progress-bar" style="width: 0%"></div></div>`;
             html += '<div class="field-actions" style="justify-content: center; margin-top: 12px;">';
-            const prepCost = Math.floor(15 * (game.tools.includes('hoe') ? 0.9 : 1));
+            let prepCost = 15;
+            if (game.tools.includes('hoe')) prepCost *= 0.9;
+            if (game.neighborHelp && game.neighborHelp.toolShare) prepCost *= 0.85;
+            const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
+            if (toolMasteryLevel > 0) prepCost = Math.max(1, Math.floor(prepCost * (1 - toolMasteryLevel * 0.05)));
+            if (game.agriTechEffects && game.agriTechEffects.plowStaminaReduction) {
+                prepCost = Math.max(1, Math.floor(prepCost * (1 - game.agriTechEffects.plowStaminaReduction)));
+            }
+            prepCost = Math.floor(prepCost);
             html += `<button class="action-btn" onclick="prepareField(${idx})" ${game.stamina < prepCost ? 'disabled' : ''}>⛏️ 整地 (-${prepCost}体力)</button>`;
             html += '</div>';
         } else {
@@ -16100,7 +16107,7 @@ function renderFieldCard(field, idx) {
         
         if (isMature) {
             // 成熟了，可以收割
-            const harvestCost = Math.floor(20 * (game.tools.includes('sickle') ? 0.9 : 1) * (1 - ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) * 0.03));
+            const harvestCost = Math.floor(20 * (game.tools.includes('sickle') ? 0.9 : 1) * (1 - ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) * 0.05));
             html += `<button class="action-btn highlight" onclick="harvestCrop(${idx})" ${game.stamina < harvestCost ? 'disabled' : ''}>🌾 收割 (-${harvestCost}体力)</button>`;
         } else {
             // 育苗阶段
@@ -16120,7 +16127,7 @@ function renderFieldCard(field, idx) {
                 const needWater = game.day - field.lastWaterDay >= 1;
                 if (needWater) {
                     const toolSkillLevel = (game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-                    let waterCost = Math.max(1, Math.floor(8 * (1 - toolSkillLevel * 0.03)));
+                    let waterCost = Math.max(1, Math.floor(8 * (1 - toolSkillLevel * 0.05)));
                     const npcWaterBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('waterStaminaReduce') : 0;
                     if (npcWaterBonus > 0) waterCost = Math.max(1, Math.floor(waterCost * (1 - npcWaterBonus)));
                     html += `<div><button class="action-btn" onclick="waterField(${idx})" ${game.stamina < waterCost ? 'disabled' : ''}>💧 浇水 (-${waterCost}体力)</button></div>`;
@@ -16132,7 +16139,7 @@ function renderFieldCard(field, idx) {
                 const needWeed = game.day - field.lastWeedDay >= 3;
                 if (needWeed && field.step >= 2) {
                     const toolSkillLevelWeed = (game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-                    const weedCost = Math.max(1, Math.floor(15 * (1 - toolSkillLevelWeed * 0.03)));
+                    const weedCost = Math.max(1, Math.floor(15 * (1 - toolSkillLevelWeed * 0.05)));
                     html += `<div><button class="action-btn" onclick="weedField(${idx})" ${game.stamina < weedCost ? 'disabled' : ''}>🌿 除草 (-${weedCost}体力)</button></div>`;
                 } else if (field.step >= 2) {
                     html += `<div><span style="font-size: 12px; color: #27ae60;">✓ 无杂草</span></div>`;
@@ -16157,13 +16164,15 @@ function renderFieldCard(field, idx) {
                 // 红薯翻藤
                 if (cropData.type === 'sweet') {
                     const growDays = game.day - field.plantedDay;
+                    let vineBaseCost = 13;
+                    if (game.tools.includes('hoe')) vineBaseCost = Math.floor(vineBaseCost * 0.9);
+                    const vineToolLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
+                    if (vineToolLevel > 0) vineBaseCost = Math.max(1, Math.floor(vineBaseCost * (1 - vineToolLevel * 0.05)));
                     if (growDays >= 30 && !field.turnedVine1) {
-                        const vineCost = Math.floor(13 * (game.tools.includes('hoe') ? 0.9 : 1));
-                        html += `<button class="action-btn" onclick="turnVine(${idx}, 1)" ${game.stamina < vineCost ? 'disabled' : ''}>🍃 翻藤1 (-${vineCost}体力)</button>`;
+                        html += `<button class="action-btn" onclick="turnVine(${idx}, 1)" ${game.stamina < vineBaseCost ? 'disabled' : ''}>🍃 翻藤1 (-${vineBaseCost}体力)</button>`;
                     }
                     if (growDays >= 60 && !field.turnedVine2 && field.turnedVine1) {
-                        const vineCost2 = Math.floor(13 * (game.tools.includes('hoe') ? 0.9 : 1));
-                        html += `<button class="action-btn" onclick="turnVine(${idx}, 2)" ${game.stamina < vineCost2 ? 'disabled' : ''}>🍃 翻藤2 (-${vineCost2}体力)</button>`;
+                        html += `<button class="action-btn" onclick="turnVine(${idx}, 2)" ${game.stamina < vineBaseCost ? 'disabled' : ''}>🍃 翻藤2 (-${vineBaseCost}体力)</button>`;
                     }
                 }
             }
@@ -16781,19 +16790,11 @@ function goForaging() {
         return;
     }
     
-    // 检查体力
-    if (game.stamina < 15) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
     // 检查每日上限
     if (game.dailyActions.foraging >= 1) {
         showToast('今天已经去过后山了...', 'warn');
         return;
     }
-    // 此时才增加计数
-    game.dailyActions.foraging = (game.dailyActions.foraging || 0) + 1;
     
     const seasonData = FORAGING_DATA[game.season];
     if (!seasonData) {
@@ -16810,12 +16811,15 @@ function goForaging() {
         amount = Math.floor(amount * game.foragingBonus);
     }
     
-    // 检查体力
+    // 检查体力（必须在计数增加前完成所有检查）
     if (game.stamina < item.staminaCost) {
         showToast('感觉累得不行了，先吃点东西或睡一觉恢复体力再来吧', 'warn');
+        playErrorSound();
         return;
     }
     
+    // 所有检查通过后，才增加计数和扣除体力
+    game.dailyActions.foraging = (game.dailyActions.foraging || 0) + 1;
     game.stamina -= item.staminaCost;
     if (!game.foragingItems) game.foragingItems = {};
     game.foragingItems[item.id] = (game.foragingItems[item.id] || 0) + amount;
@@ -17547,14 +17551,14 @@ function renderPlayerPanel() {
                 <div class="shop-item-icon">🏃</div>
                 <div>
                     <div class="shop-item-name">锻炼身体</div>
-                    <div class="shop-item-desc">消耗25体力，增加1点健康值</div>
+                    <div class="shop-item-desc">消耗20体力，增加1点健康值</div>
                     <div class="shop-item-desc" style="color: #666; margin-top: 4px;">
                         今天已锻炼 ${game.exerciseToday.count}/3 次
                     </div>
                 </div>
             </div>
             <div class="shop-item-price">
-                <button class="buy-btn" onclick="exercise()" ${!canExercise || game.stamina < 25 ? 'disabled' : ''}>
+                <button class="buy-btn" onclick="exercise()" ${!canExercise || game.stamina < 20 ? 'disabled' : ''}>
                     锻炼
                 </button>
             </div>
@@ -17608,7 +17612,7 @@ function renderPlayerPanel() {
                 </div>
             </div>
             <div class="shop-item-price">
-                <button class="buy-btn" onclick="goFishing()" ${!canFish || game.stamina < 15 ? 'disabled' : ''}>
+                <button class="buy-btn" onclick="goFishing()" ${!canFish || game.stamina < 25 ? 'disabled' : ''}>
                     钓鱼
                 </button>
             </div>
@@ -18262,7 +18266,7 @@ function renderBuildingPanel() {
             const currentLevel = game.buildings[building.id] || 0;
             const isBuilt = currentLevel > 0;
             const isMaxLevel = currentLevel >= building.maxLevel;
-            const nextCost = isBuilt ? building.upgradeCost[currentLevel] || 0 : building.cost;
+            const nextCost = isBuilt ? building.upgradeCost[currentLevel - 1] || 0 : building.cost;
             const canAfford = game.money >= nextCost;
             
             html += `
@@ -19513,7 +19517,7 @@ function upgradeBuilding(buildingId) {
         return;
     }
     
-    const upgradeCost = building.upgradeCost[currentLevel];
+    const upgradeCost = building.upgradeCost[currentLevel - 1];
     if (!upgradeCost || upgradeCost <= 0 || game.money < upgradeCost) {
         showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
         playErrorSound();
@@ -21767,9 +21771,9 @@ function waterField(fieldIdx) {
             playErrorSound();
             return;
         }
-        // 农具精通减少体力消耗（每级-3%）
+        // 农具精通减少体力消耗（每级-5%）
         const toolSkillLevel =(game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-        let waterCost = Math.max(1, Math.floor(8 * (1 - toolSkillLevel * 0.03)));
+        let waterCost = Math.max(1, Math.floor(8 * (1 - toolSkillLevel * 0.05)));
         
         // 大柱NPC好感度减少浇水体力消耗
         const npcWaterBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('waterStaminaReduce') : 0;
@@ -21829,9 +21833,9 @@ function weedField(fieldIdx) {
             playErrorSound();
             return;
         }
-        // 农具精通减少体力消耗（每级-3%）
+        // 农具精通减少体力消耗（每级-5%）
         const toolSkillLevelWeed =(game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-        const weedCost = Math.max(1, Math.floor(15 * (1 - toolSkillLevelWeed * 0.03)));
+        const weedCost = Math.max(1, Math.floor(15 * (1 - toolSkillLevelWeed * 0.05)));
         
         if (game.stamina < weedCost) {
             showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
@@ -21870,10 +21874,10 @@ function fertilizeField(fieldIdx, type = 'normal') {
             staminaCost *= 0.6; // 施肥车：施肥体力-40%
         }
         
-        // toolMastery技能：所有农具体力消耗-3%/级
+        // toolMastery技能：所有农具体力消耗-5%/级
         const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
         if (toolMasteryLevel > 0) {
-            staminaCost = Math.max(1, Math.floor(staminaCost * (1 - toolMasteryLevel * 0.03)));
+            staminaCost = Math.max(1, Math.floor(staminaCost * (1 - toolMasteryLevel * 0.05)));
         }
         
         // 陈阳NPC好感度减少施肥体力消耗
@@ -21936,6 +21940,11 @@ function turnVine(fieldIdx, turnNum) {
     if (game.tools.includes('hoe')) {
         vineCost = Math.floor(vineCost * 0.9);
     }
+    // toolMastery技能：所有农具体力消耗-5%/级
+    const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
+    if (toolMasteryLevel > 0) {
+        vineCost = Math.max(1, Math.floor(vineCost * (1 - toolMasteryLevel * 0.05)));
+    }
     if (game.stamina < vineCost) {
         showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
         playErrorSound();
@@ -21972,9 +21981,9 @@ function harvestCrop(fieldIdx) {
             staminaCost *= 0.9; // 镰刀：收割体力-10%
         }
         
-        // 农具精通减少体力消耗（每级-3%）
+        // 农具精通减少体力消耗（每级-5%）
         const toolSkillLevelHarvest =(game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-        staminaCost *= Math.max(0.1, 1 - toolSkillLevelHarvest * 0.03);
+        staminaCost *= Math.max(0.1, 1 - toolSkillLevelHarvest * 0.05);
         staminaCost = Math.max(1, Math.floor(staminaCost));
         
         if (game.neighborHelp && game.neighborHelp.toolShare) {
@@ -24245,13 +24254,19 @@ function renderExplorePanel() {
         html += `<div style="font-size: 13px; color: #666;">${isUnlocked ? '已解锁' : '🔒 ' + layer.unlockCondition}</div>`;
         html += `</div>`;
         html += `<div style="font-size: 13px; color: #666; margin-bottom: 8px;">${layer.desc}</div>`;
-        html += `<div style="font-size: 13px; color: #e67e22; margin-bottom: 8px;">💪 消耗体力：${layer.staminaCost}</div>`;
+        
+        // 计算实际体力消耗（应用工具精通减免）
+        const toolMasteryLevelMine = game.skills && game.skills.toolMastery || 0;
+        const mineStaminaDiscount = 1 - (toolMasteryLevelMine * 0.05);
+        const actualMineCost = Math.max(1, Math.floor(layer.staminaCost * mineStaminaDiscount));
+        
+        html += `<div style="font-size: 13px; color: #e67e22; margin-bottom: 8px;">💪 消耗体力：${actualMineCost}</div>`;
         
         // 可挖掘按钮
         if (isUnlocked) {
             html += `<div style="display: flex; gap: 8px;">`;
-            html += `<button class="action-btn" onclick="mineLayer('${layerKey}')" ${game.stamina < layer.staminaCost ? 'disabled' : ''}>`;
-            html += `⛏️ 挖矿（-${layer.staminaCost}体力）</button>`;
+            html += `<button class="action-btn" onclick="mineLayer('${layerKey}')" ${game.stamina < actualMineCost ? 'disabled' : ''}>`;
+            html += `⛏️ 挖矿（-${actualMineCost}体力）</button>`;
             html += `</div>`;
         }
         
@@ -24317,7 +24332,7 @@ function mineLayer(layerKey) {
     
     // 工具精通减免体力消耗
     const toolMasteryLevel = game.skills && game.skills.toolMastery || 0;
-    const staminaDiscount = 1 - (toolMasteryLevel * 0.03); // 每级减3%
+    const staminaDiscount = 1 - (toolMasteryLevel * 0.05); // 每级减5%
     const staminaCost = Math.max(1, Math.floor(layer.staminaCost * staminaDiscount));
     
     game.stamina -= staminaCost;
