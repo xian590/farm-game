@@ -3152,7 +3152,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.62';
+const GAME_VERSION = '1.3.63';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4840,10 +4840,10 @@ const PROCESSING_DATA = {
         buildCost: 300, unlockCondition: '作物熟悉度Lv3或攒够3000块钱',
         inputType: 'none', inputAmount: 0,
         outputItem: 'honey', outputAmount: 2,
-        dailyCapacity: 8, staminaCost: 5,
+        dailyCapacity: 8, staminaCost: 10,
         upgradeCost: [500, 1200],
         levelCapacity: [8, 16, 32],
-        levelStaminaCost: [5, 4, 3],
+        levelStaminaCost: [10, 8, 6],
     },
     // === 新增：蘑菇种植 ===
     mushroomFarm: {
@@ -4990,18 +4990,18 @@ const MARKET_DATA = {
         { id: 'bun', name: '馒头', emoji: '🍞', price: 3, stock: 30, desc: '填饱肚子' }
     ],
     specialCrops: [
-        { id: 'rice', name: '稻谷', emoji: '🌾', buyPrice: 3, sellPrice: 3, desc: '基础粮食' },
-        { id: 'sweet', name: '红薯', emoji: '🍠', buyPrice: 1, sellPrice: 1, desc: '粗粮' },
-        { id: 'wheat', name: '小麦', emoji: '🌾', buyPrice: 2, sellPrice: 2, desc: '做面粉' },
-        { id: 'corn', name: '玉米', emoji: '🌽', buyPrice: 2, sellPrice: 2, desc: '做玉米油' },
-        { id: 'soybean', name: '大豆', emoji: '🫘', buyPrice: 2, sellPrice: 2, desc: '做豆腐' },
-        { id: 'potato', name: '土豆', emoji: '🥔', buyPrice: 2, sellPrice: 2, desc: '做薯片' },
-        { id: 'peanut', name: '花生', emoji: '🥜', buyPrice: 3, sellPrice: 3, desc: '榨油用' },
-        { id: 'pepper', name: '辣椒', emoji: '🌶️', buyPrice: 2, sellPrice: 2, desc: '调味' },
-        { id: 'cabbage', name: '白菜', emoji: '🥬', buyPrice: 1, sellPrice: 1, desc: '做酸菜' },
-        { id: 'radish', name: '萝卜', emoji: '🥕', buyPrice: 1, sellPrice: 1, desc: '炖汤' },
-        { id: 'eggplant', name: '茄子', emoji: '🍆', buyPrice: 2, sellPrice: 2, desc: '烧茄子' },
-        { id: 'garlic', name: '大蒜', emoji: '🧄', buyPrice: 2, sellPrice: 2, desc: '调味' }
+        { id: 'rice', name: '稻谷', emoji: '🌾', buyPrice: 4, sellPrice: 3, desc: '基础粮食' },
+        { id: 'sweet', name: '红薯', emoji: '🍠', buyPrice: 2, sellPrice: 1, desc: '粗粮' },
+        { id: 'wheat', name: '小麦', emoji: '🌾', buyPrice: 3, sellPrice: 2, desc: '做面粉' },
+        { id: 'corn', name: '玉米', emoji: '🌽', buyPrice: 3, sellPrice: 2, desc: '做玉米油' },
+        { id: 'soybean', name: '大豆', emoji: '🫘', buyPrice: 3, sellPrice: 2, desc: '做豆腐' },
+        { id: 'potato', name: '土豆', emoji: '🥔', buyPrice: 3, sellPrice: 2, desc: '做薯片' },
+        { id: 'peanut', name: '花生', emoji: '🥜', buyPrice: 4, sellPrice: 3, desc: '榨油用' },
+        { id: 'pepper', name: '辣椒', emoji: '🌶️', buyPrice: 3, sellPrice: 2, desc: '调味' },
+        { id: 'cabbage', name: '白菜', emoji: '🥬', buyPrice: 2, sellPrice: 1, desc: '做酸菜' },
+        { id: 'radish', name: '萝卜', emoji: '🥕', buyPrice: 2, sellPrice: 1, desc: '炖汤' },
+        { id: 'eggplant', name: '茄子', emoji: '🍆', buyPrice: 3, sellPrice: 2, desc: '烧茄子' },
+        { id: 'garlic', name: '大蒜', emoji: '🧄', buyPrice: 3, sellPrice: 2, desc: '调味' }
     ]
 };
 
@@ -9417,6 +9417,7 @@ function initGame(mode) {
         zhaoBonusNoticed: false, // 赵老板优惠已通知
         farmStay: { level: 0, guests: 0, reputation: 0 }, // 农家乐
         farmStayDishes: {}, // 农家乐招牌菜
+        marketStock: { specialItems: {}, lastRefreshDay: 0 }, // 集市特殊商品库存
         hiredWorker: null, // 雇佣的村民
         hireStartDay: 0, // 雇佣开始天数
         lastWorkerWaterDay: 0, // 上次工人浇水天数
@@ -9600,7 +9601,7 @@ function calculateOfflineReward() {
             }
         }
         // 每天吃饭扣钱（低保机制：没钱时不扣健康体力）
-        const mealCost = 15; // 与在线一致
+        const mealCost = 30; // 与在线一致
         if (game.money >= mealCost) {
             game.money -= mealCost;
         } else if (game.money > 0) {
@@ -9923,7 +9924,7 @@ function calculateOfflineReward() {
             }
             
             // 每天吃饭扣钱（低保机制：没钱时不扣健康体力）
-            const mealCost = 15;
+            const mealCost = 30;
             if (game.money >= mealCost) {
                 game.money -= mealCost;
             } else if (game.money > 0) {
@@ -10960,6 +10961,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
     
     if (!game.neighborHelp) game.neighborHelp = {};
     if (game.marketVisited === undefined) game.marketVisited = false;
+    if (!game.marketStock) game.marketStock = { specialItems: {}, lastRefreshDay: 0 };
     
     if (game.automation === undefined) game.automation = {};
     
@@ -11938,9 +11940,61 @@ function onNewDay() {
                         const cropData = CROP_DATA[field.crop];
                         if (cropData) {
                             let yield_ = cropData.baseYield;
+                            
+                            // 田地档位加成
                             const levelBonus = { '新手档': 1.0, '进阶档': 1.15, '精英档': 1.35, '终极档': 1.6 };
                             yield_ *= levelBonus[field.level] || 1.0;
-                            yield_ = Math.max(0, Math.floor(yield_ * (0.9 + Math.random() * 0.2)));
+                            
+                            // 作物熟悉度加成（每级+3%）
+                            const cropSkillLevel = (game.skills.cropFamiliarity && game.skills.cropFamiliarity.level) || 0;
+                            if (cropSkillLevel > 0) {
+                                yield_ *= (1 + cropSkillLevel * 0.03);
+                            }
+                            
+                            // 科技产量加成
+                            const techYieldBonus = getTechBonus('yieldBonus');
+                            if (techYieldBonus > 0) {
+                                yield_ *= (1 + techYieldBonus);
+                            }
+                            
+                            // 施肥加成
+                            if (field.fertilized) {
+                                if (field.fertilizerType === 'organic') {
+                                    yield_ *= 1.08;
+                                } else {
+                                    yield_ *= 1.05;
+                                }
+                            }
+                            
+                            // 除草加成
+                            const daysSinceWeed = game.day - field.lastWeedDay;
+                            if (daysSinceWeed < 7) yield_ *= 1.08;
+                            
+                            // 浇水加成
+                            const daysSinceWater = game.day - field.lastWaterDay;
+                            if (daysSinceWater < 3) yield_ *= 1.05;
+                            
+                            // 红薯翻藤加成
+                            if (cropData.type === 'sweet') {
+                                if (field.turnedVine1) yield_ *= 1.05;
+                                if (field.turnedVine2) yield_ *= 1.05;
+                            }
+                            
+                            // 事件增产/减产
+                            if (field.yieldBonus) yield_ *= (1 + field.yieldBonus);
+                            if (field.yieldLoss) yield_ *= Math.max(0.1, 1 - field.yieldLoss);
+                            
+                            // 下一季加成
+                            if (game.currentSeasonBonus) yield_ *= (1 + game.currentSeasonBonus);
+                            
+                            // 邻里互助：收获加成
+                            if (game.neighborHelp && game.neighborHelp.harvestHelp) {
+                                yield_ *= 1.1;
+                            }
+                            
+                            // 随机波动 ±10%
+                            yield_ *= (0.9 + Math.random() * 0.2);
+                            yield_ = Math.max(0, Math.floor(yield_));
                             
                             // 限制收获量不超过剩余容量
                             if (yield_ > remainingStorage) {
@@ -11980,7 +12034,7 @@ function onNewDay() {
     }
     
     // 每日吃饭消耗（现代社会农民也要吃饭）
-    const mealCost = 15; // 一日三餐约15元
+    const mealCost = 30; // 一日三餐约30元
     if (game.money >= mealCost) {
         game.money -= mealCost;
         addLog(`🍚 吃饭花了${mealCost}元，体力恢复了一些`, 'info');
@@ -12118,6 +12172,15 @@ function onNewDay() {
     
     // 重置集市访问状态
     game.marketVisited = false;
+    
+    // 集市特殊商品库存刷新（赶集日时重置）
+    if (MARKET_DATA.openDay.includes(game.day) && game.marketStock.lastRefreshDay !== game.day) {
+        game.marketStock.specialItems = {};
+        MARKET_DATA.specialItems.forEach(item => {
+            game.marketStock.specialItems[item.id] = item.stock;
+        });
+        game.marketStock.lastRefreshDay = game.day;
+    }
     
     // 加工坊自动加工（已改为手动，玩家需点击加工按钮）
     // if (typeof processDailyProcessing === 'function') {
@@ -14127,8 +14190,31 @@ function updateProcessingJobs() {
                     job._loggedFull = true;
                     addLog(`🏡 ${job.buildingName}加工完成，但仓库已满！产出${job.outputAmount}斤${(PROCESSED_ITEMS[job.outputItem] && PROCESSED_ITEMS[job.outputItem].name) || ''}无法入库`, 'bad');
                 }
-                // 不标记 completed，下次 tick 再尝试
-                return;
+                // 返还 dailyProcessed
+                if (game.dailyProcessed && game.dailyProcessed[job.buildingKey]) {
+                    if (job.inputType === 'none') {
+                        game.dailyProcessed[job.buildingKey] = Math.max(0, game.dailyProcessed[job.buildingKey] - 1);
+                    } else {
+                        game.dailyProcessed[job.buildingKey] = Math.max(0, game.dailyProcessed[job.buildingKey] - job.inputAmount);
+                    }
+                }
+                // 返还原料
+                if (job.inputType === 'fish') {
+                    if (game.fishInventory) game.fishInventory.carp = (game.fishInventory.carp || 0) + job.inputAmount;
+                } else if (job.inputType === 'processed') {
+                    if (game.processedItems) game.processedItems[job.inputItem] = (game.processedItems[job.inputItem] || 0) + job.inputAmount;
+                } else if (job.inputType === 'wood') {
+                    if (game.items) game.items.wood = (game.items.wood || 0) + job.inputAmount;
+                } else if (job.inputType && job.inputType !== 'none' && job.inputCrop) {
+                    game.crops[job.inputCrop] = (game.crops[job.inputCrop] || 0) + job.inputAmount;
+                }
+                // 标记该任务为未完成，不删除，下次尝试
+                job._warehouseFull = true;
+                return; // 跳过产出，但保留任务（forEach的return只跳过当前迭代）
+            }
+            // 如果之前有 _warehouseFull 标记，现在清除了
+            if (job._warehouseFull) {
+                delete job._warehouseFull;
             }
             
             // 标记完成
@@ -19844,17 +19930,19 @@ function renderMarketPanel() {
     // 特殊商品
     html += '<div class="shop-category">🛒 今日特供</div>';
     MARKET_DATA.specialItems.forEach(item => {
+        const stock = game.marketStock && game.marketStock.specialItems && game.marketStock.specialItems[item.id] !== undefined ? game.marketStock.specialItems[item.id] : item.stock;
+        const isSoldOut = stock <= 0;
         html += `
             <div class="shop-item">
                 <div class="shop-item-info">
                     <div class="shop-item-icon">${item.emoji}</div>
                     <div>
                         <div class="shop-item-name">${item.name}</div>
-                        <div class="shop-item-desc">${item.desc}</div>
+                        <div class="shop-item-desc">${item.desc}（剩余${stock}个）</div>
                     </div>
                 </div>
                 <div class="shop-item-price">
-                    <button class="buy-btn" onclick="buyMarketItem('${item.id}', ${item.price})" ${game.money < item.price ? 'disabled' : ''}>💰 ${item.price}元购买</button>
+                    <button class="buy-btn" onclick="buyMarketItem('${item.id}', ${item.price})" ${game.money < item.price || isSoldOut ? 'disabled' : ''}>💰 ${item.price}元购买</button>
                 </div>
             </div>
         `;
@@ -19886,13 +19974,15 @@ function renderMarketPanel() {
 }
 
 function buyMarketItem(itemId, price) {
-    const item = MARKET_DATA.specialItems.find(i => i.id === itemId);
-    if (item && item.stock !== undefined && item.stock <= 0) { showToast('该商品已售罄', 'bad'); return; }
+    const stock = game.marketStock && game.marketStock.specialItems && game.marketStock.specialItems[itemId] !== undefined ? game.marketStock.specialItems[itemId] : undefined;
+    if (stock !== undefined && stock <= 0) { showToast('该商品已售罄', 'bad'); return; }
     if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
     game.money -= price;
     if (!game.items) game.items = {};
     game.items[itemId] = (game.items[itemId] || 0) + 1;
-    if (item && item.stock !== undefined) item.stock -= 1;
+    if (game.marketStock && game.marketStock.specialItems && stock !== undefined) {
+        game.marketStock.specialItems[itemId] -= 1;
+    }
     addLog(`🛒 集市买了${(ITEM_DATA[itemId] && ITEM_DATA[itemId].name) || itemId}`, 'good');
     saveGame();
     renderMarketPanel();
@@ -20384,9 +20474,9 @@ function makeDish(dishKey) {
         // 检查并消耗原料
         for (const [ingredient, amount] of Object.entries(dish.cost)) {
             let have = 0;
-            if (ingredient === 'fish') have =(game.items && game.items.fish) || 0;
+            if (ingredient === 'fish') have = Object.values(game.fishInventory || {}).reduce((s, v) => s + (v || 0), 0);
             else if (ingredient === 'fruit') have = Object.values(game.fruits || {}).reduce((s, v) => s + (v || 0), 0);
-            else if (ingredient === 'riceWine') have =(game.processedItems && game.processedItems.riceWine) || 0;
+            else if (ingredient === 'riceWine') have = (game.processedItems && game.processedItems.riceWine) || 0;
             else if (ingredient === 'chicken') {
                 const adults = (game.animals.chicken || []).filter(a => a.age >= ANIMAL_DATA.chicken.growthDays).length;
                 have = adults;
@@ -20395,14 +20485,29 @@ function makeDish(dishKey) {
                 const adults = (game.animals.sheep || []).filter(a => a.age >= ANIMAL_DATA.sheep.growthDays).length;
                 have = adults;
             }
-            else have =(game.crops && game.crops[ingredient]) || 0;
+            else if (ingredient === 'egg') have = (game.animalProducts && game.animalProducts.egg) || 0;
+            else if (game.items && game.items[ingredient] !== undefined) have = game.items[ingredient];
+            else if (game.crops && game.crops[ingredient] !== undefined) have = game.crops[ingredient];
+            else if (game.processedItems && game.processedItems[ingredient] !== undefined) have = game.processedItems[ingredient];
+            else have = 0;
             
-            if (have < amount) { showToast('原料不足', 'bad'); return; }
+            if (have < amount) { showToast(`食材不足：需要${amount}个${ingredient}`, 'bad'); playErrorSound(); return; }
         }
         
         // 消耗原料
         for (const [ingredient, amount] of Object.entries(dish.cost)) {
-            if (ingredient === 'fish') game.items.fish -= amount;
+            if (ingredient === 'fish') {
+                // 从 fishInventory 中扣除，优先扣除 carp
+                let remaining = amount;
+                const fishTypes = ['carp', 'catfish', 'crucian', 'grass_carp'];
+                for (const fishType of fishTypes) {
+                    if (remaining <= 0) break;
+                    const available = game.fishInventory && game.fishInventory[fishType] || 0;
+                    const deduct = Math.min(remaining, available);
+                    game.fishInventory[fishType] = (game.fishInventory[fishType] || 0) - deduct;
+                    remaining -= deduct;
+                }
+            }
             else if (ingredient === 'fruit') {
                 // 从库存中减去水果
                 let remaining = amount;
@@ -20437,7 +20542,18 @@ function makeDish(dishKey) {
                     }
                 }
             }
-            else if (game.crops[ingredient]) game.crops[ingredient] -= amount;
+            else if (ingredient === 'egg') {
+                game.animalProducts.egg = (game.animalProducts.egg || 0) - amount;
+            }
+            else if (game.items && game.items[ingredient] !== undefined) {
+                game.items[ingredient] -= amount;
+            }
+            else if (game.crops && game.crops[ingredient] !== undefined) {
+                game.crops[ingredient] -= amount;
+            }
+            else if (game.processedItems && game.processedItems[ingredient] !== undefined) {
+                game.processedItems[ingredient] -= amount;
+            }
         }
         
         if (!game.farmStayDishes) game.farmStayDishes = {};
@@ -21188,7 +21304,7 @@ function harvestCrop(fieldIdx) {
         
         // 入库（检查仓库容量限制）
         let storageCap2 = game.storageCapacity || 2000;
-        const currentStorage2 = getStorageUsed();
+        const currentStorage2 = Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
         let actualYield = yield_;
         
         if (currentStorage2 + yield_ > storageCap2) {
@@ -21694,12 +21810,6 @@ function getStorageUsed() {
     }
     let total = 0;
     total += Object.values(game.crops || {}).reduce((sum, v) => sum + (v || 0), 0);
-    total += Object.values(game.fruits || {}).reduce((sum, v) => sum + (v || 0), 0);
-    total += Object.values(game.processedItems || {}).reduce((sum, v) => sum + (v || 0), 0);
-    total += Object.values(game.fishInventory || {}).reduce((sum, v) => sum + (v || 0), 0);
-    total += Object.values(game.animalProducts || {}).reduce((sum, v) => sum + (v || 0), 0);
-    total += Object.values(game.foragingItems || {}).reduce((sum, v) => sum + (v || 0), 0);
-    total += Object.values(game.cookedFoods || {}).reduce((sum, v) => sum + (v || 0), 0);
     // 写入缓存
     if (game) {
         game._storageCacheTick = game.tickCount;
