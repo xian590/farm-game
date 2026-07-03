@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.90';
+const GAME_VERSION = '1.3.91';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9416,6 +9416,11 @@ window.onload = function() {
 function showStory() {
     const storyContainer = document.getElementById('story-container');
     if (storyContainer) storyContainer.style.display = 'flex';
+    // 隐藏游戏容器，防止层叠显示
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) gameContainer.style.display = 'none';
+    const selectContainer = document.getElementById('select-container');
+    if (selectContainer) selectContainer.style.display = 'none';
     storyPage = 0;
     updateStoryPage();
     
@@ -9516,6 +9521,11 @@ function skipStory() {
 function showSelectMode() {
     const selectContainer = document.getElementById('select-container');
     if (selectContainer) selectContainer.style.display = 'flex';
+    // 隐藏其他容器，防止层叠显示
+    const storyContainer = document.getElementById('story-container');
+    if (storyContainer) storyContainer.style.display = 'none';
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) gameContainer.style.display = 'none';
     document.body.classList.add('select-open');
 }
 
