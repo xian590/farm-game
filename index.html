@@ -3239,7 +3239,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.78';
+const GAME_VERSION = '1.3.79';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4201,11 +4201,12 @@ function toggleSettings() {
         closeSettings();
     } else {
         // 打开设置面板时暂停游戏
+        if (!game._modalPauseStack) game._modalPauseStack = [];
         if (!gamePaused) {
-            game._wasPausedBeforeModal = false;
+            game._modalPauseStack.push(false);
             togglePause();
         } else {
-            game._wasPausedBeforeModal = true;
+            game._modalPauseStack.push(true);
         }
         const musicToggle = document.getElementById('music-toggle');
         const sfxToggle = document.getElementById('sfx-toggle');
@@ -4240,11 +4241,16 @@ function toggleSettings() {
 function closeSettings() {
     const overlay = document.getElementById('settings-overlay');
     if (overlay) overlay.style.display = 'none';
-    // 关闭设置面板时恢复游戏（如果之前未暂停）
-    if (game && game._wasPausedBeforeModal === false && gamePaused) {
-        togglePause();
+    // 关闭设置面板时恢复游戏（使用栈式恢复）
+    if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
+        const wasPaused = game._modalPauseStack.pop();
+        if (!wasPaused && gamePaused) {
+            togglePause();
+        }
+        if (game._modalPauseStack.length === 0) {
+            delete game._modalPauseStack;
+        }
     }
-    delete game._wasPausedBeforeModal;
 }
 
 // ==================== 弹窗统一管理：防止叠加 ====================
@@ -14169,11 +14175,12 @@ function showEventPopup(event) {
 function showEventModal(event) {
     if (modalClosing) return;
     // 打开模态框时暂停游戏
+    if (!game._modalPauseStack) game._modalPauseStack = [];
     if (!gamePaused) {
-        game._wasPausedBeforeModal = false;
+        game._modalPauseStack.push(false);
         togglePause();
     } else {
-        game._wasPausedBeforeModal = true;
+        game._modalPauseStack.push(true);
     }
     const titleEl = document.getElementById('modal-title');
     const contentEl = document.getElementById('modal-content');
@@ -19047,14 +19054,7 @@ function sellProcessedItem(itemKey, amount) {
     
     // 应用售价加成
     let sellBonusTotal = game.sellBonus || 0;
-    const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
-    if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    let price = basePrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
-    // cropFamiliarity Lv10 售价+20%
-    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
-    if (cropSkillLevel >= 10) {
-        price *= 1.2;
-    }
+    let price = basePrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
     const money = Math.floor(price * amount);
     
     game.processedItems[itemKey] -= amount;
@@ -21215,14 +21215,7 @@ function sellAnimalProduct(productKey, amount) {
     
     // 应用售价加成
     let sellBonusTotal = game.sellBonus || 0;
-    const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
-    if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    let price = (prices[productKey] || 5) * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
-    // cropFamiliarity Lv10 售价+20%
-    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
-    if (cropSkillLevel >= 10) {
-        price *= 1.2;
-    }
+    let price = (prices[productKey] || 5) * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
     const money = Math.floor(price * amount);
     
     game.animalProducts[productKey] -= amount;
@@ -21288,14 +21281,7 @@ function sellFruit(fruitKey, amount) {
     
     // 应用售价加成
     let sellBonusTotal = game.sellBonus || 0;
-    const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
-    if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    let price = data.fruitPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
-    // cropFamiliarity Lv10 售价+20%
-    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
-    if (cropSkillLevel >= 10) {
-        price *= 1.2;
-    }
+    let price = data.fruitPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
     const money = Math.floor(price * amount);
     
     game.fruits[fruitKey] -= amount;
@@ -21922,30 +21908,14 @@ function harvestCrop(fieldIdx) {
             }
         }
         
-        if (cropData.type === 'rice') {
-            game.crops.rice = Math.max(0, (game.crops.rice || 0) + actualYield);
-        } else if (cropData.type === 'sweet') {
-            game.crops.sweet = Math.max(0, (game.crops.sweet || 0) + actualYield);
-        } else if (cropData.type === 'wheat') {
-            game.crops.wheat = Math.max(0, (game.crops.wheat || 0) + actualYield);
-        } else if (cropData.type === 'corn') {
-            game.crops.corn = Math.max(0, (game.crops.corn || 0) + actualYield);
-        } else if (cropData.type === 'soybean') {
-            game.crops.soybean = Math.max(0, (game.crops.soybean || 0) + actualYield);
-        } else if (cropData.type === 'potato') {
-            game.crops.potato = Math.max(0, (game.crops.potato || 0) + actualYield);
-        } else if (cropData.type === 'peanut') {
-            game.crops.peanut = Math.max(0, (game.crops.peanut || 0) + actualYield);
-        } else if (cropData.type === 'pepper') {
-            game.crops.pepper = Math.max(0, (game.crops.pepper || 0) + actualYield);
-        } else if (cropData.type === 'cabbage') {
-            game.crops.cabbage = Math.max(0, (game.crops.cabbage || 0) + actualYield);
-        } else if (cropData.type === 'radish') {
-            game.crops.radish = Math.max(0, (game.crops.radish || 0) + actualYield);
-        } else if (cropData.type === 'eggplant') {
-            game.crops.eggplant = Math.max(0, (game.crops.eggplant || 0) + actualYield);
-        } else if (cropData.type === 'garlic') {
-            game.crops.garlic = Math.max(0, (game.crops.garlic || 0) + actualYield);
+        const cropTypeMap = {
+            rice: 'rice', sweet: 'sweet', wheat: 'wheat', corn: 'corn',
+            soybean: 'soybean', potato: 'potato', peanut: 'peanut',
+            pepper: 'pepper', cabbage: 'cabbage', radish: 'radish',
+            eggplant: 'eggplant', garlic: 'garlic'
+        };
+        if (cropTypeMap[cropData.type]) {
+            game.crops[cropData.type] = Math.max(0, (game.crops[cropData.type] || 0) + actualYield);
         }
         
         // 解锁图鉴
@@ -22056,23 +22026,26 @@ function sellCrop(cropKey, amount) {
     });
 }
 
+function getSellPriceMultiplier() {
+    let multiplier = 1;
+    const npcSellPrice = getNpcBonus('sellPrice');
+    if (npcSellPrice > 0) {
+        multiplier += npcSellPrice;
+    }
+    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+    if (cropSkillLevel >= 10) {
+        multiplier += 0.2;
+    }
+    return multiplier;
+}
+
 function _doSellCrop(cropKey, sellAmount, price) {
     const owned = game.crops[cropKey] || 0;
     if (sellAmount > owned) sellAmount = owned;
     if (sellAmount <= 0) return;
     
-    // 应用售卖价格加成（事件 + NPC好感度）
     let sellBonusTotal = game.sellBonus || 0;
-    const npcSellBonus = getNpcBonus('sellPrice');
-    if (npcSellBonus > 0) {
-        sellBonusTotal += npcSellBonus;
-    }
-    let finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
-    // cropFamiliarity Lv10 售价+20%
-    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
-    if (cropSkillLevel >= 10) {
-        finalPrice *= 1.2;
-    }
+    let finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
     let money = Math.floor(sellAmount * finalPrice);
     
     game.crops[cropKey] -= sellAmount;
@@ -23146,11 +23119,12 @@ function showModal(title, content, onConfirm, onCancel, options) {
         }
     }
     // 打开模态框时暂停游戏
+    if (!game._modalPauseStack) game._modalPauseStack = [];
     if (!gamePaused) {
-        game._wasPausedBeforeModal = false;
+        game._modalPauseStack.push(false);
         togglePause();
     } else {
-        game._wasPausedBeforeModal = true;
+        game._modalPauseStack.push(true);
     }
     if (typeof content === 'string' && !options.allowHtml) {
         content = escapeHtml(content);
@@ -23301,6 +23275,16 @@ function closeEventModal() {
         previousActiveElement = null;
     }
     // === 焦点恢复结束 ===
+    // 关闭模态框时恢复游戏（使用栈式恢复）
+    if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
+        const wasPaused = game._modalPauseStack.pop();
+        if (!wasPaused && gamePaused) {
+            togglePause();
+        }
+        if (game._modalPauseStack.length === 0) {
+            delete game._modalPauseStack;
+        }
+    }
     setTimeout(() => { modalClosing = false; }, 300);
 }
 
@@ -23345,11 +23329,16 @@ function closeModal() {
             previousActiveElement = null;
         }
         // === 焦点恢复结束 ===
-        // 关闭模态框时恢复游戏（如果之前未暂停）
-        if (game && game._wasPausedBeforeModal === false && gamePaused) {
-            togglePause();
+        // 关闭模态框时恢复游戏（使用栈式恢复）
+        if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
+            const wasPaused = game._modalPauseStack.pop();
+            if (!wasPaused && gamePaused) {
+                togglePause();
+            }
+            if (game._modalPauseStack.length === 0) {
+                delete game._modalPauseStack;
+            }
         }
-        delete game._wasPausedBeforeModal;
         setTimeout(() => { modalClosing = false; }, 300);
         window._closeModalTimeout = null;
     }, 200);
@@ -23977,11 +23966,12 @@ function queueQuestReward(questId, money, text, reputation) {
 function showQuestRewardModal() {
     if (!game || !game.pendingQuestRewards || game.pendingQuestRewards.length === 0) return;
     // 打开模态框时暂停游戏
+    if (!game._modalPauseStack) game._modalPauseStack = [];
     if (!gamePaused) {
-        game._wasPausedBeforeModal = false;
+        game._modalPauseStack.push(false);
         togglePause();
     } else {
-        game._wasPausedBeforeModal = true;
+        game._modalPauseStack.push(true);
     }
     
     const reward = game.pendingQuestRewards[0];
@@ -24197,9 +24187,7 @@ function sellOres() {
     
     // 应用售价加成
     let sellBonusTotal = game.sellBonus || 0;
-    const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
-    if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const bonusMul = 1 + Math.max(0, Math.min(2.0, sellBonusTotal));
+    const bonusMul = (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
     
     for (const [oreKey, amount] of Object.entries(game.mineInventory || {})) {
         if (amount > 0) {
@@ -25007,47 +24995,53 @@ function renderAchievementsPanel() {
 
 // ========== 批量操作 ==========
 function batchWaterAll() {
-    if (!game || !game.fields) return;
-    let watered = 0;
-    game.fields.forEach((field, idx) => {
-        if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-            const daysSinceWater = game.day - field.lastWaterDay;
-            if (daysSinceWater >= 2) {
-                waterField(idx);
-                watered++;
+    withClickLock('batchWaterAll', () => {
+        if (!game || !game.fields) return;
+        let watered = 0;
+        game.fields.forEach((field, idx) => {
+            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                const daysSinceWater = game.day - field.lastWaterDay;
+                if (daysSinceWater >= 2) {
+                    waterField(idx);
+                    watered++;
+                }
             }
-        }
+        });
+        if (watered > 0) showToast(`💧 已浇水 ${watered} 块地`, 'good');
+        else showToast('没有需要浇水的田地', 'warn');
     });
-    if (watered > 0) showToast(`💧 已浇水 ${watered} 块地`, 'good');
-    else showToast('没有需要浇水的田地', 'warn');
 }
 function batchWeedAll() {
-    if (!game || !game.fields) return;
-    let weeded = 0;
-    game.fields.forEach((field, idx) => {
-        if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
-            const daysSinceWeed = game.day - field.lastWeedDay;
-            if (daysSinceWeed >= 7) {
-                weedField(idx);
-                weeded++;
+    withClickLock('batchWeedAll', () => {
+        if (!game || !game.fields) return;
+        let weeded = 0;
+        game.fields.forEach((field, idx) => {
+            if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
+                const daysSinceWeed = game.day - field.lastWeedDay;
+                if (daysSinceWeed >= 7) {
+                    weedField(idx);
+                    weeded++;
+                }
             }
-        }
+        });
+        if (weeded > 0) showToast(`🌿 已除草 ${weeded} 块地`, 'good');
+        else showToast('没有需要除草的田地', 'warn');
     });
-    if (weeded > 0) showToast(`🌿 已除草 ${weeded} 块地`, 'good');
-    else showToast('没有需要除草的田地', 'warn');
 }
 function batchHarvestAll() {
-    if (!game || !game.fields) return;
-    let harvested = 0;
-    const fieldsCopy = [...game.fields];
-    fieldsCopy.forEach((field, idx) => {
-        if (field.stage === 'mature') {
-            harvestCrop(idx);
-            harvested++;
-        }
+    withClickLock('batchHarvestAll', () => {
+        if (!game || !game.fields) return;
+        let harvested = 0;
+        const fieldsCopy = [...game.fields];
+        fieldsCopy.forEach((field, idx) => {
+            if (field.stage === 'mature') {
+                harvestCrop(idx);
+                harvested++;
+            }
+        });
+        if (harvested > 0) showToast(`🌾 已收割 ${harvested} 块地`, 'good');
+        else showToast('没有成熟作物可收割', 'warn');
     });
-    if (harvested > 0) showToast(`🌾 已收割 ${harvested} 块地`, 'good');
-    else showToast('没有成熟作物可收割', 'warn');
 }
 
 </script>
