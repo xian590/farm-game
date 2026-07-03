@@ -17610,7 +17610,7 @@ function renderPlayerPanel() {
     if (game.fishToday.day !== game.day) {
         game.fishToday = { day: game.day, count: 0 };
     }
-    const canFish = game.fishToday.count < 2;
+    const canFish = game.fishToday.count < 5;
     
     html += `
         <div class="shop-item">
@@ -17620,7 +17620,7 @@ function renderPlayerPanel() {
                     <div class="shop-item-name">河边钓鱼</div>
                     <div class="shop-item-desc">消耗25体力，钓着鱼能卖钱</div>
                     <div class="shop-item-desc" style="color: #666; margin-top: 4px;">
-                        今天已钓鱼 ${game.fishToday.count}/2 次
+                        今天已钓鱼 ${game.fishToday.count}/5 次
                     </div>
                 </div>
             </div>
