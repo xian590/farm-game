@@ -3030,6 +3030,14 @@
             </div>
         </div>
         
+        <div class="settings-section">
+            <div class="settings-label" style="margin-bottom: 12px;">⏱️ 游戏速度</div>
+            <div style="display: flex; gap: 8px;">
+                <button class="speed-btn" onclick="setGameSpeed(1)" id="speed-1x">1x</button>
+                <button class="speed-btn" onclick="setGameSpeed(2)" id="speed-2x">2x</button>
+                <button class="speed-btn" onclick="setGameSpeed(5)" id="speed-5x">5x</button>
+            </div>
+        </div>
         <div class="settings-section" style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
             <div class="settings-label" style="margin-bottom: 12px;">存档管理</div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -3153,7 +3161,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.69';
+const GAME_VERSION = '1.3.70';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3385,6 +3393,12 @@ function playNote(frequency, duration, wave = 'sine', volume = 0.06, targetNode 
         
         osc.start(now);
         osc.stop(now + duration + 0.05);
+        setTimeout(() => {
+            try {
+                osc.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        }, (duration + 0.05) * 1000);
     } catch (e) {
         // 音频错误静默处理，避免卡死页面
         console.warn('音频播放失败:', e.message);
@@ -3426,6 +3440,13 @@ function playNoise(duration, volume = 0.03, filterFreq = 1000) {
         if (sfxGainNode) gain.connect(sfxGainNode);
         
         source.start();
+        setTimeout(() => {
+            try {
+                source.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        }, duration * 1000);
     } catch (e) {
         console.warn('音效播放失败:', e.message);
     }
@@ -3452,6 +3473,12 @@ function playClickSound() {
         
         osc.start();
         osc.stop(audioCtx.currentTime + 0.12);
+        setTimeout(() => {
+            try {
+                osc.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        }, 120);
     } catch (e) {
         console.warn('点击音效失败:', e.message);
     }
@@ -3511,6 +3538,12 @@ function playNpcChatter(npcKey, duration = 1.2) {
             
             osc.start(syllableStart);
             osc.stop(syllableStart + syllableDuration + 0.02);
+            setTimeout(() => {
+                try {
+                    osc.disconnect();
+                    gain.disconnect();
+                } catch(e) {}
+            }, (syllableDuration + 0.02) * 1000);
         }
     } catch (e) { console.warn('playNpcChatter error:', e); }
 }
@@ -3563,6 +3596,12 @@ function playStorySinging(emotion = 'normal', speed = 1.0) {
             
             osc.start(noteStart);
             osc.stop(noteStart + noteDuration + 0.02);
+            setTimeout(() => {
+                try {
+                    osc.disconnect();
+                    gain.disconnect();
+                } catch(e) {}
+            }, (noteDuration + 0.02) * 1000);
         });
     } catch (e) { console.warn('playStorySinging error:', e); }
 }
@@ -3648,6 +3687,12 @@ function playErrorSound() {
         
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
+        setTimeout(() => {
+            try {
+                osc.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        }, 300);
     } catch (e) {
         console.warn('错误音效失败:', e.message);
     }
@@ -3690,6 +3735,13 @@ function playWaterSound() {
         gain.connect(sfxGainNode);
         
         source.start();
+        setTimeout(() => {
+            try {
+                source.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        }, 400);
     } catch (e) { console.warn('playWaterSound error:', e); }
 }
 
@@ -3722,6 +3774,13 @@ function playWeedSound() {
                 gain.connect(sfxGainNode);
                 
                 source.start();
+                setTimeout(() => {
+                    try {
+                        source.disconnect();
+                        filter.disconnect();
+                        gain.disconnect();
+                    } catch(e) {}
+                }, 100);
             } catch (e) { console.warn('playWeedSound error:', e); }
         }, i * 60);
     }
@@ -3746,6 +3805,12 @@ function playDirtSound() {
         
         osc.start();
         osc.stop(audioCtx.currentTime + 0.22);
+        setTimeout(() => {
+            try {
+                osc.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        }, 220);
         
         playNoise(0.1, 0.05, 300);
     } catch (e) { console.warn('playDirtSound error:', e); }
@@ -3780,6 +3845,12 @@ function playTabSound() {
         
         osc.start();
         osc.stop(audioCtx.currentTime + 0.08);
+        setTimeout(() => {
+            try {
+                osc.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        }, 80);
     } catch (e) {
         console.error('playTabSound error', e);
     }
@@ -3959,10 +4030,18 @@ function startRainSound() {
 
 function stopRainSound() {
     if (rainNoiseNode) {
-        rainNoiseNode.stop();
+        try {
+            rainNoiseNode.stop();
+            rainNoiseNode.disconnect();
+        } catch(e) {}
         rainNoiseNode = null;
     }
-    rainGainNode = null;
+    if (rainGainNode) {
+        try {
+            rainGainNode.disconnect();
+        } catch(e) {}
+        rainGainNode = null;
+    }
 }
 
 // 开始播放音乐（兼容旧函数）
@@ -4043,14 +4122,21 @@ function toggleSettings() {
     if (overlay.style.display === 'flex') {
         closeSettings();
     } else {
+        // 打开设置面板时暂停游戏
+        if (!gamePaused) {
+            game._wasPausedBeforeModal = false;
+            togglePause();
+        } else {
+            game._wasPausedBeforeModal = true;
+        }
         const musicToggle = document.getElementById('music-toggle');
         const sfxToggle = document.getElementById('sfx-toggle');
         const musicVolume = document.getElementById('music-volume');
         const sfxVolume = document.getElementById('sfx-volume');
         if (musicToggle) musicToggle.checked = musicEnabled;
         if (sfxToggle) sfxToggle.checked = sfxEnabled;
-        if (musicVolume) musicVolume.value = window.musicVolume || 0.3;
-        if (sfxVolume) sfxVolume.value = window.sfxVolume || 0.5;
+        if (musicVolume) musicVolume.value = window.musicVolume !== undefined ? window.musicVolume : 0.3;
+        if (sfxVolume) sfxVolume.value = window.sfxVolume !== undefined ? window.sfxVolume : 0.5;
         
         // 同步BGM风格选中状态
         const savedStyle = safeStorageGet('farm_bgm_style') || currentBgm || 'game';
@@ -4076,6 +4162,11 @@ function toggleSettings() {
 function closeSettings() {
     const overlay = document.getElementById('settings-overlay');
     if (overlay) overlay.style.display = 'none';
+    // 关闭设置面板时恢复游戏（如果之前未暂停）
+    if (game && game._wasPausedBeforeModal === false && gamePaused) {
+        togglePause();
+    }
+    delete game._wasPausedBeforeModal;
 }
 
 // ==================== 弹窗统一管理：防止叠加 ====================
@@ -11531,6 +11622,13 @@ function setGameSpeed(speed) {
             btn.classList.add('active');
         }
     });
+    // 更新设置面板中的速度按钮（通过id）
+    [1, 2, 5].forEach(s => {
+        const btn = document.getElementById('speed-' + s + 'x');
+        if (btn) {
+            btn.classList.toggle('active', gameSpeed === s);
+        }
+    });
     // 更新顶部的时间流速按钮
     document.querySelectorAll('.speed-btn-top').forEach(btn => {
         btn.classList.remove('active');
@@ -13900,6 +13998,13 @@ function showEventPopup(event) {
 
 function showEventModal(event) {
     if (modalClosing) return;
+    // 打开模态框时暂停游戏
+    if (!gamePaused) {
+        game._wasPausedBeforeModal = false;
+        togglePause();
+    } else {
+        game._wasPausedBeforeModal = true;
+    }
     const titleEl = document.getElementById('modal-title');
     const contentEl = document.getElementById('modal-content');
     const overlayEl = document.getElementById('modal-overlay');
@@ -22765,6 +22870,18 @@ function showModal(title, content, onConfirm, onCancel, options) {
     options = options || {};
     if (modalClosing) {
         modalClosing = false; // 允许新弹窗覆盖旧弹窗的关闭动画
+        // 取消已挂起的 closeModal 超时
+        if (window._closeModalTimeout) {
+            clearTimeout(window._closeModalTimeout);
+            window._closeModalTimeout = null;
+        }
+    }
+    // 打开模态框时暂停游戏
+    if (!gamePaused) {
+        game._wasPausedBeforeModal = false;
+        togglePause();
+    } else {
+        game._wasPausedBeforeModal = true;
     }
     if (typeof content === 'string' && !options.allowHtml) {
         content = escapeHtml(content);
@@ -22931,7 +23048,7 @@ function closeModal() {
     modalOverlay.style.animation = 'fadeOut 0.2s ease forwards';
     const modalContent = modalOverlay.querySelector('.modal-content');
     if (modalContent) modalContent.style.animation = 'popOut 0.2s ease forwards';
-    setTimeout(() => {
+    window._closeModalTimeout = setTimeout(() => {
         modalOverlay.style.display = 'none';
         modalOverlay.style.animation = '';
         if (modalContent) modalContent.style.animation = '';
@@ -22959,19 +23076,23 @@ function closeModal() {
             previousActiveElement = null;
         }
         // === 焦点恢复结束 ===
+        // 关闭模态框时恢复游戏（如果之前未暂停）
+        if (game && game._wasPausedBeforeModal === false && gamePaused) {
+            togglePause();
+        }
+        delete game._wasPausedBeforeModal;
         setTimeout(() => { modalClosing = false; }, 300);
+        window._closeModalTimeout = null;
     }, 200);
 }
 
 function confirmModal() {
     if (modalClosing) return;
-    modalClosing = true;
-    setTimeout(() => { modalClosing = false; }, 300);
     playClickSound();
-    if (modalCallback) {
-        modalCallback();
-    }
+    const cb = modalCallback;
+    modalCallback = null;
     closeModal();
+    if (cb) cb();
 }
 
 // ==================== 弹窗拖拽功能 ====================
@@ -23586,6 +23707,13 @@ function queueQuestReward(questId, money, text, reputation) {
 
 function showQuestRewardModal() {
     if (!game || !game.pendingQuestRewards || game.pendingQuestRewards.length === 0) return;
+    // 打开模态框时暂停游戏
+    if (!gamePaused) {
+        game._wasPausedBeforeModal = false;
+        togglePause();
+    } else {
+        game._wasPausedBeforeModal = true;
+    }
     
     const reward = game.pendingQuestRewards[0];
     const quest = QUEST_DATA[reward.questId];
