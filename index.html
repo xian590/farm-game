@@ -3152,7 +3152,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.64';
+const GAME_VERSION = '1.3.65';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10701,21 +10701,40 @@ function importSaveFile(input) {
     reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            if (!data || !data.day) {
+            if (!data || typeof data !== 'object') {
                 showToast('无效的存档文件', 'bad');
                 return;
             }
-            showModal('确认导入', '导入存档将覆盖当前进度，确定继续？', () => {
-                game = data;
-                fixSaveData();
-                saveGame();
-                updateUI();
-                showToast('✅ 存档导入成功！', 'good');
-                addLog('📂 导入了存档文件', 'info');
+            if (typeof data.day !== 'number' || data.day < 1 || data.day > 100000) {
+                showToast('存档中的天数无效', 'bad');
+                return;
+            }
+            if (typeof data.money !== 'number' || !isFinite(data.money) || data.money < -1000000) {
+                showToast('存档中的金钱数据无效', 'bad');
+                return;
+            }
+            if (data.version && typeof data.version === 'string') {
+                // 版本兼容性检查：如果版本太旧，提示可能不兼容
+                const versionParts = data.version.split('.');
+                if (versionParts[0] === '1' && parseInt(versionParts[1]) < 3) {
+                    showToast('⚠️ 旧版本存档，部分功能可能不兼容', 'warn');
+                }
+            }
+            showModal('确认导入', '确定要导入此存档吗？当前进度将被覆盖！', () => {
+                try {
+                    game = data;
+                    fixSaveData();
+                    saveGame();
+                    updateUI();
+                    showToast('存档导入成功！', 'good');
+                } catch (err) {
+                    console.error('导入失败:', err);
+                    showToast('导入失败：存档数据损坏', 'bad');
+                    initGame('normal');
+                }
             });
-        } catch(err) {
+        } catch (err) {
             showToast('存档文件解析失败', 'bad');
-            console.error('导入失败', err);
         }
         input.value = '';
     };
@@ -11301,6 +11320,11 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
     game.pestReduction = sanitizeNumber(game.pestReduction, 0);
     game.mood = sanitizeNumber(game.mood, 50);
     game.tickCount = sanitizeNumber(game.tickCount, 0);
+    game.money = Math.max(0, Math.min(game.money, 100000000));
+    game.health = Math.max(1, Math.min(game.health, 200));
+    game.stamina = Math.max(0, Math.min(game.stamina, game.maxStamina || 100));
+    game.day = Math.max(1, Math.min(game.day, 28));
+    game.totalDay = Math.max(1, Math.min(game.totalDay, 100000));
     if (game.stats) {
         game.stats.totalHarvest = sanitizeNumber(game.stats.totalHarvest, 0);
         game.stats.totalSell = sanitizeNumber(game.stats.totalSell, 0);
@@ -11446,17 +11470,29 @@ function doImportSave() {
     }
     try {
         const data = JSON.parse(text);
-        // 验证基本结构（修复了原来的逻辑bug：!data.money === undefined 永远为false）
-        if (!data || data.day == null || data.money == null) {
-            showToast('存档格式不正确！缺少关键字段', 'bad');
+        if (!data || typeof data !== 'object') {
+            showToast('无效的存档数据', 'bad');
             return;
+        }
+        if (typeof data.day !== 'number' || data.day < 1 || data.day > 100000) {
+            showToast('存档中的天数无效', 'bad');
+            return;
+        }
+        if (typeof data.money !== 'number' || !isFinite(data.money) || data.money < -1000000) {
+            showToast('存档中的金钱数据无效', 'bad');
+            return;
+        }
+        if (data.version && typeof data.version === 'string') {
+            const versionParts = data.version.split('.');
+            if (versionParts[0] === '1' && parseInt(versionParts[1]) < 3) {
+                showToast('⚠️ 旧版本存档，部分功能可能不兼容', 'warn');
+            }
         }
         game = data;
         fixSaveData();
         saveGame();
         const saveImportArea = document.getElementById('save-import-area'); if (saveImportArea) saveImportArea.style.display = 'none';
         showToast('✅ 存档导入成功！即将刷新...', 'good');
-        // 刷新页面以应用新存档
         setTimeout(() => {
             location.reload();
         }, 1500);
@@ -12485,14 +12521,28 @@ function changeWeather() {
     }
     
     // 根据天气切换BGM
-    if (game.weather === 'rainy' || game.weather === 'storm') {
+    if (game.weather === 'rain' || game.weather === 'heavyRain') {
         switchBgm('rainy');
-    } else if (game.weather === 'snow') {
+    } else if (game.weather === 'frost') {
         switchBgm('winter');
     } else {
         // 根据季节切换BGM
-        const seasonBgms = { spring: 'spring', summer: 'summer', autumn: 'autumn', winter: 'winter' };
+        const seasonBgms = { spring: 'warm', summer: 'game', autumn: 'harvest', winter: 'winter' };
         switchBgm(seasonBgms[game.season] || 'default');
+    }
+    
+    // 雨天自动浇水
+    if (['lightRain', 'rain', 'heavyRain'].includes(game.weather)) {
+        let wateredCount = 0;
+        game.fields.forEach((field, idx) => {
+            if (field.crop && field.crop !== 'none') {
+                field.lastWaterDay = game.day;
+                wateredCount++;
+            }
+        });
+        if (wateredCount > 0) {
+            addLog(`🌧️ 雨水滋润了${wateredCount}块田地`, 'info');
+        }
     }
 }
 
@@ -13927,7 +13977,7 @@ function handleEventChoice(optionIdx) {
     const option = event.options[optionIdx];
     
     // 检查物品消耗（如农药、化肥等）
-    const checkEffect = option.branches ? option.branches[0].effect : option.effect;
+    const checkEffect = option.branches && option.branches.length > 0 ? option.branches[0].effect : option.effect;
     if (checkEffect.item_pesticide !== undefined && checkEffect.item_pesticide < 0) {
         const hasPesticide = (game.items.pesticide || 0) >= Math.abs(checkEffect.item_pesticide);
         if (!hasPesticide) {
@@ -13936,7 +13986,7 @@ function handleEventChoice(optionIdx) {
             return;
         }
     }
-    if (checkEffect.items) {
+    if (checkEffect.items && game.items) {
         for (const [itemId, val] of Object.entries(checkEffect.items)) {
             if (val < 0) {
                 const current = (game.items[itemId] || 0);
@@ -14019,7 +14069,7 @@ function handleEventChoice(optionIdx) {
         if (game.reputationBonus) {
             repGain = Math.floor(repGain * (1 + game.reputationBonus));
         }
-        game.reputation += repGain;
+        game.reputation = Math.max(0, (game.reputation || 0) + repGain);
     }
     if (effect.item_pesticide) {
         game.items.pesticide = Math.max(0, (game.items.pesticide || 0) + effect.item_pesticide);
@@ -14049,7 +14099,7 @@ function handleEventChoice(optionIdx) {
         addLog(`🔧 工具效率提升！当前加成 ${Math.floor(game.toolEfficiency * 100)}%`, 'good');
     }
     if (effect.nextSeasonBonus) {
-        game.nextSeasonBonus = (game.nextSeasonBonus || 0) + effect.nextSeasonBonus;
+        game.nextSeasonBonus = Math.max(0, (game.nextSeasonBonus || 0) + effect.nextSeasonBonus);
     }
     if (effect.health) {
         game.health = Math.max(0, Math.min(game.maxHealth || 100, game.health + effect.health));
@@ -14161,7 +14211,7 @@ function handleEventChoice(optionIdx) {
     if (effect.seeds) {
         if (!game.seeds) game.seeds = {};
         for (const [seedId, val] of Object.entries(effect.seeds)) {
-            game.seeds[seedId] = (game.seeds[seedId] || 0) + val;
+            game.seeds[seedId] = Math.max(0, (game.seeds[seedId] || 0) + val);
         }
         addLog(`🌱 获得了种子奖励！`, 'good');
     }
@@ -14170,20 +14220,24 @@ function handleEventChoice(optionIdx) {
     if (eventId === 'strayCat') {
         if (optionIdx === 0) {
             // 选择了给它点吃的，增加流浪猫来访次数
-            game.petEvents.strayCatVisits = (game.petEvents.strayCatVisits || 0) + 1;
+            if (game.petEvents) {
+                game.petEvents.strayCatVisits = (game.petEvents.strayCatVisits || 0) + 1;
+            }
         }
     }
     
     // 记录事件（限制历史长度防止存档膨胀）
-    game.eventHistory.push({
-        day: game.day,
-        season: game.season,
-        eventId: eventId,
-        choice: optionIdx,
-        result: resultText
-    });
-    if (game.eventHistory.length > 100) {
-        game.eventHistory = game.eventHistory.slice(-100);
+    if (game.eventHistory) {
+        game.eventHistory.push({
+            day: game.day,
+            season: game.season,
+            eventId: eventId,
+            choice: optionIdx,
+            result: resultText
+        });
+        if (game.eventHistory.length > 100) {
+            game.eventHistory = game.eventHistory.slice(-100);
+        }
     }
     
     addLog(`⚡ ${event.name}：${resultText}`, event.type === 'disaster' ? 'bad' : event.type === 'gain' ? 'good' : 'info');
@@ -22578,11 +22632,12 @@ function toggleLogExpand() {
 }
 
 // ==================== 弹窗系统 ====================
-function showModal(title, content, onConfirm) {
+function showModal(title, content, onConfirm, onCancel, options) {
+    options = options || {};
     if (modalClosing) {
         modalClosing = false; // 允许新弹窗覆盖旧弹窗的关闭动画
     }
-    if (typeof content === 'string' && !/<[a-z][^>]*>/i.test(content)) {
+    if (typeof content === 'string' && !options.allowHtml) {
         content = escapeHtml(content);
     }
     const titleEl = document.getElementById('modal-title');
