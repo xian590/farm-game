@@ -11658,11 +11658,11 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
     if (typeof getTechBonus === 'function') {
         const healthBonus = getTechBonus('healthMax');
         if (healthBonus > 0) {
-            game.maxHealth = Math.min(200, 100 + healthBonus);
+            game.maxHealth = Math.max(game.maxHealth, 200 + healthBonus);
         }
         const staminaBonus = getTechBonus('staminaMax');
         if (staminaBonus > 0) {
-            game.maxStamina = Math.min(200, 100 + staminaBonus);
+            game.maxStamina = Math.max(game.maxStamina, 200 + staminaBonus);
         }
     }
 }
