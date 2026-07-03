@@ -3170,7 +3170,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.71';
+const GAME_VERSION = '1.3.72';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10334,7 +10334,7 @@ function calculateOfflineReward() {
     let totalHealthRegen = game.healthRegenBonus || 0;
     const npcHealthRegen = (typeof getNpcBonus === 'function') ? getNpcBonus('healthRegen') : 0;
     if (npcHealthRegen > 0) {
-        totalHealthRegen += Math.floor(npcHealthRegen);
+        totalHealthRegen += npcHealthRegen * 10;
     }
     const totalDays = gameDays + daysPassed;
     if (totalDays > 0 && totalHealthRegen > 0 && game.health < game.maxHealth) {
@@ -12120,11 +12120,12 @@ function onNewDay() {
                             
                             // 施肥加成
                             if (field.fertilized) {
-                                if (field.fertilizerType === 'organic') {
-                                    yield_ *= 1.08;
-                                } else {
-                                    yield_ *= 1.05;
+                                let fertMultiplier = (field.fertilizerType === 'organic') ? 1.08 : 1.05;
+                                const fertilizerEfficiency = game.agriTechEffects && game.agriTechEffects.fertilizerEfficiency;
+                                if (fertilizerEfficiency > 0) {
+                                    fertMultiplier *= (1 + fertilizerEfficiency);
                                 }
+                                yield_ *= fertMultiplier;
                             }
                             
                             // 除草加成
@@ -12264,10 +12265,23 @@ function onNewDay() {
     let totalHealthRegen = game.healthRegenBonus || 0;
     const npcHealthRegen = (typeof getNpcBonus === 'function') ? getNpcBonus('healthRegen') : 0;
     if (npcHealthRegen > 0) {
-        totalHealthRegen = Math.floor(totalHealthRegen * (1 + npcHealthRegen));
+        const baseHealthRegen = (game.maxHealth || 200) * 0.1; // 基础恢复10%上限
+        totalHealthRegen = baseHealthRegen + npcHealthRegen * 10; // 每0.1加成恢复+10点
     }
     if (totalHealthRegen > 0 && game.health < game.maxHealth) {
         game.health = Math.min(game.maxHealth, game.health + totalHealthRegen);
+    }
+    
+    // 王艺人心情恢复加成
+    const moodRegen = (typeof getNpcBonus === 'function') ? getNpcBonus('moodRegen') : 0;
+    if (moodRegen > 0) {
+        game.mood = Math.min(100, (game.mood || 50) + moodRegen * 10);
+    }
+    
+    // 吴医生健康上限加成
+    const healthMax = (typeof getNpcBonus === 'function') ? getNpcBonus('healthMax') : 0;
+    if (healthMax > 0) {
+        game.maxHealth = Math.min(300, (game.maxHealth || 200) + healthMax * 10);
     }
     
     // 重置每日加工上限
@@ -13804,6 +13818,17 @@ function triggerRandomEvent() {
     
     if (availableEvents.length === 0) return;
     
+    // 张半仙好运加成：有机会避免坏事或获得更好结果
+    const luckBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('luckBonus') : 0;
+    if (luckBonus > 0 && Math.random() < luckBonus) {
+        // 过滤掉灾难和人为破坏事件，只保留好事
+        const goodEvents = availableEvents.filter(e => e.type !== 'disaster' && e.type !== 'human');
+        if (goodEvents.length > 0) {
+            availableEvents.length = 0;
+            availableEvents.push(...goodEvents);
+        }
+    }
+    
     // 30%概率无事发生，增加"平静的一天"体验
     if (Math.random() < 0.3) return;
     
@@ -13961,6 +13986,11 @@ function triggerNightEvent() {
     
     if (effect.reputation) {
         let repGain = effect.reputation;
+        // NPC好感度声望加成（王村长）
+        const npcRepBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('reputationGain') : 0;
+        if (npcRepBonus > 0) {
+            repGain = Math.floor(repGain * (1 + npcRepBonus));
+        }
         // 社区建设加成（村祠堂翻修：声望获取+30%）
         if (game.reputationBonus) {
             repGain = Math.floor(repGain * (1 + game.reputationBonus));
@@ -14186,7 +14216,9 @@ function handleEventChoice(optionIdx) {
     
     // 田间管理技能减少灾害损失
     const fieldSkillLevel =(game.skills.fieldManagement && game.skills.fieldManagement.level) || 0;
-    if (fieldSkillLevel > 0 && effect.yieldLoss) {
+    if (fieldSkillLevel >= 10) {
+        effect.yieldLoss = 0; // Lv10零损失
+    } else if (fieldSkillLevel > 0 && effect.yieldLoss) {
         effect.yieldLoss *= (1 - fieldSkillLevel * 0.05);
     }
     if (effect.stamina) effect.stamina = Math.floor(effect.stamina * STAMINA_STRENGTH);
@@ -14410,6 +14442,13 @@ function updateProcessingJobs() {
         const elapsed = Math.max(0, currentTotalTime - jobTotalTime);
         const safeDuration = Math.max(1, job.duration || 1);
         job.progress = Math.min(100, Math.max(0, Math.floor((elapsed / safeDuration) * 100)));
+        
+        // 李小芳加工速度加成
+        const processSpeed = (typeof getNpcBonus === 'function') ? getNpcBonus('processSpeed') : 0;
+        if (processSpeed > 0) {
+            job.progress += processSpeed * 10; // 加速进度
+            job.progress = Math.min(100, job.progress);
+        }
         
         if (elapsed >= job.duration) {
             // 产出加工品前先检查容量
@@ -16691,7 +16730,12 @@ function sellAllFish() {
         let sellBonusTotal = game.sellBonus || 0;
         const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
         if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-        const bonusMul = 1 + Math.max(0, Math.min(2.0, sellBonusTotal));
+        let bonusMul = 1 + Math.max(0, Math.min(2.0, sellBonusTotal));
+        // cropFamiliarity Lv10 售价+20%
+        const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+        if (cropSkillLevel >= 10) {
+            bonusMul *= 1.2;
+        }
         
         let totalMoney = 0;
         let soldLog = [];
@@ -16737,7 +16781,12 @@ function sellForagingItem(itemId, amount) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    let finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    // cropFamiliarity Lv10 售价+20%
+    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+    if (cropSkillLevel >= 10) {
+        finalPrice *= 1.2;
+    }
     const money = Math.floor(finalPrice * amount);
     
     game.foragingItems[itemId] -= amount;
@@ -18592,14 +18641,19 @@ function buildProcessing(key) {
         }
         
         // 检查金钱
-        if (game.money < building.buildCost) {
+        let finalBuildCost = building.buildCost;
+        const buildCostReduce = (typeof getNpcBonus === 'function') ? getNpcBonus('buildCostReduce') : 0;
+        if (buildCostReduce > 0) {
+            finalBuildCost = Math.floor(finalBuildCost * (1 - buildCostReduce));
+        }
+        if (game.money < finalBuildCost) {
             showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
         
         // 建造
-        game.money -= building.buildCost;
+        game.money -= finalBuildCost;
         if (!game.builtProcessing) game.builtProcessing = {};
         game.builtProcessing[key] = 1;
         
@@ -18630,9 +18684,14 @@ function upgradeProcessing(buildingKey) {
         if (currentLevel >= 3) { showToast('已满级', 'warn'); return; }
         const cost = building.upgradeCost && building.upgradeCost[Math.max(0, currentLevel - 1)] !== undefined ? building.upgradeCost[Math.max(0, currentLevel - 1)] : 0;
         if (cost <= 0) { showToast('升级数据异常', 'bad'); return; }
-        if (game.money < cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        let finalCost = cost;
+        const buildCostReduce = (typeof getNpcBonus === 'function') ? getNpcBonus('buildCostReduce') : 0;
+        if (buildCostReduce > 0) {
+            finalCost = Math.floor(finalCost * (1 - buildCostReduce));
+        }
+        if (game.money < finalCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
         
-        game.money -= cost;
+        game.money -= finalCost;
         game.builtProcessing[buildingKey] = currentLevel + 1;
         
         addLog(`🎉 ${building.name}升级到了Lv${currentLevel + 1}！日产能提升至${building.levelCapacity[currentLevel]}斤`, 'good');
@@ -18852,7 +18911,12 @@ function sellProcessedItem(itemKey, amount) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const price = basePrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    let price = basePrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    // cropFamiliarity Lv10 售价+20%
+    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+    if (cropSkillLevel >= 10) {
+        price *= 1.2;
+    }
     const money = Math.floor(price * amount);
     
     game.processedItems[itemKey] -= amount;
@@ -20250,6 +20314,12 @@ function renderMarketPanel() {
     
     html += '<p class="panel-desc">赶集啦！十里八乡的人都来了，东西比村里便宜。</p>';
     
+    // 老周市场信息加成：显示价格提示
+    const marketInfo = (typeof getNpcBonus === 'function') ? getNpcBonus('marketInfo') : 0;
+    if (marketInfo > 0) {
+        html += '<p class="panel-desc" style="color:#27ae60;">📊 老周给你透了个底：今天价格' + (marketInfo >= 0.2 ? '非常公道' : '还算公道') + '</p>';
+    }
+    
     // 特殊商品
     html += '<div class="shop-category">🛒 今日特供</div>';
     MARKET_DATA.specialItems.forEach(item => {
@@ -20945,13 +21015,22 @@ function sellAnimal(animalKey, idx) {
     }
     
     const weightFactor = (animal.weight || 50) / 100;
-    const price = Math.floor(data.sellPrice * weightFactor);
-    game.money += price;
-    game.stats.totalEarned = (game.stats.totalEarned || 0) + price;
+    let sellPrice = Math.floor(data.sellPrice * weightFactor);
+    const npcSellPrice = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
+    if (npcSellPrice > 0) {
+        sellPrice = Math.floor(sellPrice * (1 + npcSellPrice));
+    }
+    // cropFamiliarity Lv10 售价+20%
+    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+    if (cropSkillLevel >= 10) {
+        sellPrice = Math.floor(sellPrice * 1.2);
+    }
+    game.money += sellPrice;
+    game.stats.totalEarned = (game.stats.totalEarned || 0) + sellPrice;
     game.stats.totalSell = (game.stats.totalSell || 0) + 1;
     game.animals[animalKey].splice(idx, 1);
     
-    addLog(`💰 卖掉${data.emoji}${animal.name}，获得${price}元`, 'good');
+    addLog(`💰 卖掉${data.emoji}${animal.name}，获得${sellPrice}元`, 'good');
     saveGame();
     renderAnimalsPanel();
     updateTopBar();
@@ -21000,7 +21079,12 @@ function sellAnimalProduct(productKey, amount) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const price = (prices[productKey] || 5) * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    let price = (prices[productKey] || 5) * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    // cropFamiliarity Lv10 售价+20%
+    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+    if (cropSkillLevel >= 10) {
+        price *= 1.2;
+    }
     const money = Math.floor(price * amount);
     
     game.animalProducts[productKey] -= amount;
@@ -21068,7 +21152,12 @@ function sellFruit(fruitKey, amount) {
     let sellBonusTotal = game.sellBonus || 0;
     const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
     if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const price = data.fruitPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    let price = data.fruitPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    // cropFamiliarity Lv10 售价+20%
+    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+    if (cropSkillLevel >= 10) {
+        price *= 1.2;
+    }
     const money = Math.floor(price * amount);
     
     game.fruits[fruitKey] -= amount;
@@ -21277,7 +21366,12 @@ function plantCrop(fieldIdx, cropKey) {
         field.lastWeedDay = game.day;
         
         // 增加作物熟悉度经验
-        addSkillExp('cropFamiliarity', 3);  // 从5减到3，保持比例
+        const npcCropExpBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('cropExpGain') : 0;
+        if (npcCropExpBonus > 0) {
+            addSkillExp('cropFamiliarity', 3 * (1 + npcCropExpBonus));
+        } else {
+            addSkillExp('cropFamiliarity', 3);  // 从5减到3，保持比例
+        }
         field.fertilized = false;
         field.turnedVine1 = false;
         field.turnedVine2 = false;
@@ -21632,11 +21726,12 @@ function harvestCrop(fieldIdx) {
         
         // 施肥加成
         if (field.fertilized) {
-            if (field.fertilizerType === 'organic') {
-                yield_ *= 1.08; // 有机肥+8%
-            } else {
-                yield_ *= 1.05; // 普通化肥+5%
+            let fertMultiplier = (field.fertilizerType === 'organic') ? 1.08 : 1.05;
+            const fertilizerEfficiency = game.agriTechEffects && game.agriTechEffects.fertilizerEfficiency;
+            if (fertilizerEfficiency > 0) {
+                fertMultiplier *= (1 + fertilizerEfficiency);
             }
+            yield_ *= fertMultiplier;
         }
         
         // 除草加成（如果最近除过草）
@@ -21834,7 +21929,12 @@ function _doSellCrop(cropKey, sellAmount, price) {
     if (npcSellBonus > 0) {
         sellBonusTotal += npcSellBonus;
     }
-    const finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    let finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+    // cropFamiliarity Lv10 售价+20%
+    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+    if (cropSkillLevel >= 10) {
+        finalPrice *= 1.2;
+    }
     let money = Math.floor(sellAmount * finalPrice);
     
     game.crops[cropKey] -= sellAmount;
