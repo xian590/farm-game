@@ -3207,7 +3207,10 @@ function safeStorageSet(key, value) {
         if (e.name === 'QuotaExceededError' || e.code === 22) {
             console.warn('localStorage quota exceeded, attempting cleanup');
             try {
-                localStorage.clear();
+                // 只清理旧备份，而不是全部清理
+                for (let i = 1; i <= 3; i++) {
+                    localStorage.removeItem(SAVE_KEY + '_backup_' + i);
+                }
                 localStorage.setItem(key, value);
                 return true;
             } catch (e2) {
@@ -3230,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.85';
+const GAME_VERSION = '1.3.86';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4253,6 +4256,14 @@ function closeSettings() {
 
 // ==================== 弹窗统一管理：防止叠加 ====================
 function closeAllModals() {
+    // 清理暂停栈
+    if (game._modalPauseStack) {
+        // 如果游戏在暂停状态，恢复游戏
+        if (gamePaused && game._modalPauseStack.length > 0) {
+            togglePause();
+        }
+        delete game._modalPauseStack;
+    }
     const overlays = [
         'modal-overlay',
         'settings-overlay',
@@ -10901,6 +10912,10 @@ function exportSaveFile() {
         const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout', '_loggedFull'];
         const backups = {};
         transientKeys.forEach(k => { backups[k] = game[k]; delete game[k]; });
+        // 清理 processingJobs 中的瞬态字段
+        if (game.processingJobs) {
+            game.processingJobs.forEach(job => { delete job._loggedFull; });
+        }
         try {
             game.version = GAME_VERSION;
             const saveData = JSON.stringify(game, null, 2);
@@ -10942,7 +10957,7 @@ function importSaveFile(input) {
                 showToast('存档中的天数无效', 'bad');
                 return;
             }
-            if (typeof data.money !== 'number' || !isFinite(data.money) || data.money < -1000000) {
+            if (typeof data.money !== 'number' || !isFinite(data.money) || data.money < 0) {
                 showToast('存档中的金钱数据无效', 'bad');
                 return;
             }
@@ -11697,20 +11712,28 @@ function exportSave() {
         }
     }
     
-    tryCopy(saveData).then(success => {
-        if (success) {
-            showToast('📋 存档已复制到剪贴板！请到另一台设备粘贴导入', 'good');
-        } else if (fallbackCopy(saveData)) {
-            showToast('📋 存档已复制到剪贴板！请到另一台设备粘贴导入', 'good');
-        } else {
-            // 最终降级：显示弹窗让用户手动复制
-            showModal(
-                '导出存档',
-                '<div style="text-align:left;"><p>请长按复制以下存档代码，保存到备忘录或微信收藏：</p><textarea readonly style="width:100%;height:120px;margin-top:10px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:12px;resize:none;" onclick="this.select()">' + escapeHtml(saveData.substring(0, 500)) + '...</textarea><p style="font-size:11px;color:#999;margin-top:8px;">💡 提示：点击文本框即可全选，然后复制</p></div>',
-                null
-            );
-        }
-    });
+    try {
+        tryCopy(saveData).then(success => {
+            if (success) {
+                showToast('📋 存档已复制到剪贴板！请到另一台设备粘贴导入', 'good');
+            } else if (fallbackCopy(saveData)) {
+                showToast('📋 存档已复制到剪贴板！请到另一台设备粘贴导入', 'good');
+            } else {
+                // 最终降级：显示弹窗让用户手动复制
+                showModal(
+                    '导出存档',
+                    '<div style="text-align:left;"><p>请长按复制以下存档代码，保存到备忘录或微信收藏：</p><textarea readonly style="width:100%;height:120px;margin-top:10px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:12px;resize:none;" onclick="this.select()">' + escapeHtml(saveData.substring(0, 500)) + '...</textarea><p style="font-size:11px;color:#999;margin-top:8px;">💡 提示：点击文本框即可全选，然后复制</p></div>',
+                    null
+                );
+            }
+        }).catch(e => {
+            console.error('剪贴板导出失败', e);
+            showToast('复制失败，请手动复制', 'bad');
+        });
+    } catch (e) {
+        console.error('剪贴板导出失败', e);
+        showToast('复制失败，请手动复制', 'bad');
+    };
 }
 
 function importSavePrompt() {
@@ -11744,7 +11767,7 @@ function doImportSave() {
             showToast('存档中的天数无效', 'bad');
             return;
         }
-        if (typeof data.money !== 'number' || !isFinite(data.money) || data.money < -1000000) {
+        if (typeof data.money !== 'number' || !isFinite(data.money) || data.money < 0) {
             showToast('存档中的金钱数据无效', 'bad');
             return;
         }
@@ -14243,6 +14266,13 @@ function showEventModal(event) {
     const overlayEl = document.getElementById('modal-overlay');
     if (!titleEl || !contentEl || !overlayEl) return;
     
+    // 清理所有残留的暂停状态，防止强制关闭其他弹窗后状态不一致
+    if (game._modalPauseStack && game._modalPauseStack.length > 0) {
+        if (gamePaused) {
+            togglePause();
+        }
+        delete game._modalPauseStack;
+    }
     closeAllModals(); // 打开弹窗前关闭其他弹窗
     
     modalCallback = null; // 清除之前的回调，避免事件弹窗触发旧的确认回调
@@ -14946,6 +14976,13 @@ function showGame() {
     if (game) game.started = true;
     const savedStyle = safeStorageGet('farm_bgm_style') || 'game';
     switchBgm(savedStyle);
+    
+    // 隐藏其他容器
+    const storyContainer = document.getElementById('story-container');
+    if (storyContainer) storyContainer.style.display = 'none';
+    const selectContainer = document.getElementById('select-container');
+    if (selectContainer) selectContainer.style.display = 'none';
+    
     const gameContainer = document.getElementById('game-container');
     if (gameContainer) gameContainer.style.display = 'flex';
     
@@ -15019,7 +15056,11 @@ function showGame() {
     
     const loaderBar3 = document.getElementById('loader-bar');
     if (loaderBar3) loaderBar3.style.width = '100%';
-    showToast('🎁 新手礼包：2个馒头+1个鸡蛋已放入背包！', 'good');
+    // 只在首次显示游戏时显示新手礼包
+    if (!game._newbiePackShown) {
+        showToast('🎁 新手礼包：2个馒头+1个鸡蛋已放入背包！', 'good');
+        game._newbiePackShown = true;
+    }
 }
 
 // ==================== 面板渲染 ====================
@@ -23242,6 +23283,13 @@ function showModal(title, content, onConfirm, onCancel, options) {
     }
     
     contentEl.innerHTML = content;
+    // 清理所有残留的暂停状态，防止强制关闭事件弹窗后状态不一致
+    if (game._modalPauseStack && game._modalPauseStack.length > 0) {
+        if (gamePaused) {
+            togglePause();
+        }
+        delete game._modalPauseStack;
+    }
     closeAllModals(); // 打开弹窗前关闭其他弹窗
     overlayEl.style.display = 'flex';
     
