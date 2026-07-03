@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.89';
+const GAME_VERSION = '1.3.90';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -5113,7 +5113,7 @@ const NEIGHBOR_HELP_DATA = {
         id: 'waterHelp', name: '邻里浇水', emoji: '💧',
         desc: '农忙时邻居来帮你浇地，人情往来。',
         requireFriendship: 10, // 需要总好感度10
-        effect: ' neighborWater',
+        effect: 'neighborWater',
         effectDesc: '每3天自动帮浇1次水',
         npcText: '看你一个人忙不过来，我帮你浇浇地吧。'
     },
@@ -9937,18 +9937,46 @@ function calculateOfflineReward() {
                                 if (yield_ > remainingStorage) yield_ = remainingStorage;
                                 if (yield_ <= 0) return;
                                 remainingStorage -= yield_;
-                                if (cropData.type === 'rice') game.crops.rice = (game.crops.rice || 0) + yield_;
-                                else if (cropData.type === 'sweet') game.crops.sweet = (game.crops.sweet || 0) + yield_;
-                                else if (cropData.type === 'wheat') game.crops.wheat = (game.crops.wheat || 0) + yield_;
-                                else if (cropData.type === 'corn') game.crops.corn = (game.crops.corn || 0) + yield_;
-                                else if (cropData.type === 'soybean') game.crops.soybean = (game.crops.soybean || 0) + yield_;
-                                else if (cropData.type === 'potato') game.crops.potato = (game.crops.potato || 0) + yield_;
-                                else if (cropData.type === 'peanut') game.crops.peanut = (game.crops.peanut || 0) + yield_;
-                                else if (cropData.type === 'pepper') game.crops.pepper = (game.crops.pepper || 0) + yield_;
-                                else if (cropData.type === 'cabbage') game.crops.cabbage = (game.crops.cabbage || 0) + yield_;
-                                else if (cropData.type === 'radish') game.crops.radish = (game.crops.radish || 0) + yield_;
-                                else if (cropData.type === 'eggplant') game.crops.eggplant = (game.crops.eggplant || 0) + yield_;
-                                else if (cropData.type === 'garlic') game.crops.garlic = (game.crops.garlic || 0) + yield_;
+                                if (cropData.type === 'rice') {
+                                    game.crops.rice = (game.crops.rice || 0) + yield_;
+                                }
+                                else if (cropData.type === 'sweet') {
+                                    game.crops.sweet = (game.crops.sweet || 0) + yield_;
+                                }
+                                else if (cropData.type === 'wheat') {
+                                    game.crops.wheat = (game.crops.wheat || 0) + yield_;
+                                }
+                                else if (cropData.type === 'corn') {
+                                    game.crops.corn = (game.crops.corn || 0) + yield_;
+                                }
+                                else if (cropData.type === 'soybean') {
+                                    game.crops.soybean = (game.crops.soybean || 0) + yield_;
+                                }
+                                else if (cropData.type === 'potato') {
+                                    game.crops.potato = (game.crops.potato || 0) + yield_;
+                                }
+                                else if (cropData.type === 'peanut') {
+                                    game.crops.peanut = (game.crops.peanut || 0) + yield_;
+                                }
+                                else if (cropData.type === 'pepper') {
+                                    game.crops.pepper = (game.crops.pepper || 0) + yield_;
+                                }
+                                else if (cropData.type === 'cabbage') {
+                                    game.crops.cabbage = (game.crops.cabbage || 0) + yield_;
+                                }
+                                else if (cropData.type === 'radish') {
+                                    game.crops.radish = (game.crops.radish || 0) + yield_;
+                                }
+                                else if (cropData.type === 'eggplant') {
+                                    game.crops.eggplant = (game.crops.eggplant || 0) + yield_;
+                                }
+                                else if (cropData.type === 'garlic') {
+                                    game.crops.garlic = (game.crops.garlic || 0) + yield_;
+                                }
+                                // 解锁图鉴
+                                if (typeof unlockCollectionItem === 'function') {
+                                    unlockCollectionItem('crops', cropData.type);
+                                }
                                 field.crop = null;
                                 field.stage = 'idle';
                                 field.step = 0;
@@ -9965,6 +9993,7 @@ function calculateOfflineReward() {
                             }
                         }
                     });
+                    game._storageCacheTick = -1; // 使缓存失效
                 }
             }
         }
@@ -14700,6 +14729,7 @@ function updateProcessingJobs() {
                     if (game.items) game.items.wood = (game.items.wood || 0) + job.inputAmount;
                 } else if (job.inputType && job.inputType !== 'none' && job.inputCrop) {
                     game.crops[job.inputCrop] = (game.crops[job.inputCrop] || 0) + job.inputAmount;
+                    game._storageCacheTick = -1; // 使缓存失效
                 }
                 // 标记该任务为未完成，不删除，下次尝试
                 job._warehouseFull = true;
@@ -15429,10 +15459,15 @@ const MILESTONE_DATA = {
         desc: '总资产达到5000元',
         reward: 1000,
         check: () => {
-            if (!game.crops) return false;
-            const riceValue = game.crops.rice * 2;
-            const sweetValue = game.crops.sweet * 0.5;
-            const total = game.money + riceValue + sweetValue;
+            let cropValue = 0;
+            const cropTypes = ['rice', 'sweet', 'wheat', 'corn', 'soybean', 'potato', 'peanut', 'pepper', 'cabbage', 'radish', 'eggplant', 'garlic'];
+            cropTypes.forEach(type => {
+                const amount = (game.crops && game.crops[type]) || 0;
+                if (amount > 0) {
+                    cropValue += amount * getSeasonPrice(type);
+                }
+            });
+            const total = game.money + cropValue;
             return total >= 5000;
         }
     },
@@ -15443,9 +15478,15 @@ const MILESTONE_DATA = {
         desc: '总资产达到10000元',
         reward: 2000,
         check: () => {
-            const riceValue = game.crops.rice * 2;
-            const sweetValue = game.crops.sweet * 0.5;
-            const total = game.money + riceValue + sweetValue;
+            let cropValue = 0;
+            const cropTypes = ['rice', 'sweet', 'wheat', 'corn', 'soybean', 'potato', 'peanut', 'pepper', 'cabbage', 'radish', 'eggplant', 'garlic'];
+            cropTypes.forEach(type => {
+                const amount = (game.crops && game.crops[type]) || 0;
+                if (amount > 0) {
+                    cropValue += amount * getSeasonPrice(type);
+                }
+            });
+            const total = game.money + cropValue;
             return total >= 10000;
         }
     }
@@ -15664,6 +15705,11 @@ function renderQuestBox() {
                 // 售卖任务
                 progress = q.q4 ? 50 : 0; // 完成收割后算50%
                 progressText = q.q4 ? '进行中' : '未开始';
+            } else if (quest.id === 'q12') {
+                // 作物熟悉度任务
+                const level = game.skills && game.skills.cropFamiliarity ? game.skills.cropFamiliarity.level : 0;
+                progress = Math.min(100, Math.floor(level / 2 * 100));
+                progressText = progress >= 100 ? '已完成' : '进行中';
             } else {
                 // 其他任务简单估算
                 const questNum = parseInt(quest.id.slice(1), 10);
@@ -22031,6 +22077,7 @@ function harvestCrop(fieldIdx) {
         };
         if (cropTypeMap[cropData.type]) {
             game.crops[cropData.type] = Math.max(0, (game.crops[cropData.type] || 0) + actualYield);
+            game._storageCacheTick = -1; // 使缓存失效
         }
         
         // 解锁图鉴
@@ -22908,14 +22955,26 @@ function addLog(text, type = 'normal') {
     }
     
     logEl.appendChild(item);
+    // 维护计数器，避免 O(n) DOM 查询
+    if (typeof game._logItemCount !== 'number') {
+        game._logItemCount = logEl.querySelectorAll('.log-item').length;
+    } else {
+        game._logItemCount++;
+    }
     // 仅在用户已滚动到底部时自动滚动
     const isAtBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 20;
     if (isAtBottom) logEl.scrollTop = logEl.scrollHeight;
     
     // 限制日志数量，最多保留200条
-    while (logEl.querySelectorAll('.log-item').length > 200) {
+    while (game._logItemCount > 200) {
         const firstLog = logEl.querySelector('.log-item');
-        if (firstLog) firstLog.remove();
+        if (firstLog) {
+            firstLog.remove();
+            game._logItemCount--;
+        } else {
+            game._logItemCount = 0;
+            break;
+        }
     }
     
     // 3秒后自动移除 new 高亮类，避免动画结束后残留背景
@@ -24966,28 +25025,45 @@ function checkAchievements() {
         totalPickle: game.stats && game.stats.totalPickle || 0
     };
     
+    // 缓存解析后的条件
+    if (!game._achievementConditionCache) {
+        game._achievementConditionCache = {};
+    }
+    
     for (const [key, ach] of Object.entries(ACHIEVEMENT_DATA)) {
         if (game.achievements[key]) continue; // 已解锁
         
-        // 解析条件
-        const parts = ach.condition.split('>=');
-        if (parts.length === 2) {
-            const condKey = parts[0].trim();
-            const condVal = parseInt(parts[1].trim(), 10);
-            if (conditions[condKey] !== undefined && conditions[condKey] >= condVal) {
+        // 使用缓存解析后的条件
+        let parsed = game._achievementConditionCache[key];
+        if (!parsed) {
+            const parts = ach.condition.split('>=');
+            if (parts.length === 2) {
+                parsed = {
+                    type: 'numeric',
+                    condKey: parts[0].trim(),
+                    condVal: parseInt(parts[1].trim(), 10)
+                };
+            } else {
+                parsed = { type: 'string', condKey: ach.condition };
+            }
+            game._achievementConditionCache[key] = parsed;
+        }
+        
+        if (parsed.type === 'numeric') {
+            if (conditions[parsed.condKey] !== undefined && conditions[parsed.condKey] >= parsed.condVal) {
                 unlockAchievement(key);
             }
         } else {
             // 布尔条件检查（如 hasCompost, hasWell）
-            if (ach.condition === 'hasCompost' && conditions.hasCompost) {
+            if (parsed.condKey === 'hasCompost' && conditions.hasCompost) {
                 unlockAchievement(key);
             }
-            if (ach.condition === 'hasWell' && conditions.hasWell) {
+            if (parsed.condKey === 'hasWell' && conditions.hasWell) {
                 unlockAchievement(key);
             }
             // 处理字符串条件
-            if (typeof ach.condition === 'string') {
-                if (ach.condition === 'allBuildingsBuilt') {
+            if (typeof parsed.condKey === 'string') {
+                if (parsed.condKey === 'allBuildingsBuilt') {
                     const allBuilt = Object.keys(BUILDING_DATA).every(key => {
                         const level = game.buildings && game.buildings[key];
                         return (level || 0) >= 1;
@@ -24995,7 +25071,7 @@ function checkAchievements() {
                     if (allBuilt) unlockAchievement(key);
                     continue;
                 }
-                if (ach.condition === 'allProcessingBuilt') {
+                if (parsed.condKey === 'allProcessingBuilt') {
                     const allBuilt = Object.keys(PROCESSING_DATA).every(key => {
                         const level = game.builtProcessing && game.builtProcessing[key];
                         return (level || 0) >= 1;
