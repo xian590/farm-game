@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.86';
+const GAME_VERSION = '1.3.87';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10975,13 +10975,13 @@ function importSaveFile(input) {
             if (data.version && typeof data.version === 'string') {
                 // 版本兼容性检查：如果版本太旧，提示可能不兼容
                 const versionParts = data.version.split('.');
-                if (versionParts[0] === '1' && parseInt(versionParts[1]) < 3) {
+                if (versionParts[0] === '1' && parseInt(versionParts[1], 10) < 3) {
                     showToast('⚠️ 旧版本存档，部分功能可能不兼容', 'warn');
                 }
                 // 高版本存档检查
                 const currentVersion = GAME_VERSION.split('.');
                 const saveVersion = data.version.split('.');
-                if (parseInt(saveVersion[1]) > parseInt(currentVersion[1])) {
+                if (parseInt(saveVersion[1], 10) > parseInt(currentVersion[1], 10)) {
                     showToast('⚠️ 该存档来自更高版本，可能无法完全兼容', 'warn');
                 }
             }
@@ -11096,13 +11096,13 @@ function fixSaveData() {
     if (!game) return;
     
     // 补全核心游戏状态（极旧存档可能缺少这些基础字段）
-    if (game.mode == null) game.mode = 'normal';
-    if (game.money == null) game.money = 1500;
+    if (game.mode === undefined) game.mode = 'normal';
+    if (game.money === undefined) game.money = 1500;
     if (game.maxHealth === undefined) game.maxHealth = 200;
     if (game.health === undefined) game.health = Math.floor(game.maxHealth * 0.6);
     if (game.maxStamina === undefined) game.maxStamina = 200;
     if (game.stamina === undefined) game.stamina = Math.floor(game.maxStamina * 0.5);
-    if (game.day == null || game.day < 1) game.day = 1;
+    if (game.day === undefined || game.day < 1) game.day = 1;
     if (game.totalDay === undefined || game.totalDay < 1) game.totalDay = game.day || 1;
     if (game.season === undefined) game.season = 'spring';
     const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
@@ -11784,13 +11784,13 @@ function doImportSave() {
         }
         if (data.version && typeof data.version === 'string') {
             const versionParts = data.version.split('.');
-            if (versionParts[0] === '1' && parseInt(versionParts[1]) < 3) {
+            if (versionParts[0] === '1' && parseInt(versionParts[1], 10) < 3) {
                 showToast('⚠️ 旧版本存档，部分功能可能不兼容', 'warn');
             }
             // 高版本存档检查
             const currentVersion = GAME_VERSION.split('.');
             const saveVersion = data.version.split('.');
-            if (parseInt(saveVersion[1]) > parseInt(currentVersion[1])) {
+            if (parseInt(saveVersion[1], 10) > parseInt(currentVersion[1], 10)) {
                 showToast('⚠️ 该存档来自更高版本，可能无法完全兼容', 'warn');
             }
         }
@@ -14966,7 +14966,10 @@ function switchTab(tabName) {
     renderPanel(currentMainTab);
     // 恢复滚动位置（如果之前保存过）
     if (panel && panel.dataset.scrollTop) {
-        panel.scrollTop = parseInt(panel.dataset.scrollTop);
+        const scrollTop = parseInt(panel.dataset.scrollTop, 10);
+        if (!isNaN(scrollTop)) {
+            panel.scrollTop = scrollTop;
+        }
     }
 }
 
