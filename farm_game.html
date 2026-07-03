@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.98';
+const GAME_VERSION = '1.3.99';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -16789,75 +16789,77 @@ function renderCompostPanel() {
 
 // ===== 采集面板 =====
 function goForaging() {
-    // 检查是否是白天（6:00-20:00）
-    if (game.time < 6 || game.time >= 20) {
-        showToast('天黑了，山路不好走，等明天天亮再去吧', 'warn');
-        return;
-    }
-    
-    // 检查每日上限
-    if (game.dailyActions.foraging >= 1) {
-        showToast('今天已经去过后山了...', 'warn');
-        return;
-    }
-    
-    const seasonData = FORAGING_DATA[game.season];
-    if (!seasonData) {
-        showToast('这个季节没什么可采集的', 'warn');
-        return;
-    }
-    
-    // 随机选择一个采集物
-    const item = seasonData.items[Math.floor(Math.random() * seasonData.items.length)];
-    let amount = Math.floor(Math.random() * (item.maxAmount - item.minAmount + 1)) + item.minAmount;
-    
-    // 社区建设加成（小河石桥：采集物产量+50%）
-    if (game.foragingBonus) {
-        amount = Math.floor(amount * game.foragingBonus);
-    }
-    
-    // 检查体力（必须在计数增加前完成所有检查）
-    if (game.stamina < item.staminaCost) {
-        showToast('感觉累得不行了，先吃点东西或睡一觉恢复体力再来吧', 'warn');
-        playErrorSound();
-        return;
-    }
-    
-    // 所有检查通过后，才增加计数和扣除体力
-    game.dailyActions.foraging = (game.dailyActions.foraging || 0) + 1;
-    game.stamina -= item.staminaCost;
-    if (!game.foragingItems) game.foragingItems = {};
-    game.foragingItems[item.id] = (game.foragingItems[item.id] || 0) + amount;
-    
-    // 采集时顺手捡木材（30%概率）
-    if (['bamboo_shoot', 'wild_vegetable', 'herb'].includes(item.id) && Math.random() < 0.3) {
-        const woodAmount = Math.floor(Math.random() * 3) + 1;
-        game.items.wood = (game.items.wood || 0) + woodAmount;
-        addLog(`🪵 顺手捡了${woodAmount}根枯树枝`, 'good');
-    }
-    
-    // 统计
-    if (!game.stats) game.stats = {};
-    game.stats.totalForage = (game.stats.totalForage || 0) + 1;
-    
-    // 解锁图鉴
-    unlockCollectionItem('foraging', item.id);
-    
-    // 消耗2小时游戏时间
-    game.time += 2;
-    
-    addLog(`🌿 去后山转了一圈，花了两个钟头，采了${amount}斤${item.name}，累坏了。体力-${item.staminaCost}`, 'good');
-    
-    // 任务检查：第一次采集
-    if (!game.quests.q20) {
-        game.quests.q20 = true;
-        queueQuestReward('q20', 80, '✅ 任务完成：山野采集，奖励80元');
-    }
-    
-    saveGame();
-    updateUI();
-    checkAchievements();
-    showToast(`采了${amount}斤${item.name}！`, 'good');
+    withClickLock('goForaging', () => {
+        // 检查是否是白天（6:00-20:00）
+        if (game.time < 6 || game.time >= 20) {
+            showToast('天黑了，山路不好走，等明天天亮再去吧', 'warn');
+            return;
+        }
+        
+        // 检查每日上限
+        if (game.dailyActions.foraging >= 1) {
+            showToast('今天已经去过后山了...', 'warn');
+            return;
+        }
+        
+        const seasonData = FORAGING_DATA[game.season];
+        if (!seasonData) {
+            showToast('这个季节没什么可采集的', 'warn');
+            return;
+        }
+        
+        // 随机选择一个采集物
+        const item = seasonData.items[Math.floor(Math.random() * seasonData.items.length)];
+        let amount = Math.floor(Math.random() * (item.maxAmount - item.minAmount + 1)) + item.minAmount;
+        
+        // 社区建设加成（小河石桥：采集物产量+50%）
+        if (game.foragingBonus) {
+            amount = Math.floor(amount * game.foragingBonus);
+        }
+        
+        // 检查体力（必须在计数增加前完成所有检查）
+        if (game.stamina < item.staminaCost) {
+            showToast('感觉累得不行了，先吃点东西或睡一觉恢复体力再来吧', 'warn');
+            playErrorSound();
+            return;
+        }
+        
+        // 所有检查通过后，才增加计数和扣除体力
+        game.dailyActions.foraging = (game.dailyActions.foraging || 0) + 1;
+        game.stamina -= item.staminaCost;
+        if (!game.foragingItems) game.foragingItems = {};
+        game.foragingItems[item.id] = (game.foragingItems[item.id] || 0) + amount;
+        
+        // 采集时顺手捡木材（30%概率）
+        if (['bamboo_shoot', 'wild_vegetable', 'herb'].includes(item.id) && Math.random() < 0.3) {
+            const woodAmount = Math.floor(Math.random() * 3) + 1;
+            game.items.wood = (game.items.wood || 0) + woodAmount;
+            addLog(`🪵 顺手捡了${woodAmount}根枯树枝`, 'good');
+        }
+        
+        // 统计
+        if (!game.stats) game.stats = {};
+        game.stats.totalForage = (game.stats.totalForage || 0) + 1;
+        
+        // 解锁图鉴
+        unlockCollectionItem('foraging', item.id);
+        
+        // 消耗2小时游戏时间
+        game.time += 2;
+        
+        addLog(`🌿 去后山转了一圈，花了两个钟头，采了${amount}斤${item.name}，累坏了。体力-${item.staminaCost}`, 'good');
+        
+        // 任务检查：第一次采集
+        if (!game.quests.q20) {
+            game.quests.q20 = true;
+            queueQuestReward('q20', 80, '✅ 任务完成：山野采集，奖励80元');
+        }
+        
+        saveGame();
+        updateUI();
+        checkAchievements();
+        showToast(`采了${amount}斤${item.name}！`, 'good');
+    });
 }
 
 function renderForagingPanel() {
@@ -17015,110 +17017,114 @@ function renderFishingPanel() {
 }
 
 function sellAllFish() {
-    if (!game.fishInventory) {
-        showToast('鱼塘里空空如也', 'bad');
-        return;
-    }
-    
-    let totalWeight = 0;
-    for (const count of Object.values(game.fishInventory)) {
-        totalWeight += count;
-    }
-    if (totalWeight <= 0) {
-        showToast('鱼塘里空空如也', 'bad');
-        return;
-    }
-    
-    showModal('确认出售', `确定要卖出鱼塘里所有${totalWeight}斤鱼吗？`, () => {
-        const fishPrices = {
-            'carp': 15,
-            'catfish': 20,
-            'crucian': 12,
-            'grass_carp': 14,
-            'perch': 25,
-            'eel': 30,
-            'salmon': 35
-        };
+    withClickLock('sellAllFish', () => {
+        if (!game.fishInventory) {
+            showToast('鱼塘里空空如也', 'bad');
+            return;
+        }
+        
+        let totalWeight = 0;
+        for (const count of Object.values(game.fishInventory)) {
+            totalWeight += count;
+        }
+        if (totalWeight <= 0) {
+            showToast('鱼塘里空空如也', 'bad');
+            return;
+        }
+        
+        showModal('确认出售', `确定要卖出鱼塘里所有${totalWeight}斤鱼吗？`, () => {
+            const fishPrices = {
+                'carp': 15,
+                'catfish': 20,
+                'crucian': 12,
+                'grass_carp': 14,
+                'perch': 25,
+                'eel': 30,
+                'salmon': 35
+            };
+            
+            // 应用售价加成
+            let sellBonusTotal = game.sellBonus || 0;
+            const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
+            if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
+            let bonusMul = 1 + Math.max(0, Math.min(2.0, sellBonusTotal));
+            // cropFamiliarity Lv10 售价+20%
+            const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+            if (cropSkillLevel >= 10) {
+                bonusMul *= 1.2;
+            }
+            
+            let totalMoney = 0;
+            let soldLog = [];
+            
+            for (const [fishKey, count] of Object.entries(game.fishInventory)) {
+                if (count > 0) {
+                    const price = (fishPrices[fishKey] || 10) * bonusMul;
+                    const money = Math.floor(count * price);
+                    totalMoney += money;
+                    soldLog.push(`${getFishName(fishKey)} ${count}斤`);
+                    delete game.fishInventory[fishKey];
+                }
+            }
+            
+            game.money += totalMoney;
+            
+            if (!game.stats) game.stats = {};
+            game.stats.totalSell = (game.stats.totalSell || 0) + totalMoney;
+            game.stats.totalEarned = (game.stats.totalEarned || 0) + totalMoney;
+            
+            playCoinSound();
+            showToast(`卖了${soldLog.join('、')}，共${totalMoney}元`, 'good');
+            addLog(`🐟 卖出全部鱼，${soldLog.join('、')}，共获得${totalMoney}元`, 'good');
+            updateUI();
+            renderFishingPanel();
+        });
+    });
+}
+
+function sellForagingItem(itemId, amount) {
+    withClickLock('sellForagingItem_' + itemId + '_' + amount, () => {
+        if (!game.foragingItems || !game.foragingItems[itemId] || game.foragingItems[itemId] < amount) {
+            showToast('库存不足', 'bad');
+            return;
+        }
+        
+        // 查找价格
+        let price = 5;
+        for (const season of Object.values(FORAGING_DATA)) {
+            const item = season.items.find(i => i.id === itemId);
+            if (item) { price = item.basePrice; break; }
+        }
         
         // 应用售价加成
         let sellBonusTotal = game.sellBonus || 0;
         const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
         if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-        let bonusMul = 1 + Math.max(0, Math.min(2.0, sellBonusTotal));
+        let finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
         // cropFamiliarity Lv10 售价+20%
         const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
         if (cropSkillLevel >= 10) {
-            bonusMul *= 1.2;
+            finalPrice *= 1.2;
         }
+        const money = Math.floor(finalPrice * amount);
         
-        let totalMoney = 0;
-        let soldLog = [];
-        
-        for (const [fishKey, count] of Object.entries(game.fishInventory)) {
-            if (count > 0) {
-                const price = (fishPrices[fishKey] || 10) * bonusMul;
-                const money = Math.floor(count * price);
-                totalMoney += money;
-                soldLog.push(`${getFishName(fishKey)} ${count}斤`);
-                delete game.fishInventory[fishKey];
-            }
+        game.foragingItems[itemId] -= amount;
+        if (game.foragingItems[itemId] <= 0) {
+            delete game.foragingItems[itemId];
         }
-        
-        game.money += totalMoney;
+        game.money += money;
         
         if (!game.stats) game.stats = {};
-        game.stats.totalSell = (game.stats.totalSell || 0) + totalMoney;
-        game.stats.totalEarned = (game.stats.totalEarned || 0) + totalMoney;
+        game.stats.totalSell = (game.stats.totalSell || 0) + money;
+        game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
         
-        playCoinSound();
-        showToast(`卖了${soldLog.join('、')}，共${totalMoney}元`, 'good');
-        addLog(`🐟 卖出全部鱼，${soldLog.join('、')}，共获得${totalMoney}元`, 'good');
+        addLog(`💰 卖了${amount}斤${itemId}，获得${money}元`, 'success');
+        playSound('coin');
+        
+        saveGame();
         updateUI();
-        renderFishingPanel();
+        showToast(`卖了${amount}斤，获得${money}元`, 'good');
     });
-}
-
-function sellForagingItem(itemId, amount) {
-    if (!game.foragingItems || !game.foragingItems[itemId] || game.foragingItems[itemId] < amount) {
-        showToast('库存不足', 'bad');
-        return;
-    }
-    
-    // 查找价格
-    let price = 5;
-    for (const season of Object.values(FORAGING_DATA)) {
-        const item = season.items.find(i => i.id === itemId);
-        if (item) { price = item.basePrice; break; }
-    }
-    
-    // 应用售价加成
-    let sellBonusTotal = game.sellBonus || 0;
-    const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
-    if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    let finalPrice = price * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
-    // cropFamiliarity Lv10 售价+20%
-    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
-    if (cropSkillLevel >= 10) {
-        finalPrice *= 1.2;
-    }
-    const money = Math.floor(finalPrice * amount);
-    
-    game.foragingItems[itemId] -= amount;
-    if (game.foragingItems[itemId] <= 0) {
-        delete game.foragingItems[itemId];
-    }
-    game.money += money;
-    
-    if (!game.stats) game.stats = {};
-    game.stats.totalSell = (game.stats.totalSell || 0) + money;
-    game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
-    
-    addLog(`💰 卖了${amount}斤${itemId}，获得${money}元`, 'success');
-    playSound('coin');
-    
-    saveGame();
-    updateUI();
-    showToast(`卖了${amount}斤，获得${money}元`, 'good');
 }
 
 // ===== 加工坊面板 =====
@@ -18039,52 +18045,54 @@ function goFishing() {
 
 // 看书学习
 function studySkill() {
-    if (!game.studyToday) game.studyToday = { day: 0, count: 0 };
-    if (game.studyToday.day !== game.day) {
-        game.studyToday = { day: game.day, count: 0 };
-    }
-    
-    if (game.studyToday.count >= 2) {
-        showToast('今天已经看够书啦，眼睛都花了~', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    if (game.stamina < 15) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    playClickSound();
-    game.stamina -= 15;
-    game.studyToday.count++;
-    
-    // 随机选一个技能增加经验
-    const skillKeys = ['cropFamiliarity', 'fieldManagement', 'toolMastery', 'composting', 'fishingMastery'];
-    const randomSkill = skillKeys[Math.floor(Math.random() * skillKeys.length)];
-    const skillInfo = SKILL_EFFECTS[randomSkill];
-    
-    const gain = Math.floor(Math.random() * 3) + 1; // 1~3点经验
-    let bonusGain = gain;
-    if (game.hasBookBonus) {
-        bonusGain += 1; // 有林老师借的书，经验+1
-    }
-    // 社区建设加成（村小学扩建：每日研究点+2）
-    if (game.researchPointBonus) {
-        bonusGain += game.researchPointBonus;
-    }
-    addSkillExp(randomSkill, bonusGain);
-    
-    let bonusText = '';
-    if (game.hasBookBonus) {
-        bonusText = '（林老师借的书帮了大忙，额外+1）';
-    }
-    addLog(`📚 看了会儿${skillInfo.name}相关的书，学到了不少，经验+${bonusGain}${bonusText}`, 'good');
-    saveGame();
-    renderPlayerPanel();
-    updateTopBar();
-    showToast(`${skillInfo.name}经验+${bonusGain}！`, 'good');
+    withClickLock('studySkill', () => {
+        if (!game.studyToday) game.studyToday = { day: 0, count: 0 };
+        if (game.studyToday.day !== game.day) {
+            game.studyToday = { day: game.day, count: 0 };
+        }
+        
+        if (game.studyToday.count >= 2) {
+            showToast('今天已经看够书啦，眼睛都花了~', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        if (game.stamina < 15) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        playClickSound();
+        game.stamina -= 15;
+        game.studyToday.count++;
+        
+        // 随机选一个技能增加经验
+        const skillKeys = ['cropFamiliarity', 'fieldManagement', 'toolMastery', 'composting', 'fishingMastery'];
+        const randomSkill = skillKeys[Math.floor(Math.random() * skillKeys.length)];
+        const skillInfo = SKILL_EFFECTS[randomSkill];
+        
+        const gain = Math.floor(Math.random() * 3) + 1; // 1~3点经验
+        let bonusGain = gain;
+        if (game.hasBookBonus) {
+            bonusGain += 1; // 有林老师借的书，经验+1
+        }
+        // 社区建设加成（村小学扩建：每日研究点+2）
+        if (game.researchPointBonus) {
+            bonusGain += game.researchPointBonus;
+        }
+        addSkillExp(randomSkill, bonusGain);
+        
+        let bonusText = '';
+        if (game.hasBookBonus) {
+            bonusText = '（林老师借的书帮了大忙，额外+1）';
+        }
+        addLog(`📚 看了会儿${skillInfo.name}相关的书，学到了不少，经验+${bonusGain}${bonusText}`, 'good');
+        saveGame();
+        renderPlayerPanel();
+        updateTopBar();
+        showToast(`${skillInfo.name}经验+${bonusGain}！`, 'good');
+    });
 }
 
 function renderSkillsPanel() {
@@ -18645,44 +18653,46 @@ function getHireButton(npcKey, npc) {
 }
 
 function hireWorker(npcKey) {
-    const npc = NPC_DATA[npcKey];
-    if (!npc || !npc.canHire) return;
-    
-    const friendship = game.npcs[npcKey] || 0;
-    if (friendship < npc.hireFriendship) {
-        showToast('关系还没好到那个份上，再多聊聊吧', 'bad');
-        return;
-    }
-    
-    if (game.hiredWorker) {
-        showToast('你已经雇佣了一个村民了', 'bad');
-        return;
-    }
-    
-    if (game.money < npc.hireFee) {
-        showToast(`💰 金钱不足，雇佣费需要${npc.hireFee}元`, 'bad');
-        return;
-    }
-    
-    // 扣除雇佣费
-    game.money -= npc.hireFee;
-    game.hiredWorker = npcKey;
-    game.hireStartDay = game.day;
-    game.lastWorkerWaterDay = game.day - 1; // 明天就可以浇水
-    game.lastWorkerWeedDay = game.day - 3; // 3天后可以除草
-    
-    playClickSound();
-    showToast(`✅ 雇佣了${npc.name}！一次性介绍费${npc.hireFee}元，每天工资${npc.dailyWage}元`, 'good');
-    addLog(`🧑‍🌾 雇佣了${npc.name}帮忙干活，一次性介绍费${npc.hireFee}元，每天工资${npc.dailyWage}元`, 'info');
-    
-    // 任务检查：雇佣第一个村民
-    if (!game.quests.q36) {
-        game.quests.q36 = true;
-        queueQuestReward('q36', 300, '✅ 任务完成：雇佣帮手，奖励300元');
-    }
-    
-    saveGame();
-    updateUI();
+    withClickLock('hireWorker_' + npcKey, () => {
+        const npc = NPC_DATA[npcKey];
+        if (!npc || !npc.canHire) return;
+        
+        const friendship = game.npcs[npcKey] || 0;
+        if (friendship < npc.hireFriendship) {
+            showToast('关系还没好到那个份上，再多聊聊吧', 'bad');
+            return;
+        }
+        
+        if (game.hiredWorker) {
+            showToast('你已经雇佣了一个村民了', 'bad');
+            return;
+        }
+        
+        if (game.money < npc.hireFee) {
+            showToast(`💰 金钱不足，雇佣费需要${npc.hireFee}元`, 'bad');
+            return;
+        }
+        
+        // 扣除雇佣费
+        game.money -= npc.hireFee;
+        game.hiredWorker = npcKey;
+        game.hireStartDay = game.day;
+        game.lastWorkerWaterDay = game.day - 1; // 明天就可以浇水
+        game.lastWorkerWeedDay = game.day - 3; // 3天后可以除草
+        
+        playClickSound();
+        showToast(`✅ 雇佣了${npc.name}！一次性介绍费${npc.hireFee}元，每天工资${npc.dailyWage}元`, 'good');
+        addLog(`🧑‍🌾 雇佣了${npc.name}帮忙干活，一次性介绍费${npc.hireFee}元，每天工资${npc.dailyWage}元`, 'info');
+        
+        // 任务检查：雇佣第一个村民
+        if (!game.quests.q36) {
+            game.quests.q36 = true;
+            queueQuestReward('q36', 300, '✅ 任务完成：雇佣帮手，奖励300元');
+        }
+        
+        saveGame();
+        updateUI();
+    });
 }
 
 function fireWorker(npcKey) {
@@ -19218,42 +19228,44 @@ function calculateCropValue() {
 
 // 售卖加工产品
 function sellProcessedItem(itemKey, amount) {
-    const item = PROCESSED_ITEMS[itemKey];
-    if (!item) return;
-    
-    const have =(game.processedItems && game.processedItems[itemKey]) || 0;
-    if (have < amount) {
-        showToast('库存不足', 'bad');
-        return;
-    }
-    
-    // 计算价格（使用统一的定价函数，确保显示价格和实际售价一致）
-    const basePrice = getProcessedItemPrice(itemKey);
-    
-    // 应用售价加成
-    let sellBonusTotal = game.sellBonus || 0;
-    let price = basePrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
-    const money = Math.floor(price * amount);
-    
-    game.processedItems[itemKey] -= amount;
-    game.money += money;
-    
-    // 累计售卖统计
-    if (!game.stats) game.stats = {};
-    game.stats.totalSell = (game.stats.totalSell || 0) + money;
-    game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
-    
-    addLog(`💰 卖掉了${amount}斤${item.name}，获得${money}元`, 'success');
-    playSound('coin');
-    
-    // 只刷新当前面板，不跳转
-    if (currentMainTab === 'processing') {
-        renderProcessingPanel();
-    } else if (currentMainTab) {
-        renderPanel(currentMainTab);
-    }
-    updateTopBar();
-    saveGame();
+    withClickLock('sellProcessedItem_' + itemKey + '_' + amount, () => {
+        const item = PROCESSED_ITEMS[itemKey];
+        if (!item) return;
+        
+        const have =(game.processedItems && game.processedItems[itemKey]) || 0;
+        if (have < amount) {
+            showToast('库存不足', 'bad');
+            return;
+        }
+        
+        // 计算价格（使用统一的定价函数，确保显示价格和实际售价一致）
+        const basePrice = getProcessedItemPrice(itemKey);
+        
+        // 应用售价加成
+        let sellBonusTotal = game.sellBonus || 0;
+        let price = basePrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
+        const money = Math.floor(price * amount);
+        
+        game.processedItems[itemKey] -= amount;
+        game.money += money;
+        
+        // 累计售卖统计
+        if (!game.stats) game.stats = {};
+        game.stats.totalSell = (game.stats.totalSell || 0) + money;
+        game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
+        
+        addLog(`💰 卖掉了${amount}斤${item.name}，获得${money}元`, 'success');
+        playSound('coin');
+        
+        // 只刷新当前面板，不跳转
+        if (currentMainTab === 'processing') {
+            renderProcessingPanel();
+        } else if (currentMainTab) {
+            renderPanel(currentMainTab);
+        }
+        updateTopBar();
+        saveGame();
+    });
 }
 
 
@@ -19476,81 +19488,85 @@ function getBuildingBonus(effectType) {
 
 // 建造建筑
 function buildBuilding(buildingId) {
-    const building = BUILDING_DATA[buildingId];
-    if (!building) return;
-    
-    // 检查是否已经建造
-    const currentLevel = game.buildings[buildingId] || 0;
-    if (currentLevel > 0) {
-        showToast('已经建造过了', 'warn');
-        return;
-    }
-    
-    // 检查金钱
-    if (game.money < building.cost) {
-        showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    // 建造
-    game.money -= building.cost;
-    game.buildings[buildingId] = 1;
-    
-    // 应用效果（储存上限等需要立即更新的）
-    if (building.effect.storageBonus) {
-        const bonus = building.effect.storageBonus;
-        game.storageCapacity = (game.storageCapacity || 3000) + bonus;
-    }
-    
-    addLog(`🏗️ 建造了${building.name}！${building.effectDesc}`, 'success');
-    playSound('levelup');
-    
-    checkAchievements();
-    
-    renderBuildingPanel();
-    updateTopBar();
-    saveGame();
+    withClickLock('buildBuilding_' + buildingId, () => {
+        const building = BUILDING_DATA[buildingId];
+        if (!building) return;
+        
+        // 检查是否已经建造
+        const currentLevel = game.buildings[buildingId] || 0;
+        if (currentLevel > 0) {
+            showToast('已经建造过了', 'warn');
+            return;
+        }
+        
+        // 检查金钱
+        if (game.money < building.cost) {
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        // 建造
+        game.money -= building.cost;
+        game.buildings[buildingId] = 1;
+        
+        // 应用效果（储存上限等需要立即更新的）
+        if (building.effect.storageBonus) {
+            const bonus = building.effect.storageBonus;
+            game.storageCapacity = (game.storageCapacity || 3000) + bonus;
+        }
+        
+        addLog(`🏗️ 建造了${building.name}！${building.effectDesc}`, 'success');
+        playSound('levelup');
+        
+        checkAchievements();
+        
+        renderBuildingPanel();
+        updateTopBar();
+        saveGame();
+    });
 }
 
 // 升级建筑
 function upgradeBuilding(buildingId) {
-    const building = BUILDING_DATA[buildingId];
-    if (!building) return;
-    
-    const currentLevel = game.buildings[buildingId] || 0;
-    if (currentLevel >= building.maxLevel) {
-        showToast('已达最高等级', 'warn');
-        return;
-    }
-    
-    const upgradeCost = building.upgradeCost[currentLevel - 1];
-    if (!upgradeCost || upgradeCost <= 0 || game.money < upgradeCost) {
-        showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    // 升级
-    game.money -= upgradeCost;
-    game.buildings[buildingId] = currentLevel + 1;
-    
-    // 应用效果，限制索引不超过数组长度
-    if (building.effect.storageBonus) {
-        const oldIdx = Math.max(0, Math.min(currentLevel - 1, building.upgradeEffect.length - 1));
-        const newIdx = Math.max(0, Math.min(currentLevel, building.upgradeEffect.length - 1));
-        const oldBonus = building.upgradeEffect[oldIdx] || building.effect.storageBonus;
-        const newBonus = building.upgradeEffect[newIdx] || building.effect.storageBonus;
-        const diff = newBonus - oldBonus;
-        game.storageCapacity = (game.storageCapacity || 3000) + diff;
-    }
-    
-    addLog(`⬆️ ${building.name}升级到${currentLevel + 1}级！`, 'success');
-    playSound('levelup');
-    
-    renderBuildingPanel();
-    updateTopBar();
-    saveGame();
+    withClickLock('upgradeBuilding_' + buildingId, () => {
+        const building = BUILDING_DATA[buildingId];
+        if (!building) return;
+        
+        const currentLevel = game.buildings[buildingId] || 0;
+        if (currentLevel >= building.maxLevel) {
+            showToast('已达最高等级', 'warn');
+            return;
+        }
+        
+        const upgradeCost = building.upgradeCost[currentLevel - 1];
+        if (!upgradeCost || upgradeCost <= 0 || game.money < upgradeCost) {
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        // 升级
+        game.money -= upgradeCost;
+        game.buildings[buildingId] = currentLevel + 1;
+        
+        // 应用效果，限制索引不超过数组长度
+        if (building.effect.storageBonus) {
+            const oldIdx = Math.max(0, Math.min(currentLevel - 1, building.upgradeEffect.length - 1));
+            const newIdx = Math.max(0, Math.min(currentLevel, building.upgradeEffect.length - 1));
+            const oldBonus = building.upgradeEffect[oldIdx] || building.effect.storageBonus;
+            const newBonus = building.upgradeEffect[newIdx] || building.effect.storageBonus;
+            const diff = newBonus - oldBonus;
+            game.storageCapacity = (game.storageCapacity || 3000) + diff;
+        }
+        
+        addLog(`⬆️ ${building.name}升级到${currentLevel + 1}级！`, 'success');
+        playSound('levelup');
+        
+        renderBuildingPanel();
+        updateTopBar();
+        saveGame();
+    });
 }
 
 // 更新储存上限（保留作为兼容函数，实际增量在建造/升级时直接应用）
@@ -20435,37 +20451,41 @@ function renderAutomationPanel() {
 }
 
 function buyAutomation(deviceId) {
-    const device = AUTOMATION_DATA[deviceId];
-    if (!device) return;
-    if (game.automation && game.automation[deviceId] > 0) { showToast('已拥有该设备', 'bad'); return; }
-    if (game.money < device.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
-    
-    game.money -= device.cost;
-    if (!game.automation) game.automation = {};
-    game.automation[deviceId] = 1;
-    
-    addLog(`🎉 购买了${device.emoji}${device.name}！`, 'good');
-    saveGame();
-    renderAutomationPanel();
-    updateTopBar();
+    withClickLock('buyAutomation_' + deviceId, () => {
+        const device = AUTOMATION_DATA[deviceId];
+        if (!device) return;
+        if (game.automation && game.automation[deviceId] > 0) { showToast('已拥有该设备', 'bad'); return; }
+        if (game.money < device.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        
+        game.money -= device.cost;
+        if (!game.automation) game.automation = {};
+        game.automation[deviceId] = 1;
+        
+        addLog(`🎉 购买了${device.emoji}${device.name}！`, 'good');
+        saveGame();
+        renderAutomationPanel();
+        updateTopBar();
+    });
 }
 
 function upgradeAutomation(deviceId) {
-    const device = AUTOMATION_DATA[deviceId];
-    if (!device) return;
-    const currentLevel =(game.automation && game.automation[deviceId]) || 0;
-    if (currentLevel >= device.maxLevel) return;
-    
-    const cost = device.levelUpCost[currentLevel];
-    if (game.money < cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
-    
-    game.money -= cost;
-    game.automation[deviceId] = currentLevel + 1;
-    
-    addLog(`🎉 ${device.emoji}${device.name}升级到了Lv${currentLevel + 1}！`, 'good');
-    saveGame();
-    renderAutomationPanel();
-    updateTopBar();
+    withClickLock('upgradeAutomation_' + deviceId, () => {
+        const device = AUTOMATION_DATA[deviceId];
+        if (!device) return;
+        const currentLevel =(game.automation && game.automation[deviceId]) || 0;
+        if (currentLevel >= device.maxLevel) return;
+        
+        const cost = device.levelUpCost[currentLevel];
+        if (game.money < cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        
+        game.money -= cost;
+        game.automation[deviceId] = currentLevel + 1;
+        
+        addLog(`🎉 ${device.emoji}${device.name}升级到了Lv${currentLevel + 1}！`, 'good');
+        saveGame();
+        renderAutomationPanel();
+        updateTopBar();
+    });
 }
 
 function renderBankPanel() {
@@ -20519,17 +20539,19 @@ function renderBankPanel() {
 }
 
 function bankDepositAll() {
-    if (game.money <= 0) { showToast('没有现金可存入', 'bad'); return; }
-    if (!game.bankDeposit) game.bankDeposit = 0;
-    const depositSpace = Math.max(0, BANK_DATA.maxDeposit - game.bankDeposit);
-    const depositAmount = Math.min(game.money, depositSpace);
-    if (depositAmount <= 0) { showToast('银行存款已达上限', 'bad'); return; }
-    game.bankDeposit += depositAmount;
-    game.money -= depositAmount;
-    addLog(`🏦 存入${depositAmount}元到银行`, 'good');
-    saveGame();
-    renderBankPanel();
-    updateTopBar();
+    withClickLock('bankDepositAll', () => {
+        if (game.money <= 0) { showToast('没有现金可存入', 'bad'); return; }
+        if (!game.bankDeposit) game.bankDeposit = 0;
+        const depositSpace = Math.max(0, BANK_DATA.maxDeposit - game.bankDeposit);
+        const depositAmount = Math.min(game.money, depositSpace);
+        if (depositAmount <= 0) { showToast('银行存款已达上限', 'bad'); return; }
+        game.bankDeposit += depositAmount;
+        game.money -= depositAmount;
+        addLog(`🏦 存入${depositAmount}元到银行`, 'good');
+        saveGame();
+        renderBankPanel();
+        updateTopBar();
+    });
 }
 
 function bankWithdrawAll() {
@@ -20687,19 +20709,21 @@ function renderMarketPanel() {
 }
 
 function buyMarketItem(itemId, price) {
-    const stock = game.marketStock && game.marketStock.specialItems && game.marketStock.specialItems[itemId] !== undefined ? game.marketStock.specialItems[itemId] : undefined;
-    if (stock !== undefined && stock <= 0) { showToast('该商品已售罄', 'bad'); return; }
-    if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
-    game.money -= price;
-    if (!game.items) game.items = {};
-    game.items[itemId] = (game.items[itemId] || 0) + 1;
-    if (game.marketStock && game.marketStock.specialItems && stock !== undefined) {
-        game.marketStock.specialItems[itemId] -= 1;
-    }
-    addLog(`🛒 集市买了${(ITEM_DATA[itemId] && ITEM_DATA[itemId].name) || itemId}`, 'good');
-    saveGame();
-    renderMarketPanel();
-    updateTopBar();
+    withClickLock('buyMarketItem_' + itemId, () => {
+        const stock = game.marketStock && game.marketStock.specialItems && game.marketStock.specialItems[itemId] !== undefined ? game.marketStock.specialItems[itemId] : undefined;
+        if (stock !== undefined && stock <= 0) { showToast('该商品已售罄', 'bad'); return; }
+        if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        game.money -= price;
+        if (!game.items) game.items = {};
+        game.items[itemId] = (game.items[itemId] || 0) + 1;
+        if (game.marketStock && game.marketStock.specialItems && stock !== undefined) {
+            game.marketStock.specialItems[itemId] -= 1;
+        }
+        addLog(`🛒 集市买了${(ITEM_DATA[itemId] && ITEM_DATA[itemId].name) || itemId}`, 'good');
+        saveGame();
+        renderMarketPanel();
+        updateTopBar();
+    });
 }
 
 function buyCrop(cropId, price) {
@@ -20792,26 +20816,28 @@ function renderAgriTechPanel() {
 }
 
 function upgradeAgriTech() {
-    const nextLevel = AGRI_TECH_DATA.levels[game.agriTechLevel || 0];
-    if (!nextLevel) return;
-    if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
-    
-    game.money -= nextLevel.cost;
-    if (!game.agriTechLevel) game.agriTechLevel = 0;
-    if (!game.agriTechEffects) game.agriTechEffects = {};
-    game.agriTechLevel++;
-    
-    // 激活效果（同名效果叠加）
-    if (game.agriTechEffects[nextLevel.effect]) {
-        game.agriTechEffects[nextLevel.effect] += nextLevel.value;
-    } else {
-        game.agriTechEffects[nextLevel.effect] = nextLevel.value;
-    }
-    
-    addLog(`🎉 研发了${nextLevel.name}！${nextLevel.desc}`, 'good');
-    saveGame();
-    renderAgriTechPanel();
-    updateTopBar();
+    withClickLock('upgradeAgriTech', () => {
+        const nextLevel = AGRI_TECH_DATA.levels[game.agriTechLevel || 0];
+        if (!nextLevel) return;
+        if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        
+        game.money -= nextLevel.cost;
+        if (!game.agriTechLevel) game.agriTechLevel = 0;
+        if (!game.agriTechEffects) game.agriTechEffects = {};
+        game.agriTechLevel++;
+        
+        // 激活效果（同名效果叠加）
+        if (game.agriTechEffects[nextLevel.effect]) {
+            game.agriTechEffects[nextLevel.effect] += nextLevel.value;
+        } else {
+            game.agriTechEffects[nextLevel.effect] = nextLevel.value;
+        }
+        
+        addLog(`🎉 研发了${nextLevel.name}！${nextLevel.desc}`, 'good');
+        saveGame();
+        renderAgriTechPanel();
+        updateTopBar();
+    });
 }
 
 function renderAnimalsPanel() {
@@ -21187,19 +21213,21 @@ function investVillageProject(projectKey) {
 }
 
 function upgradeFarmStay() {
-    const currentLevel =(game.farmStay && game.farmStay.level) || 0;
-    if (currentLevel >= FARM_STAY_DATA.level.length) return;
-    const nextLevel = FARM_STAY_DATA.level[currentLevel];
-    if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
-    
-    game.money -= nextLevel.cost;
-    if (!game.farmStay) game.farmStay = { level: 0, guests: 0, reputation: 0 };
-    game.farmStay.level++;
-    
-    addLog(`🎉 农家乐升级到了${nextLevel.emoji}${nextLevel.name}！`, 'good');
-    saveGame();
-    renderFarmStayPanel();
-    updateTopBar();
+    withClickLock('upgradeFarmStay', () => {
+        const currentLevel =(game.farmStay && game.farmStay.level) || 0;
+        if (currentLevel >= FARM_STAY_DATA.level.length) return;
+        const nextLevel = FARM_STAY_DATA.level[currentLevel];
+        if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        
+        game.money -= nextLevel.cost;
+        if (!game.farmStay) game.farmStay = { level: 0, guests: 0, reputation: 0 };
+        game.farmStay.level++;
+        
+        addLog(`🎉 农家乐升级到了${nextLevel.emoji}${nextLevel.name}！`, 'good');
+        saveGame();
+        renderFarmStayPanel();
+        updateTopBar();
+    });
 }
 
 function makeDish(dishKey) {
@@ -21324,174 +21352,188 @@ function buyAnimal(animalKey) {
 }
 
 function sellAnimal(animalKey, idx) {
-    const data = ANIMAL_DATA[animalKey];
-    if (!data || !game.animals[animalKey]) return;
-    const animal = game.animals[animalKey][idx];
-    if (!animal) return;
-    
-    if (animal.age < data.growthDays) {
-        showToast('还没成年，不能卖！', 'bad');
-        return;
-    }
-    
-    const weightFactor = (animal.weight || 50) / 100;
-    let sellPrice = Math.floor(data.sellPrice * weightFactor);
-    const npcSellPrice = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
-    if (npcSellPrice > 0) {
-        sellPrice = Math.floor(sellPrice * (1 + npcSellPrice));
-    }
-    // cropFamiliarity Lv10 售价+20%
-    const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
-    if (cropSkillLevel >= 10) {
-        sellPrice = Math.floor(sellPrice * 1.2);
-    }
-    game.money += sellPrice;
-    game.stats.totalEarned = (game.stats.totalEarned || 0) + sellPrice;
-    game.stats.totalSell = (game.stats.totalSell || 0) + 1;
-    game.animals[animalKey].splice(idx, 1);
-    
-    addLog(`💰 卖掉${data.emoji}${animal.name}，获得${sellPrice}元`, 'good');
-    saveGame();
-    renderAnimalsPanel();
-    updateTopBar();
+    withClickLock('sellAnimal_' + animalKey + '_' + idx, () => {
+        const data = ANIMAL_DATA[animalKey];
+        if (!data || !game.animals[animalKey]) return;
+        const animal = game.animals[animalKey][idx];
+        if (!animal) return;
+        
+        if (animal.age < data.growthDays) {
+            showToast('还没成年，不能卖！', 'bad');
+            return;
+        }
+        
+        const weightFactor = (animal.weight || 50) / 100;
+        let sellPrice = Math.floor(data.sellPrice * weightFactor);
+        const npcSellPrice = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
+        if (npcSellPrice > 0) {
+            sellPrice = Math.floor(sellPrice * (1 + npcSellPrice));
+        }
+        // cropFamiliarity Lv10 售价+20%
+        const cropSkillLevel = game.skills && game.skills.cropFamiliarity && game.skills.cropFamiliarity.level || 0;
+        if (cropSkillLevel >= 10) {
+            sellPrice = Math.floor(sellPrice * 1.2);
+        }
+        game.money += sellPrice;
+        game.stats.totalEarned = (game.stats.totalEarned || 0) + sellPrice;
+        game.stats.totalSell = (game.stats.totalSell || 0) + 1;
+        game.animals[animalKey].splice(idx, 1);
+        
+        addLog(`💰 卖掉${data.emoji}${animal.name}，获得${sellPrice}元`, 'good');
+        saveGame();
+        renderAnimalsPanel();
+        updateTopBar();
+    });
 }
 
 function harvestAnimalProduct(animalKey, idx) {
-    const data = ANIMAL_DATA[animalKey];
-    if (!data || !data.product) return;
-    if (!game.animals[animalKey]) return;
-    const animal = game.animals[animalKey][idx];
-    if (!animal) return;
-    
-    if (animal.age < data.growthDays) {
-        showToast('还没成年，不能收获！', 'bad');
-        return;
-    }
-    if (animal.daysSinceProduct < data.productDays) {
-        showToast('还没产出，再等等！', 'bad');
-        return;
-    }
-    
-    animal.daysSinceProduct = 0;
-    const amount = Math.floor((data.productPrice || 0) / 5) + 1;
-    const currentStorage = getStorageUsed();
-    if (currentStorage + amount > game.storageCapacity) {
-        showToast('仓库满了，先腾点地方', 'bad');
-        return;
-    }
-    if (!game.animalProducts) game.animalProducts = {};
-    game.animalProducts[data.product] = (game.animalProducts[data.product] || 0) + amount;
-    
-    addLog(`🎉 ${data.emoji}${animal.name} 产出${data.productName} ${amount}个`, 'good');
-    saveGame();
-    renderAnimalsPanel();
-    updateTopBar();
+    withClickLock('harvestAnimalProduct_' + animalKey + '_' + idx, () => {
+        const data = ANIMAL_DATA[animalKey];
+        if (!data || !data.product) return;
+        if (!game.animals[animalKey]) return;
+        const animal = game.animals[animalKey][idx];
+        if (!animal) return;
+        
+        if (animal.age < data.growthDays) {
+            showToast('还没成年，不能收获！', 'bad');
+            return;
+        }
+        if (animal.daysSinceProduct < data.productDays) {
+            showToast('还没产出，再等等！', 'bad');
+            return;
+        }
+        
+        animal.daysSinceProduct = 0;
+        const amount = Math.floor((data.productPrice || 0) / 5) + 1;
+        const currentStorage = getStorageUsed();
+        if (currentStorage + amount > game.storageCapacity) {
+            showToast('仓库满了，先腾点地方', 'bad');
+            return;
+        }
+        if (!game.animalProducts) game.animalProducts = {};
+        game.animalProducts[data.product] = (game.animalProducts[data.product] || 0) + amount;
+        
+        addLog(`🎉 ${data.emoji}${animal.name} 产出${data.productName} ${amount}个`, 'good');
+        saveGame();
+        renderAnimalsPanel();
+        updateTopBar();
+    });
 }
 
 function sellAnimalProduct(productKey, amount) {
-    const prices = { milk: 8, egg: 3, duck_egg: 4, goose_egg: 8, wool: 25 };
-    const names = { milk: '牛奶', egg: '鸡蛋', duck_egg: '鸭蛋', goose_egg: '鹅蛋', wool: '羊毛' };
-    const emojis = { milk: '🥛', egg: '🥚', duck_egg: '🥚', goose_egg: '🥚', wool: '🧶' };
-    
-    if (!game.animalProducts || !game.animalProducts[productKey] || game.animalProducts[productKey] < amount) return;
-    
-    // 应用售价加成
-    let sellBonusTotal = game.sellBonus || 0;
-    let price = (prices[productKey] || 5) * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
-    const money = Math.floor(price * amount);
-    
-    game.animalProducts[productKey] -= amount;
-    game.money += money;
-    
-    if (!game.stats) game.stats = {};
-    game.stats.totalSell = (game.stats.totalSell || 0) + money;
-    game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
-    
-    addLog(`💰 卖掉${emojis[productKey] || '📦'}${amount}个${names[productKey] || productKey}，获得${money}元`, 'good');
-    saveGame();
-    renderAnimalsPanel();
-    updateTopBar();
+    withClickLock('sellAnimalProduct_' + productKey + '_' + amount, () => {
+        const prices = { milk: 8, egg: 3, duck_egg: 4, goose_egg: 8, wool: 25 };
+        const names = { milk: '牛奶', egg: '鸡蛋', duck_egg: '鸭蛋', goose_egg: '鹅蛋', wool: '羊毛' };
+        const emojis = { milk: '🥛', egg: '🥚', duck_egg: '🥚', goose_egg: '🥚', wool: '🧶' };
+        
+        if (!game.animalProducts || !game.animalProducts[productKey] || game.animalProducts[productKey] < amount) return;
+        
+        // 应用售价加成
+        let sellBonusTotal = game.sellBonus || 0;
+        let price = (prices[productKey] || 5) * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
+        const money = Math.floor(price * amount);
+        
+        game.animalProducts[productKey] -= amount;
+        game.money += money;
+        
+        if (!game.stats) game.stats = {};
+        game.stats.totalSell = (game.stats.totalSell || 0) + money;
+        game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
+        
+        addLog(`💰 卖掉${emojis[productKey] || '📦'}${amount}个${names[productKey] || productKey}，获得${money}元`, 'good');
+        saveGame();
+        renderAnimalsPanel();
+        updateTopBar();
+    });
 }
 
 function buyTree(treeKey) {
-    const data = ORCHARD_DATA[treeKey];
-    if (!data) return;
-    if (data.season && data.season !== game.season) {
-        showToast('🌸 ' + data.name + '只能在' + SEASON_NAMES[data.season] + '种植，现在是' + SEASON_NAMES[game.season], 'warn');
-        return;
-    }
-    if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
-    
-    game.money -= data.buyCost;
-    if (!game.orchard) game.orchard = [];
-    game.orchard.push({ type: treeKey, growDays: 0, mature: false, ready: false, daysSinceHarvest: 0 });
-    
-    addLog(`🌱 买了${data.emoji}${data.name}，花了${data.buyCost}元`, 'good');
-    saveGame();
-    renderOrchardPanel();
-    updateTopBar();
+    withClickLock('buyTree_' + treeKey, () => {
+        const data = ORCHARD_DATA[treeKey];
+        if (!data) return;
+        if (data.season && data.season !== game.season) {
+            showToast('🌸 ' + data.name + '只能在' + SEASON_NAMES[data.season] + '种植，现在是' + SEASON_NAMES[game.season], 'warn');
+            return;
+        }
+        if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        
+        game.money -= data.buyCost;
+        if (!game.orchard) game.orchard = [];
+        game.orchard.push({ type: treeKey, growDays: 0, mature: false, ready: false, daysSinceHarvest: 0 });
+        
+        addLog(`🌱 买了${data.emoji}${data.name}，花了${data.buyCost}元`, 'good');
+        saveGame();
+        renderOrchardPanel();
+        updateTopBar();
+    });
 }
 
 function harvestFruit(treeIdx) {
-    if (!game.orchard || !game.orchard[treeIdx]) return;
-    const tree = game.orchard[treeIdx];
-    const data = ORCHARD_DATA[tree.type];
-    if (!data || !tree.ready) return;
-    
-    // 检查仓库容量
-    const storageCap = game.storageCapacity || 2000;
-    const currentStorage = getStorageUsed();
-    if (currentStorage + data.yield > storageCap) {
-        showToast('仓库已满，无法收获果实！', 'bad');
-        return;
-    }
-    
-    tree.ready = false;
-    tree.daysSinceHarvest = 0;
-    if (!game.fruits) game.fruits = {};
-    game.fruits[tree.type] = (game.fruits[tree.type] || 0) + data.yield;
-    
-    // 统计水果收获数量
-    if (!game.stats) game.stats = {};
-    game.stats.totalFruitHarvest = (game.stats.totalFruitHarvest || 0) + data.yield;
-    
-    addLog(`🍎 ${data.name}收获了${data.yield}斤${data.emoji}，存入库中`, 'good');
-    saveGame();
-    renderOrchardPanel();
-    updateTopBar();
+    withClickLock('harvestFruit_' + treeIdx, () => {
+        if (!game.orchard || !game.orchard[treeIdx]) return;
+        const tree = game.orchard[treeIdx];
+        const data = ORCHARD_DATA[tree.type];
+        if (!data || !tree.ready) return;
+        
+        // 检查仓库容量
+        const storageCap = game.storageCapacity || 2000;
+        const currentStorage = getStorageUsed();
+        if (currentStorage + data.yield > storageCap) {
+            showToast('仓库已满，无法收获果实！', 'bad');
+            return;
+        }
+        
+        tree.ready = false;
+        tree.daysSinceHarvest = 0;
+        if (!game.fruits) game.fruits = {};
+        game.fruits[tree.type] = (game.fruits[tree.type] || 0) + data.yield;
+        
+        // 统计水果收获数量
+        if (!game.stats) game.stats = {};
+        game.stats.totalFruitHarvest = (game.stats.totalFruitHarvest || 0) + data.yield;
+        
+        addLog(`🍎 ${data.name}收获了${data.yield}斤${data.emoji}，存入库中`, 'good');
+        saveGame();
+        renderOrchardPanel();
+        updateTopBar();
+    });
 }
 
 function sellFruit(fruitKey, amount) {
-    const data = ORCHARD_DATA[fruitKey];
-    if (!data || !game.fruits || !game.fruits[fruitKey] || game.fruits[fruitKey] < amount) return;
-    
-    // 应用售价加成
-    let sellBonusTotal = game.sellBonus || 0;
-    let price = data.fruitPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
-    const money = Math.floor(price * amount);
-    
-    game.fruits[fruitKey] -= amount;
-    game.money += money;
-    
-    if (!game.stats) game.stats = {};
-    game.stats.totalSell = (game.stats.totalSell || 0) + money;
-    game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
-    
-    addLog(`💰 卖掉${data.emoji}${amount}斤${data.name}，获得${money}元`, 'good');
-    saveGame();
-    renderOrchardPanel();
-    updateTopBar();
+    withClickLock('sellFruit_' + fruitKey + '_' + amount, () => {
+        const data = ORCHARD_DATA[fruitKey];
+        if (!data || !game.fruits || !game.fruits[fruitKey] || game.fruits[fruitKey] < amount) return;
+        
+        // 应用售价加成
+        let sellBonusTotal = game.sellBonus || 0;
+        let price = data.fruitPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal))) * getSellPriceMultiplier();
+        const money = Math.floor(price * amount);
+        
+        game.fruits[fruitKey] -= amount;
+        game.money += money;
+        
+        if (!game.stats) game.stats = {};
+        game.stats.totalSell = (game.stats.totalSell || 0) + money;
+        game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
+        
+        addLog(`💰 卖掉${data.emoji}${amount}斤${data.name}，获得${money}元`, 'good');
+        saveGame();
+        renderOrchardPanel();
+        updateTopBar();
+    });
 }
 
 function removeTree(treeIdx) {
-    if (!game.orchard || !game.orchard[treeIdx]) return;
-    const tree = game.orchard[treeIdx];
-    const data = ORCHARD_DATA[tree.type];
-    showModal('确认砍伐', `确定要砍伐${data ? data.name : '这棵'}树吗？已种植的果树会永久消失。`, () => {
-        game.orchard.splice(treeIdx, 1);
-        addLog(`🪓 砍伐了${data ? data.emoji + data.name : '果树'}`, 'info');
-        saveGame();
-        renderOrchardPanel();
+    withClickLock('removeTree_' + treeIdx, () => {
+        if (!game.orchard || !game.orchard[treeIdx]) return;
+        const tree = game.orchard[treeIdx];
+        const data = ORCHARD_DATA[tree.type];
+        showModal('确认砍伐', `确定要砍伐${data ? data.name : '这棵'}树吗？已种植的果树会永久消失。`, () => {
+            game.orchard.splice(treeIdx, 1);
+            addLog(`🪓 砍伐了${data ? data.emoji + data.name : '果树'}`, 'info');
+            saveGame();
+            renderOrchardPanel();
+        });
     });
 }
 
@@ -22439,76 +22481,80 @@ function buyTool(toolKey) {
 
 // 开始堆肥
 function startCompost() {
-    if (game.composting) {
-        showToast('已经有堆肥在制作了！', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    if (game.money < 50) {
-        showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    playDirtSound();
-    game.money -= 50;
-    game.composting = true;
-    game.compostStartTotalDay = game.totalDay || game.day;
-    game.compostStartDay = game.day; // 保留兼容旧存档
-    
-    // 堆肥需要花时间准备材料（1小时）
-    game.time += 1;
-    
-    // 任务检查：制作第一份堆肥
-    if (!game.quests.q51) {
-        game.quests.q51 = true;
-        queueQuestReward('q51', 150, '✅ 任务完成：第一份堆肥，奖励150元');
-    }
-    
-    addLog('🌱 忙活了一个钟头，把堆肥的材料都备好了，等3天后来收。', 'info');
-    checkAchievements();
-    saveGame();
-    if (currentMainTab === 'compost') {
-        renderCompostPanel();
-    }
-    updateTopBar();
-    showToast('开始堆肥！', 'good');
+    withClickLock('startCompost', () => {
+        if (game.composting) {
+            showToast('已经有堆肥在制作了！', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        if (game.money < 50) {
+            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        playDirtSound();
+        game.money -= 50;
+        game.composting = true;
+        game.compostStartTotalDay = game.totalDay || game.day;
+        game.compostStartDay = game.day; // 保留兼容旧存档
+        
+        // 堆肥需要花时间准备材料（1小时）
+        game.time += 1;
+        
+        // 任务检查：制作第一份堆肥
+        if (!game.quests.q51) {
+            game.quests.q51 = true;
+            queueQuestReward('q51', 150, '✅ 任务完成：第一份堆肥，奖励150元');
+        }
+        
+        addLog('🌱 忙活了一个钟头，把堆肥的材料都备好了，等3天后来收。', 'info');
+        checkAchievements();
+        saveGame();
+        if (currentMainTab === 'compost') {
+            renderCompostPanel();
+        }
+        updateTopBar();
+        showToast('开始堆肥！', 'good');
+    });
 }
 
 // 收获堆肥
 function harvestCompost() {
-    if (!game.composting) {
-        showToast('没有堆肥可以收获！', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    const startDay = game.compostStartTotalDay || game.compostStartDay || game.day;
-    const elapsed = (game.totalDay || game.day) - startDay;
-    const compostingLevel = (game.skills.composting && game.skills.composting.level) || 0;
-    const baseDays = 3;
-    const compostDays = Math.max(1, baseDays - Math.floor(compostingLevel / 2));
-    if (elapsed < compostDays) {
-        showToast('还没做好呢！', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    playHarvestSound();
-    game.composting = false;
-    game.items.organicFertilizer = (game.items.organicFertilizer || 0) + 3;
-    
-    // 增加堆肥经验
-    addSkillExp('composting', 10);
-    
-    addLog('💩 堆肥做好了！收获了3份有机肥。', 'good');
-    saveGame();
-    if (currentMainTab === 'compost') {
-        renderCompostPanel();
-    }
-    updateTopBar();
-    showToast('收获有机肥！', 'good');
+    withClickLock('harvestCompost', () => {
+        if (!game.composting) {
+            showToast('没有堆肥可以收获！', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        const startDay = game.compostStartTotalDay || game.compostStartDay || game.day;
+        const elapsed = (game.totalDay || game.day) - startDay;
+        const compostingLevel = (game.skills.composting && game.skills.composting.level) || 0;
+        const baseDays = 3;
+        const compostDays = Math.max(1, baseDays - Math.floor(compostingLevel / 2));
+        if (elapsed < compostDays) {
+            showToast('还没做好呢！', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        playHarvestSound();
+        game.composting = false;
+        game.items.organicFertilizer = (game.items.organicFertilizer || 0) + 3;
+        
+        // 增加堆肥经验
+        addSkillExp('composting', 10);
+        
+        addLog('💩 堆肥做好了！收获了3份有机肥。', 'good');
+        saveGame();
+        if (currentMainTab === 'compost') {
+            renderCompostPanel();
+        }
+        updateTopBar();
+        showToast('收获有机肥！', 'good');
+    });
 }
 
 function roundGameState() {
