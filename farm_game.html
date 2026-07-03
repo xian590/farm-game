@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.4.0';
+const GAME_VERSION = '1.4.2';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10789,7 +10789,7 @@ function updateDailyButtons() {
     const btnChat = document.getElementById('btn-chat');
     if (btnChat) btnChat.disabled = (game.visitToday.count >= 3) || game.stamina < 15;
     const btnFish = document.getElementById('btn-fish');
-    if (btnFish) btnFish.disabled = (game.fishToday.count >= 2) || game.stamina < 25;
+    if (btnFish) btnFish.disabled = (game.fishToday.count >= 5) || game.stamina < 25;
     const btnForaging = document.getElementById('btn-foraging');
     if (btnForaging) btnForaging.disabled = game.dailyActions.foraging >= 1 || game.stamina < 15;
 }
@@ -18023,7 +18023,7 @@ function goFishing() {
         }
         
         // 记录每日钓鱼次数
-        game.dailyActions.fishing = (game.dailyActions.fishing || 0) + 1;
+        game.dailyActions.fish = (game.dailyActions.fish || 0) + 1;
         
         // 任务检查：累积钓到50条鱼
         if (game.stats.totalFish >= 50 && !game.quests.q27) {
@@ -24093,28 +24093,30 @@ function renderBackpackModal() {
 }
 
 function useBackpackItem(itemId) {
-    if (!game || !game.items[itemId] || game.items[itemId] <= 0) {
-        showToast('道具不足', 'bad');
-        return;
-    }
-    
-    const item = ITEM_EFFECTS[itemId];
-    if (!item || !item.use || Object.keys(item.use).length === 0) {
-        showToast('该道具无法直接使用', 'warn');
-        return;
-    }
-    
-    // 应用效果
-    if (item.use.stamina) game.stamina = Math.min(game.maxStamina, game.stamina + item.use.stamina);
-    if (item.use.health) game.health = Math.min(game.maxHealth, game.health + item.use.health);
-    if (item.use.mood) game.mood = Math.min(100, (game.mood === undefined ? 50 : game.mood) + item.use.mood);
-    
-    game.items[itemId]--;
-    addLog(`使用了${item.icon}${item.name}`, 'item');
-    showToast(`使用了${item.icon}${item.name}！${item.desc}`, 'good');
-    
-    renderBackpackModal();
-    updateUI();
+    withClickLock('useBackpackItem_' + itemId, () => {
+        if (!game || !game.items[itemId] || game.items[itemId] <= 0) {
+            showToast('道具不足', 'bad');
+            return;
+        }
+        
+        const item = ITEM_EFFECTS[itemId];
+        if (!item || !item.use || Object.keys(item.use).length === 0) {
+            showToast('该道具无法直接使用', 'warn');
+            return;
+        }
+        
+        // 应用效果
+        if (item.use.stamina) game.stamina = Math.min(game.maxStamina, game.stamina + item.use.stamina);
+        if (item.use.health) game.health = Math.min(game.maxHealth, game.health + item.use.health);
+        if (item.use.mood) game.mood = Math.min(100, (game.mood === undefined ? 50 : game.mood) + item.use.mood);
+        
+        game.items[itemId]--;
+        addLog(`使用了${item.icon}${item.name}`, 'item');
+        showToast(`使用了${item.icon}${item.name}！${item.desc}`, 'good');
+        
+        renderBackpackModal();
+        updateUI();
+    });
 }
 
 // ==================== 飘字提示 ====================
