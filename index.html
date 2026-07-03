@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.99';
+const GAME_VERSION = '1.4.0';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10743,34 +10743,36 @@ function doFish() {
 }
 
 function doRead() {
-    // 统一使用 studyToday 计数器（与UI和按钮状态一致）
-    if (!game.studyToday) game.studyToday = { day: 0, count: 0 };
-    if (game.studyToday.day !== game.day) game.studyToday = { day: game.day, count: 0 };
-    if (game.studyToday.count >= 2) { addLog('今天看过书了，明天再看吧', 'warn'); return; }
-    if (game.stamina < 10) { addLog('累得不行了，先吃点东西或睡一觉恢复体力再来吧', 'warn'); return; }
-    game.stamina -= 10;
-    const skills = Object.keys(game.skills || {});
-    if (skills.length === 0) {
-        addLog('没有可学习的技能', 'warn');
-        return;
-    }
-    const skillId = skills[Math.floor(Math.random() * skills.length)];
-    let add = Math.floor(Math.random() * 4) + 5;
-    
-    // 林晓雨NPC好感度增加读书经验
-    const npcReadBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('readExpBonus') : 0;
-    if (npcReadBonus > 0) {
-        add = Math.floor(add * (1 + npcReadBonus));
-    }
-    
-    // 统一使用 addSkillExp 处理所有技能经验增加，避免双系统冲突
-    addSkillExp(skillId, add);
-    
-    game.studyToday.count++;
-    game.dailyActions.read++;
-    addLog(`你看了会书，${(game.skills[skillId] && game.skills[skillId].name) || '未知技能'}经验+${add}`, 'action');
-    updateDailyButtons();
-    updateUI();
+    withClickLock('doRead', () => {
+        // 统一使用 studyToday 计数器（与UI和按钮状态一致）
+        if (!game.studyToday) game.studyToday = { day: 0, count: 0 };
+        if (game.studyToday.day !== game.day) game.studyToday = { day: game.day, count: 0 };
+        if (game.studyToday.count >= 2) { addLog('今天看过书了，明天再看吧', 'warn'); return; }
+        if (game.stamina < 10) { addLog('累得不行了，先吃点东西或睡一觉恢复体力再来吧', 'warn'); return; }
+        game.stamina -= 10;
+        const skills = Object.keys(game.skills || {});
+        if (skills.length === 0) {
+            addLog('没有可学习的技能', 'warn');
+            return;
+        }
+        const skillId = skills[Math.floor(Math.random() * skills.length)];
+        let add = Math.floor(Math.random() * 4) + 5;
+        
+        // 林晓雨NPC好感度增加读书经验
+        const npcReadBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('readExpBonus') : 0;
+        if (npcReadBonus > 0) {
+            add = Math.floor(add * (1 + npcReadBonus));
+        }
+        
+        // 统一使用 addSkillExp 处理所有技能经验增加，避免双系统冲突
+        addSkillExp(skillId, add);
+        
+        game.studyToday.count++;
+        game.dailyActions.read++;
+        addLog(`你看了会书，${(game.skills[skillId] && game.skills[skillId].name) || '未知技能'}经验+${add}`, 'action');
+        updateDailyButtons();
+        updateUI();
+    });
 }
 
 function updateDailyButtons() {
@@ -19594,131 +19596,133 @@ function getSeedPrice(basePrice) {
 }
 
 function chatWithNpc(npcKey) {
-    const npc = NPC_DATA[npcKey];
-    const today = game.day;
-    
-    // 检查今天是否已经聊过天
-    if (game.lastChatDay && game.lastChatDay[npcKey] === today) {
-        showToast('今天已经聊过啦~明天再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    if (game.stamina < 5) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    playClickSound();
-    playNpcChatter(npcKey, 1.5); // 播放NPC呢喃声
-    game.stamina -= 5;
-    
-    // 增加好感度 1~3点
-        // 计算好感度增加（科技 + NPC加成）
-    let baseGain = Math.floor(Math.random() * 3) + 1;
-    let friendshipMultiplier = 1 + getTechBonus('friendshipGain');
-    
-    // 王二蛋的好感度加成（和其他NPC聊天时生效，和二蛋自己聊天不生效）
-    if (npcKey !== 'wangerdan') {
-        const npcFriendshipBonus = getNpcBonus('friendshipGain');
-        if (npcFriendshipBonus > 0) {
-            friendshipMultiplier += npcFriendshipBonus;
+    withClickLock('chatWithNpc_' + npcKey, () => {
+        const npc = NPC_DATA[npcKey];
+        const today = game.day;
+        
+        // 检查今天是否已经聊过天
+        if (game.lastChatDay && game.lastChatDay[npcKey] === today) {
+            showToast('今天已经聊过啦~明天再来吧', 'bad');
+            playErrorSound();
+            return;
         }
-    }
-    
-    const gain = Math.floor(baseGain * friendshipMultiplier);
-    const oldFriendship = game.npcs[npcKey] || 0;
-    game.npcs[npcKey] = Math.min(100, oldFriendship + gain);
-    if (!game.friendship[npcKey]) game.friendship[npcKey] = 0;
-    game.friendship[npcKey] = Math.min(100, game.friendship[npcKey] + gain);
-    const friendship = game.npcs[npcKey];
-    
-    // 任务检查：第一次和村民聊天
-    if (!game.quests.q9) {
-        game.quests.q9 = true;
-        queueQuestReward('q9', 50, '✅ 任务完成：初次交流，奖励50元');
-    }
-    
-    // 任务检查：和任意村民达到友好（40好感）
-    if (!game.quests.q15 && friendship >= 40) {
-        game.quests.q15 = true;
-        queueQuestReward('q15', 300, '✅ 任务完成：打成一片，奖励300元');
-    }
-    
-    // 记录今天已经聊过天
-    if (!game.lastChatDay) game.lastChatDay = {};
-    game.lastChatDay[npcKey] = today;
-    
-    // 根据好感度等级选择对话
-    let level = 0;
-    for (let i = FRIENDSHIP_LEVELS.length - 1; i >= 0; i--) {
-        if (friendship >= FRIENDSHIP_LEVELS[i].min) {
-            level = i;
-            break;
+        
+        if (game.stamina < 5) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            playErrorSound();
+            return;
         }
-    }
-    
-    // 检查是否升级了好感度等级
-    let oldLevel = 0;
-    for (let i = FRIENDSHIP_LEVELS.length - 1; i >= 0; i--) {
-        if (oldFriendship >= FRIENDSHIP_LEVELS[i].min) {
-            oldLevel = i;
-            break;
+        
+        playClickSound();
+        playNpcChatter(npcKey, 1.5); // 播放NPC呢喃声
+        game.stamina -= 5;
+        
+        // 增加好感度 1~3点
+            // 计算好感度增加（科技 + NPC加成）
+        let baseGain = Math.floor(Math.random() * 3) + 1;
+        let friendshipMultiplier = 1 + getTechBonus('friendshipGain');
+        
+        // 王二蛋的好感度加成（和其他NPC聊天时生效，和二蛋自己聊天不生效）
+        if (npcKey !== 'wangerdan') {
+            const npcFriendshipBonus = getNpcBonus('friendshipGain');
+            if (npcFriendshipBonus > 0) {
+                friendshipMultiplier += npcFriendshipBonus;
+            }
         }
-    }
-    const levelUp = level > oldLevel;
-    
-    // 随机选一条对话，避免重复
-    const npcDialogue = NPC_DIALOGUE[npcKey];
-    let dialogues;
-    if (npcDialogue) {
-        dialogues = npcDialogue[level] || npcDialogue[0] || ['...'];
-    } else {
-        dialogues = ['（对方看起来有话想说，但不知如何开口）'];
-    }
-    let dialogueIndex = Math.floor(Math.random() * dialogues.length);
-    
-    // 避免和上次对话重复
-    if (!game.lastDialogue) game.lastDialogue = {};
-    if (game.lastDialogue[npcKey] !== undefined && dialogues.length > 1) {
-        let _maxRetry = 10;
-        while (dialogueIndex === game.lastDialogue[npcKey] && _maxRetry-- > 0) {
-            dialogueIndex = Math.floor(Math.random() * dialogues.length);
+        
+        const gain = Math.floor(baseGain * friendshipMultiplier);
+        const oldFriendship = game.npcs[npcKey] || 0;
+        game.npcs[npcKey] = Math.min(100, oldFriendship + gain);
+        if (!game.friendship[npcKey]) game.friendship[npcKey] = 0;
+        game.friendship[npcKey] = Math.min(100, game.friendship[npcKey] + gain);
+        const friendship = game.npcs[npcKey];
+        
+        // 任务检查：第一次和村民聊天
+        if (!game.quests.q9) {
+            game.quests.q9 = true;
+            queueQuestReward('q9', 50, '✅ 任务完成：初次交流，奖励50元');
         }
-    }
-    game.lastDialogue[npcKey] = dialogueIndex;
-    const dialogue = dialogues[dialogueIndex];
-    
-    // 构建弹窗内容
-    let modalContent = `"${dialogue}"`;
-    
-    // 如果升级了好感度等级，显示特殊提示
-    if (levelUp) {
-        const levelName =(FRIENDSHIP_LEVELS[level] && FRIENDSHIP_LEVELS[level].name) || '新等级';
-        modalContent += `\n\n🎉 关系提升！现在是【${levelName}】`;
-    }
-    
-    modalContent += `\n\n好感度 +${gain}`;
-    
-    // 显示对话弹窗
-    showModal(
-        `${npc.emoji} ${npc.name}`,
-        modalContent,
-        null
-    );
-    
-    addLog(`💬 和${npc.name}聊了会儿天，好感度+${gain}`, 'info');
-    // 检查NPC里程碑
-    checkNpcMilestones(npcKey);
-    
-    saveGame();
-    if (currentMainTab === 'npcs') {
-        renderNpcsPanel();
-        renderBackpack();
-        updateDailyButtons();
-    }
-    updateTopBar();
+        
+        // 任务检查：和任意村民达到友好（40好感）
+        if (!game.quests.q15 && friendship >= 40) {
+            game.quests.q15 = true;
+            queueQuestReward('q15', 300, '✅ 任务完成：打成一片，奖励300元');
+        }
+        
+        // 记录今天已经聊过天
+        if (!game.lastChatDay) game.lastChatDay = {};
+        game.lastChatDay[npcKey] = today;
+        
+        // 根据好感度等级选择对话
+        let level = 0;
+        for (let i = FRIENDSHIP_LEVELS.length - 1; i >= 0; i--) {
+            if (friendship >= FRIENDSHIP_LEVELS[i].min) {
+                level = i;
+                break;
+            }
+        }
+        
+        // 检查是否升级了好感度等级
+        let oldLevel = 0;
+        for (let i = FRIENDSHIP_LEVELS.length - 1; i >= 0; i--) {
+            if (oldFriendship >= FRIENDSHIP_LEVELS[i].min) {
+                oldLevel = i;
+                break;
+            }
+        }
+        const levelUp = level > oldLevel;
+        
+        // 随机选一条对话，避免重复
+        const npcDialogue = NPC_DIALOGUE[npcKey];
+        let dialogues;
+        if (npcDialogue) {
+            dialogues = npcDialogue[level] || npcDialogue[0] || ['...'];
+        } else {
+            dialogues = ['（对方看起来有话想说，但不知如何开口）'];
+        }
+        let dialogueIndex = Math.floor(Math.random() * dialogues.length);
+        
+        // 避免和上次对话重复
+        if (!game.lastDialogue) game.lastDialogue = {};
+        if (game.lastDialogue[npcKey] !== undefined && dialogues.length > 1) {
+            let _maxRetry = 10;
+            while (dialogueIndex === game.lastDialogue[npcKey] && _maxRetry-- > 0) {
+                dialogueIndex = Math.floor(Math.random() * dialogues.length);
+            }
+        }
+        game.lastDialogue[npcKey] = dialogueIndex;
+        const dialogue = dialogues[dialogueIndex];
+        
+        // 构建弹窗内容
+        let modalContent = `"${dialogue}"`;
+        
+        // 如果升级了好感度等级，显示特殊提示
+        if (levelUp) {
+            const levelName =(FRIENDSHIP_LEVELS[level] && FRIENDSHIP_LEVELS[level].name) || '新等级';
+            modalContent += `\n\n🎉 关系提升！现在是【${levelName}】`;
+        }
+        
+        modalContent += `\n\n好感度 +${gain}`;
+        
+        // 显示对话弹窗
+        showModal(
+            `${npc.emoji} ${npc.name}`,
+            modalContent,
+            null
+        );
+        
+        addLog(`💬 和${npc.name}聊了会儿天，好感度+${gain}`, 'info');
+        // 检查NPC里程碑
+        checkNpcMilestones(npcKey);
+        
+        saveGame();
+        if (currentMainTab === 'npcs') {
+            renderNpcsPanel();
+            renderBackpack();
+            updateDailyButtons();
+        }
+        updateTopBar();
+    });
 }
 
 // 显示送礼弹窗（先做个简单版本，后面再完善）
@@ -19791,6 +19795,7 @@ function showGiftModal(npcKey) {
 
 // 送礼
 function giveGift(npcKey, giftKey) {
+    withClickLock('giveGift_' + npcKey + '_' + giftKey, () => {
     const npc = NPC_DATA[npcKey];
     const today = game.day;
     
@@ -19971,6 +19976,7 @@ function giveGift(npcKey, giftKey) {
     updateDailyButtons();
     }
     updateTopBar();
+    });
 }
 
 // 宠物数据
@@ -20260,6 +20266,7 @@ function adoptPet(petKey) {
 
 // 喂食宠物
 function feedPet(petKey) {
+    withClickLock('feedPet_' + petKey, () => {
     const pet = PET_DATA[petKey];
     if (!pet) return;
     
@@ -20298,36 +20305,39 @@ function feedPet(petKey) {
     renderPetsPanel();
     updateTopBar();
     showToast('好感度+3！', 'good');
+    });
 }
 
 // 抚摸宠物
 function petPet(petKey) {
-    const pet = PET_DATA[petKey];
-    if (!pet) return;
-    
-    const petData =(game.pets && game.pets[petKey]);
-    if (!petData) {
-        showToast('请先领养宠物~', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    const today = game.day;
-    
-    if (petData.lastPettedDay === today) {
-        showToast('今天已经摸过啦~', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    playClickSound();
-    petData.lastPettedDay = today;
-    petData.affection = Math.min(100, (petData.affection || petData.friendship || 0) + 1);
-    
-    addLog(`🤚 摸了摸${pet.name}，它舒服地眯起了眼睛，好感度+1`, 'good');
-    saveGame();
-    renderPetsPanel();
-    showToast('好感度+1！', 'good');
+    withClickLock('petPet_' + petKey, () => {
+        const pet = PET_DATA[petKey];
+        if (!pet) return;
+        
+        const petData =(game.pets && game.pets[petKey]);
+        if (!petData) {
+            showToast('请先领养宠物~', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        const today = game.day;
+        
+        if (petData.lastPettedDay === today) {
+            showToast('今天已经摸过啦~', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        playClickSound();
+        petData.lastPettedDay = today;
+        petData.affection = Math.min(100, (petData.affection || petData.friendship || 0) + 1);
+        
+        addLog(`🤚 摸了摸${pet.name}，它舒服地眯起了眼睛，好感度+1`, 'good');
+        saveGame();
+        renderPetsPanel();
+        showToast('好感度+1！', 'good');
+    });
 }
 
 // 和宠物玩耍
@@ -24261,6 +24271,7 @@ function showQuestRewardModal() {
 }
 
 function claimQuestReward() {
+    withClickLock('claimQuestReward', () => {
     if (!game || !game.pendingQuestRewards || game.pendingQuestRewards.length === 0) {
         closeModal();
         return;
@@ -24290,6 +24301,7 @@ function claimQuestReward() {
     
     saveGame();
     updateUI();
+    });
 }
 
 // ==================== 探索/矿洞系统 ====================
@@ -24385,65 +24397,67 @@ function isMineLayerUnlocked(layerKey) {
 }
 
 function mineLayer(layerKey) {
-    const layer = MINE_DATA[layerKey];
-    if (!layer) return;
-    
-    if (game.stamina < layer.staminaCost) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        return;
-    }
-    
-    // 工具精通减免体力消耗
-    const toolMasteryLevel = game.skills && game.skills.toolMastery || 0;
-    const staminaDiscount = 1 - (toolMasteryLevel * 0.05); // 每级减5%
-    const staminaCost = Math.max(1, Math.floor(layer.staminaCost * staminaDiscount));
-    
-    game.stamina -= staminaCost;
-    
-    // 挖掘结果
-    let totalOres = [];
-    let totalValue = 0;
-    
-    for (const yieldData of layer.yields) {
-        if (Math.random() < yieldData.probability) {
-            const range = Math.max(0, yieldData.max - yieldData.min);
-    const amount = Math.floor(Math.random() * (range + 1)) + yieldData.min;
-            if (amount > 0) {
-                game.mineInventory[yieldData.ore] = (game.mineInventory[yieldData.ore] || 0) + amount;
-                totalOres.push({ ore: yieldData.ore, amount });
-                totalValue += amount * ORE_DATA[yieldData.ore].basePrice;
-                // 解锁图鉴
-                unlockCollectionItem('ores', yieldData.ore);
+    withClickLock('mineLayer_' + layerKey, () => {
+        const layer = MINE_DATA[layerKey];
+        if (!layer) return;
+        
+        if (game.stamina < layer.staminaCost) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            return;
+        }
+        
+        // 工具精通减免体力消耗
+        const toolMasteryLevel = game.skills && game.skills.toolMastery || 0;
+        const staminaDiscount = 1 - (toolMasteryLevel * 0.05); // 每级减5%
+        const staminaCost = Math.max(1, Math.floor(layer.staminaCost * staminaDiscount));
+        
+        game.stamina -= staminaCost;
+        
+        // 挖掘结果
+        let totalOres = [];
+        let totalValue = 0;
+        
+        for (const yieldData of layer.yields) {
+            if (Math.random() < yieldData.probability) {
+                const range = Math.max(0, yieldData.max - yieldData.min);
+        const amount = Math.floor(Math.random() * (range + 1)) + yieldData.min;
+                if (amount > 0) {
+                    game.mineInventory[yieldData.ore] = (game.mineInventory[yieldData.ore] || 0) + amount;
+                    totalOres.push({ ore: yieldData.ore, amount });
+                    totalValue += amount * ORE_DATA[yieldData.ore].basePrice;
+                    // 解锁图鉴
+                    unlockCollectionItem('ores', yieldData.ore);
+                }
             }
         }
-    }
-    
-    // 更新统计
-    game.mineStats.totalDigs = (game.mineStats.totalDigs || 0) + 1;
-    if (!game.stats) game.stats = {};
-    game.stats.totalDigs = game.mineStats.totalDigs;
-    const layerIndex = parseInt(layerKey.replace('layer', ''), 10) - 1;
-    const currentDeepest = typeof game.mineStats.deepestLayer === 'number' ? game.mineStats.deepestLayer : -1;
-    if (layerIndex > currentDeepest) {
-        game.mineStats.deepestLayer = layerIndex;
-    }
-    
-    // 增加工具精通经验
-    addSkillExp('toolMastery', 3);
-    
-    if (totalOres.length > 0) {
-        const oreText = totalOres.map(o => `${ORE_DATA[o.ore].emoji}${o.amount}个${ORE_DATA[o.ore].name}`).join('、');
-        addLog(`⛏️ 在${layer.name}挖到了：${oreText}，总价值约${totalValue}元`, 'good');
-        showToast(`挖到矿了！${totalOres.length}种矿石`, 'good');
-    } else {
-        addLog(`⛏️ 在${layer.name}挖了半天，只挖到些碎石...`, 'info');
-        showToast('运气不好，没挖到什么...', 'bad');
-    }
-    
-    saveGame();
-    renderExplorePanel();
-    updateTopBar();
-    checkAchievements();
+        
+        // 更新统计
+        game.mineStats.totalDigs = (game.mineStats.totalDigs || 0) + 1;
+        if (!game.stats) game.stats = {};
+        game.stats.totalDigs = game.mineStats.totalDigs;
+        const layerIndex = parseInt(layerKey.replace('layer', ''), 10) - 1;
+        const currentDeepest = typeof game.mineStats.deepestLayer === 'number' ? game.mineStats.deepestLayer : -1;
+        if (layerIndex > currentDeepest) {
+            game.mineStats.deepestLayer = layerIndex;
+        }
+        
+        // 增加工具精通经验
+        addSkillExp('toolMastery', 3);
+        
+        if (totalOres.length > 0) {
+            const oreText = totalOres.map(o => `${ORE_DATA[o.ore].emoji}${o.amount}个${ORE_DATA[o.ore].name}`).join('、');
+            addLog(`⛏️ 在${layer.name}挖到了：${oreText}，总价值约${totalValue}元`, 'good');
+            showToast(`挖到矿了！${totalOres.length}种矿石`, 'good');
+        } else {
+            addLog(`⛏️ 在${layer.name}挖了半天，只挖到些碎石...`, 'info');
+            showToast('运气不好，没挖到什么...', 'bad');
+        }
+        
+        saveGame();
+        renderExplorePanel();
+        updateTopBar();
+        checkAchievements();
+    });
 }
 
 function sellOres() {
