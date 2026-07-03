@@ -3239,7 +3239,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.82';
+const GAME_VERSION = '1.3.83';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4241,16 +4241,23 @@ function toggleSettings() {
 function closeSettings() {
     const overlay = document.getElementById('settings-overlay');
     if (overlay) overlay.style.display = 'none';
-    // 关闭设置面板时恢复游戏（使用栈式恢复）
-    if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
-        const wasPaused = game._modalPauseStack.pop();
-        if (!wasPaused && gamePaused) {
-            togglePause();
+    const pauseStackLength = game._modalPauseStack ? game._modalPauseStack.length : 0;
+    setTimeout(() => {
+        // 检查模态框栈是否已变化（用户又打开了新模态框）
+        if (game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
+            return; // 有新的模态框打开，不恢复暂停
         }
-        if (game._modalPauseStack.length === 0) {
-            delete game._modalPauseStack;
+        // 关闭设置面板时恢复游戏（使用栈式恢复）
+        if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
+            const wasPaused = game._modalPauseStack.pop();
+            if (!wasPaused && gamePaused) {
+                togglePause();
+            }
+            if (game._modalPauseStack.length === 0) {
+                delete game._modalPauseStack;
+            }
         }
-    }
+    }, 200);
 }
 
 // ==================== 弹窗统一管理：防止叠加 ====================
@@ -9405,7 +9412,7 @@ function updateStoryPage() {
     
     let html = '';
     page.texts.forEach(t => {
-        html += `<div class="story-text">${t}</div>`;
+        html += `<div class="story-text">${escapeHtml(t)}</div>`;
     });
     if (storyText) storyText.innerHTML = html;
 
@@ -15736,7 +15743,7 @@ function renderSidebarQuests() {
             <div class="sidebar-quest-item" style="position: relative;">
                 <div class="sidebar-quest-item-name">
                     <span>${quest.icon || '✨'}</span>
-                    <span>${quest.name || '未知任务'}</span>
+                    <span>${escapeHtml(quest.name) || '未知任务'}</span>
                 </div>
                 <div class="sidebar-quest-progress">
                     <div class="sidebar-quest-progress-bar" style="width: ${Math.min(100, progress)}%"></div>
@@ -15885,7 +15892,7 @@ function renderFieldCard(field, idx) {
                     
                     html += `<div style="width: 100%; margin-bottom: 6px;">`;
                     html += `<button class="action-btn" onclick="plantCrop(${idx}, '${key}')" ${!hasSeed ? 'disabled' : ''} style="width: 100%; justify-content: space-between;">`;
-                    html += `<span>${data.emoji} ${data.name}</span>`;
+                    html += `<span>${data.emoji} ${escapeHtml(data.name)}</span>`;
                     const plantCost = (data.stepCosts && data.stepCosts[0]) || 12;
                     html += `<span style="font-size: 11px; opacity: 0.7;">${data.growDays}天 | -${plantCost}体力</span>`;
                     html += `</button>`;
@@ -17967,10 +17974,10 @@ function renderSkillsPanel() {
                         <div class="shop-item-icon">${skillInfo.emoji}</div>
                         <div style="flex: 1;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div class="shop-item-name">${skillInfo.name} <span style="color: #e67e22;">Lv.${level}</span></div>
+                                <div class="shop-item-name">${escapeHtml(skillInfo.name)} <span style="color: #e67e22;">Lv.${level}</span></div>
                                 <div style="font-size: 12px; color: #999;">${exp}/${nextLevelExp} EXP</div>
                             </div>
-                            <div class="shop-item-desc" style="margin-top: 4px;">${skillInfo.desc}</div>
+                            <div class="shop-item-desc" style="margin-top: 4px;">${escapeHtml(skillInfo.desc)}</div>
                             <div style="margin-top: 6px; font-size: 13px; color: #27ae60; font-weight: bold;">
                                 ✨ ${currentEffect || '暂无效果'}
                             </div>
@@ -18168,6 +18175,11 @@ function getSkillLevel(exp) {
 
 // 增加技能经验
 function addSkillExp(skillKey, amount) {
+    // 参数安全检查
+    if (!amount || !isFinite(amount) || amount < 0) {
+        console.warn('addSkillExp: 无效的经验值', amount);
+        return;
+    }
     const skill = game.skills[skillKey];
     if (!skill) return;
     
@@ -18393,12 +18405,12 @@ function renderNpcsPanel() {
                             <div style="flex: 1;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
-                                        <span style="font-weight: bold; font-size: 16px; color: #5d4e37;">${npc.name}</span>
-                                        <span style="font-size: 13px; color: #999; margin-left: 8px;">${npc.title}</span>
+                                        <span style="font-weight: bold; font-size: 16px; color: #5d4e37;">${escapeHtml(npc.name)}</span>
+                                        <span style="font-size: 13px; color: #999; margin-left: 8px;">${escapeHtml(npc.title)}</span>
                                     </div>
                                     <span style="font-size: 13px; color: ${level.color}; font-weight: bold;">${level.name} (${friendship}/100)</span>
                                 </div>
-                                <div style="font-size: 13px; color: #666; margin-top: 4px;">${npc.desc}</div>
+                                <div style="font-size: 13px; color: #666; margin-top: 4px;">${escapeHtml(npc.desc)}</div>
                                 <div class="field-progress" style="margin-top: 8px;">
                                     <div class="field-progress-bar" style="width: ${progress}%; background: ${level.color};"></div>
                                 </div>
@@ -19560,7 +19572,7 @@ function showGiftModal(npcKey) {
     
     let html = '<div style="max-height: 300px; overflow-y: auto;">';
     html += `<p style="margin-bottom: 10px; color: #5d4e37; font-style: italic;">"哎呀，来就来嘛，还带什么东西。"</p>`;
-    html += `<p style="margin-bottom: 15px; color: #666;">选择要送给${npc.name}的礼物：</p>`;
+    html += `<p style="margin-bottom: 15px; color: #666;">选择要送给${escapeHtml(npc.name)}的礼物：</p>`;
     
     gifts.forEach(gift => {
         const owned = game.items[gift.key] || 0;
@@ -19573,7 +19585,7 @@ function showGiftModal(npcKey) {
                 <div class="shop-item-info">
                     <div class="shop-item-icon">${gift.emoji}</div>
                     <div>
-                        <div class="shop-item-name">${gift.name}</div>
+                        <div class="shop-item-name">${escapeHtml(gift.name)}</div>
                         <div class="shop-item-desc">${likeDesc} | 拥有：${owned}个</div>
                     </div>
                 </div>
@@ -23289,16 +23301,23 @@ function closeEventModal() {
         previousActiveElement = null;
     }
     // === 焦点恢复结束 ===
-    // 关闭模态框时恢复游戏（使用栈式恢复）
-    if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
-        const wasPaused = game._modalPauseStack.pop();
-        if (!wasPaused && gamePaused) {
-            togglePause();
+    const pauseStackLength = game._modalPauseStack ? game._modalPauseStack.length : 0;
+    setTimeout(() => {
+        // 检查模态框栈是否已变化（用户又打开了新模态框）
+        if (game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
+            return; // 有新的模态框打开，不恢复暂停
         }
-        if (game._modalPauseStack.length === 0) {
-            delete game._modalPauseStack;
+        // 关闭模态框时恢复游戏（使用栈式恢复）
+        if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
+            const wasPaused = game._modalPauseStack.pop();
+            if (!wasPaused && gamePaused) {
+                togglePause();
+            }
+            if (game._modalPauseStack.length === 0) {
+                delete game._modalPauseStack;
+            }
         }
-    }
+    }, 200);
     setTimeout(() => { modalClosing = false; }, 300);
 }
 
@@ -23315,7 +23334,12 @@ function closeModal() {
     modalOverlay.style.animation = 'fadeOut 0.2s ease forwards';
     const modalContent = modalOverlay.querySelector('.modal-content');
     if (modalContent) modalContent.style.animation = 'popOut 0.2s ease forwards';
+    const pauseStackLength = game._modalPauseStack ? game._modalPauseStack.length : 0;
     window._closeModalTimeout = setTimeout(() => {
+        // 检查模态框栈是否已变化（用户又打开了新模态框）
+        if (game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
+            return; // 有新的模态框打开，不恢复暂停
+        }
         modalOverlay.style.display = 'none';
         modalOverlay.style.animation = '';
         if (modalContent) modalContent.style.animation = '';
@@ -23994,11 +24018,11 @@ function showQuestRewardModal() {
     let html = `<div style="text-align: center; margin-bottom: 20px;">`;
     html += `<div style="font-size: 50px; margin-bottom: 10px;">🎁</div>`;
     html += `<div style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #27ae60;">任务完成！</div>`;
-    html += `<div style="font-size: 16px; color: #5d4e37; margin-bottom: 5px;">${reward.name}</div>`;
-    html += `<div style="font-size: 13px; color: #666; margin-bottom: 15px;">${reward.desc}</div>`;
+    html += `<div style="font-size: 16px; color: #5d4e37; margin-bottom: 5px;">${escapeHtml(reward.name)}</div>`;
+    html += `<div style="font-size: 13px; color: #666; margin-bottom: 15px;">${escapeHtml(reward.desc)}</div>`;
     html += `<div style="background: #f8f9e8; border-radius: 8px; padding: 12px; margin-bottom: 15px;">`;
     html += `<div style="font-size: 14px; color: #8b7355;">奖励</div>`;
-    html += `<div style="font-size: 18px; font-weight: bold; color: #e67e22;">${reward.reward}</div>`;
+    html += `<div style="font-size: 18px; font-weight: bold; color: #e67e22;">${escapeHtml(reward.reward)}</div>`;
     html += `</div>`;
     html += `</div>`;
     html += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
