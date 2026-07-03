@@ -371,7 +371,7 @@
             border-color: #e74c3c;
             font-weight: bold;
             box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
-            animation: pause-pulse 1.5s ease-in-out infinite;
+            animation: pause-pulse 1.5s ease-in-out 3;
         }
         
         @keyframes pause-pulse {
@@ -414,7 +414,7 @@
 
         .stat-item .warning {
             color: #e74c3c !important;
-            animation: pulse-warning 1.5s ease-in-out infinite;
+            animation: pulse-warning 1.5s ease-in-out 3;
         }
 
         @keyframes pulse-warning {
@@ -530,7 +530,7 @@
             background-image: 
                 radial-gradient(circle at 90% 10%, rgba(139, 115, 85, 0.05) 0%, transparent 50%),
                 radial-gradient(circle at 10% 90%, rgba(139, 115, 85, 0.05) 0%, transparent 50%);
-            animation: fadeIn 0.3s ease;
+            animation: fadeIn 0.3s ease forwards;
         }
         
         @keyframes fadeIn {
@@ -562,17 +562,17 @@
         /* 按钮脉冲效果 */
         .action-btn.highlight {
             background: linear-gradient(135deg, #e67e22, #d35400);
-            animation: pulse 1.5s infinite;
+            animation: pulse 1.5s 3;
             box-shadow: 0 0 15px rgba(230, 126, 34, 0.4);
         }
         
         /* 模态框动画 */
         .modal-overlay {
-            animation: fadeIn 0.2s ease;
+            animation: fadeIn 0.2s ease forwards;
         }
         
         .modal-content {
-            animation: popIn 0.3s ease;
+            animation: popIn 0.3s ease forwards;
         }
         
         /* 统计数字变化动画 */
@@ -592,12 +592,12 @@
         }
         
         .field-progress-bar.active {
-            animation: shimmer 2s linear infinite;
+            animation: shimmer 2s linear 1;
         }
         
         /* 日志项动画 */
         .log-item {
-            animation: slideIn 0.3s ease;
+            animation: slideIn 0.3s ease forwards;
         }
         
         /* 侧边栏标签悬停效果 */
@@ -798,7 +798,7 @@
 
         .action-btn.highlight {
             background: #e67e22;
-            animation: pulse 1.5s infinite;
+            animation: pulse 1.5s 3;
         }
 
         @keyframes pulse {
@@ -994,7 +994,7 @@
             padding: 2px 6px;
             border-radius: 4px;
             transition: all 0.3s ease;
-            animation: logSlideIn 0.3s ease-out;
+            animation: logSlideIn 0.3s ease-out forwards;
         }
 
         .log-item.new {
@@ -1087,7 +1087,7 @@
             z-index: 3500;
             backdrop-filter: blur(3px);
             -webkit-backdrop-filter: blur(3px);
-            animation: fadeIn 0.2s ease;
+            animation: fadeIn 0.2s ease forwards;
         }
 
         .modal {
@@ -1099,7 +1099,7 @@
             width: 90%;
             text-align: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.05);
-            animation: popIn 0.3s ease;
+            animation: popIn 0.3s ease forwards;
             position: relative;
             cursor: grab;
             -webkit-user-select: none;
@@ -1224,7 +1224,7 @@
             border-radius: 8px;
             padding: 4px 12px !important;
             border: 2px solid #8b7355;
-            animation: clock-pulse 2s ease-in-out infinite;
+            animation: clock-pulse 2s ease-in-out 3;
         }
         
         @keyframes clock-pulse {
@@ -1265,7 +1265,7 @@
             justify-content: center;
             z-index: 2000;
             transition: all 0.3s ease;
-            animation: float-bounce 2s ease-in-out infinite;
+            animation: float-bounce 2s ease-in-out 3;
         }
         
         .float-countdown-btn:hover {
@@ -3148,6 +3148,56 @@ if (!Object.values) {
     };
 }
 
+// Array.prototype.includes polyfill
+if (!Array.prototype.includes) {
+    Array.prototype.includes = function(searchElement) {
+        return this.indexOf(searchElement) !== -1;
+    };
+}
+// String.prototype.includes polyfill
+if (!String.prototype.includes) {
+    String.prototype.includes = function(search) {
+        return this.indexOf(search) !== -1;
+    };
+}
+// Object.assign polyfill
+if (!Object.assign) {
+    Object.assign = function(target) {
+        for (var i = 1; i < arguments.length; i++) {
+            var source = arguments[i];
+            for (var key in source) {
+                if (source.hasOwnProperty(key)) {
+                    target[key] = source[key];
+                }
+            }
+        }
+        return target;
+    };
+}
+// requestAnimationFrame polyfill
+(function() {
+    var lastTime = 0;
+    var vendors = ['webkit', 'moz'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+    if (!window.requestAnimationFrame) {
+        window.requestAnimationFrame = function(callback) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+    }
+    if (!window.cancelAnimationFrame) {
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+    }
+}());
+
 // 安全localStorage封装（处理隐私模式/超配额/无权限）
 function safeStorageGet(key, defaultValue) {
     try {
@@ -3163,6 +3213,17 @@ function safeStorageSet(key, value) {
         localStorage.setItem(key, value);
         return true;
     } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+            console.warn('localStorage quota exceeded, attempting cleanup');
+            try {
+                localStorage.clear();
+                localStorage.setItem(key, value);
+                return true;
+            } catch (e2) {
+                console.error('localStorage completely unavailable');
+                return false;
+            }
+        }
         console.error('localStorage写入失败', key, e);
         return false;
     }
@@ -3178,7 +3239,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.76';
+const GAME_VERSION = '1.3.77';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10946,6 +11007,10 @@ function loadGameManual() {
     }
 }
 
+function createDefaultGame() {
+    return initGame('normal');
+}
+
 // 存档兼容处理：给旧存档补上缺失的字段
 function fixSaveData() {
     if (!game || typeof game !== 'object') {
@@ -15798,7 +15863,7 @@ function renderFieldCard(field, idx) {
                       : field.stage === 'seedling' ? 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)'
                       : 'linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%)';
         html += `<div style="text-align: center; margin: 0 0 12px; padding: 20px 0; background: ${bgColor}; border-radius: 12px; margin-left: -5px; margin-right: -5px;">
-                    <span style="font-size: ${iconSize}; opacity: ${iconOpacity}; display: inline-block; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); animation: float 3s ease-in-out infinite;">${cropData.emoji}</span>
+                    <span style="font-size: ${iconSize}; opacity: ${iconOpacity}; display: inline-block; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15)); animation: float 3s ease-in-out 3;">${cropData.emoji}</span>
                 </div>`;
         
         html += `<div class="field-status" style="text-align: center; font-size: 15px; font-weight: 500; margin-bottom: 4px;">${cropData.name}</div>`;
