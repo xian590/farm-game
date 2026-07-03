@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.96';
+const GAME_VERSION = '1.3.97';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9515,6 +9515,11 @@ function skipStory() {
     } else {
         showSelectMode();
     }
+}
+
+// closeStory 是 skipStory 的别名，用于 Escape 键关闭故事容器
+function closeStory() {
+    skipStory();
 }
 
 // ==================== 开局选择 ====================
@@ -17716,31 +17721,33 @@ function consumeOnePetFood() {
 
 // 撸宠物
 function petThePet(petId) {
-    const p = game.pets[petId];
-    if (!p) return;
-    if (!p.petToday) p.petToday = 0;
-    if (p.petToday >= 2) {
-        showToast('今天已经撸够啦，明天再来吧~', 'bad');
-        playErrorSound();
-        return;
-    }
-    if (game.stamina < 5) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
-    game.stamina -= 5;
-    game.mood = Math.min(100, (game.mood === undefined ? 50 : game.mood) + 5);
-    p.petToday++;
-    p.affection = (p.affection || 0) + 1;
-    const names = { dahuang: '大黄', ahua: '阿花' };
-    const flavors = petId === 'dahuang'
-        ? ['大黄舒服地眯起眼睛，尾巴摇得像风车一样。', '大黄翻过身来露出肚皮，让你多摸几下。', '大黄舔了舔你的手，眼神里满是信任。']
-        : ['阿花发出咕噜咕噜的声音，用脑袋蹭你的手心。', '阿花伸了个懒腰，在你腿上踩起了奶。', '阿花眯着眼，尾巴尖轻轻晃了晃，看起来很享受。'];
-    addLog(`🐾 你撸了撸${names[petId]}。${flavors[Math.floor(Math.random() * flavors.length)]}`, 'pet');
-    saveGame();
-    updateUI();
-    showToast('心情+5', 'good');
+    withClickLock('petThePet_' + petId, () => {
+        const p = game.pets[petId];
+        if (!p) return;
+        if (!p.petToday) p.petToday = 0;
+        if (p.petToday >= 2) {
+            showToast('今天已经撸够啦，明天再来吧~', 'bad');
+            playErrorSound();
+            return;
+        }
+        if (game.stamina < 5) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            playErrorSound();
+            return;
+        }
+        game.stamina -= 5;
+        game.mood = Math.min(100, (game.mood === undefined ? 50 : game.mood) + 5);
+        p.petToday++;
+        p.affection = (p.affection || 0) + 1;
+        const names = { dahuang: '大黄', ahua: '阿花' };
+        const flavors = petId === 'dahuang'
+            ? ['大黄舒服地眯起眼睛，尾巴摇得像风车一样。', '大黄翻过身来露出肚皮，让你多摸几下。', '大黄舔了舔你的手，眼神里满是信任。']
+            : ['阿花发出咕噜咕噜的声音，用脑袋蹭你的手心。', '阿花伸了个懒腰，在你腿上踩起了奶。', '阿花眯着眼，尾巴尖轻轻晃了晃，看起来很享受。'];
+        addLog(`🐾 你撸了撸${names[petId]}。${flavors[Math.floor(Math.random() * flavors.length)]}`, 'pet');
+        saveGame();
+        updateUI();
+        showToast('心情+5', 'good');
+    });
 }
 
 // 喂宠物
@@ -20309,40 +20316,42 @@ function petPet(petKey) {
 
 // 和宠物玩耍
 function playWithPet(petKey) {
-    const pet = PET_DATA[petKey];
-    if (!pet) return;
-    
-    const petData =(game.pets && game.pets[petKey]);
-    if (!petData) {
-        showToast('请先领养宠物~', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    const today = game.day;
-    
-    if (petData.lastPlayedDay === today) {
-        showToast('今天已经玩过啦~', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    if (game.stamina < 10) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    playClickSound();
-    game.stamina -= 10;
-    petData.lastPlayedDay = today;
-    petData.affection = Math.min(100, (petData.affection || petData.friendship || 0) + 5);
-    
-    addLog(`🎾 和${pet.name}玩了一会儿，它特别开心，好感度+5`, 'good');
-    saveGame();
-    renderPetsPanel();
-    updateTopBar();
-    showToast('好感度+5！', 'good');
+    withClickLock('playWithPet_' + petKey, () => {
+        const pet = PET_DATA[petKey];
+        if (!pet) return;
+        
+        const petData =(game.pets && game.pets[petKey]);
+        if (!petData) {
+            showToast('请先领养宠物~', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        const today = game.day;
+        
+        if (petData.lastPlayedDay === today) {
+            showToast('今天已经玩过啦~', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        if (game.stamina < 10) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        playClickSound();
+        game.stamina -= 10;
+        petData.lastPlayedDay = today;
+        petData.affection = Math.min(100, (petData.affection || petData.friendship || 0) + 5);
+        
+        addLog(`🎾 和${pet.name}玩了一会儿，它特别开心，好感度+5`, 'good');
+        saveGame();
+        renderPetsPanel();
+        updateTopBar();
+        showToast('好感度+5！', 'good');
+    });
 }
 
 // 收集宠物粪便用于堆肥
@@ -21570,52 +21579,54 @@ function renderLeaderboardPanel() {
 // 种植作物
 // 整地
 function prepareField(fieldIdx) {
-    if (!game.fields || fieldIdx < 0 || fieldIdx >= game.fields.length) { showToast('操作失败', 'bad'); return; }
-    const field = game.fields[fieldIdx];
-    
-    let staminaCost = 15;
-    if (game.tools.includes('hoe')) {
-        staminaCost *= 0.9; // 锄头：翻地体力-10%
-    }
-    if (game.neighborHelp && game.neighborHelp.toolShare) {
-        staminaCost *= 0.85;
-    }
-    // toolMastery技能：所有农具体力消耗-5%/级
-    const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-    if (toolMasteryLevel > 0) {
-        staminaCost = Math.max(1, Math.floor(staminaCost * (1 - toolMasteryLevel * 0.05)));
-    }
-    // 农业科技：机械化耕作 - 翻地体力消耗减免
-    if (game.agriTechEffects && game.agriTechEffects.plowStaminaReduction) {
-        staminaCost = Math.max(1, Math.floor(staminaCost * (1 - game.agriTechEffects.plowStaminaReduction)));
-    }
-    staminaCost = Math.floor(staminaCost);
-    
-    if (game.stamina < staminaCost) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    playDirtSound();
-    game.stamina -= staminaCost;
-    field.prepared = true;
-    
-    // 增加田间管理经验
-    addSkillExp('fieldManagement', 2);
-    
-    addLog(`⛏️ 给第${field.id}块田整了地。你弯着腰，一锄头一锄头地翻着地。泥土翻过来，带着潮湿的腥气。嗯，这块地肥得很。`, 'good');
-    
-    // 检查任务
-    if (!game.quests.q0) {
-        game.quests.q0 = true;
-        queueQuestReward('q0', 0, '✅ 任务完成：整地');
-    }
-    
-    game.needsRender = true;
-    saveGame();
-    updateUI();
-    showToast('整地完成！', 'good');
+    withClickLock('prepareField_' + fieldIdx, () => {
+        if (!game.fields || fieldIdx < 0 || fieldIdx >= game.fields.length) { showToast('操作失败', 'bad'); return; }
+        const field = game.fields[fieldIdx];
+        
+        let staminaCost = 15;
+        if (game.tools.includes('hoe')) {
+            staminaCost *= 0.9; // 锄头：翻地体力-10%
+        }
+        if (game.neighborHelp && game.neighborHelp.toolShare) {
+            staminaCost *= 0.85;
+        }
+        // toolMastery技能：所有农具体力消耗-5%/级
+        const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
+        if (toolMasteryLevel > 0) {
+            staminaCost = Math.max(1, Math.floor(staminaCost * (1 - toolMasteryLevel * 0.05)));
+        }
+        // 农业科技：机械化耕作 - 翻地体力消耗减免
+        if (game.agriTechEffects && game.agriTechEffects.plowStaminaReduction) {
+            staminaCost = Math.max(1, Math.floor(staminaCost * (1 - game.agriTechEffects.plowStaminaReduction)));
+        }
+        staminaCost = Math.floor(staminaCost);
+        
+        if (game.stamina < staminaCost) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        playDirtSound();
+        game.stamina -= staminaCost;
+        field.prepared = true;
+        
+        // 增加田间管理经验
+        addSkillExp('fieldManagement', 2);
+        
+        addLog(`⛏️ 给第${field.id}块田整了地。你弯着腰，一锄头一锄头地翻着地。泥土翻过来，带着潮湿的腥气。嗯，这块地肥得很。`, 'good');
+        
+        // 检查任务
+        if (!game.quests.q0) {
+            game.quests.q0 = true;
+            queueQuestReward('q0', 0, '✅ 任务完成：整地');
+        }
+        
+        game.needsRender = true;
+        saveGame();
+        updateUI();
+        showToast('整地完成！', 'good');
+    });
 }
 
 // 种植（播种/育苗）
@@ -21716,48 +21727,50 @@ function plantCrop(fieldIdx, cropKey) {
 
 // 移栽
 function transplantCrop(fieldIdx) {
-    if (!game.fields || fieldIdx < 0 || fieldIdx >= game.fields.length) { showToast('操作失败', 'bad'); return; }
-    const field = game.fields[fieldIdx];
-    const cropData = CROP_DATA[field.crop];
-    
-    let staminaCost = 18;
-    if (game.tools.includes('seedlingRider')) {
-        staminaCost *= 0.4; // 秧马：移栽体力-60%
-    }
-    staminaCost = Math.floor(staminaCost);
-    
-    if (game.stamina < staminaCost) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
-    
-    playDirtSound();
-    game.stamina -= staminaCost;
-    field.stage = 'transplanting';
-    field.step = 2;
-    field.growProgress = 20;
-    
-    const flavorText = cropData.type === 'rice'
-        ? '你弓着腰，把秧苗一棵一棵插进水里。腰酸背痛，但看着整整齐齐的秧苗，心里很踏实。'
-        : '小苗已经站稳了脚跟，开始长出新的叶子。';
-    
-    addLog(`🌱 完成了${cropData.name}的移栽。${flavorText}`, 'good');
-    
-    // 检查任务：移栽插秧
-    if (!game.quests.q3) {
-        game.quests.q3 = true;
-        queueQuestReward('q3', 50, '✅ 任务完成：移栽插秧，奖励50元');
-    }
-    if (!game.quests.q5) {
-        game.quests.q5 = true;
-        queueQuestReward('q5', 50, '✅ 任务完成：移栽插秧，奖励50元');
-    }
-    
-    game.needsRender = true;
-    saveGame();
-    updateUI();
-    showToast('移栽完成！', 'good');
+    withClickLock('transplantCrop_' + fieldIdx, () => {
+        if (!game.fields || fieldIdx < 0 || fieldIdx >= game.fields.length) { showToast('操作失败', 'bad'); return; }
+        const field = game.fields[fieldIdx];
+        const cropData = CROP_DATA[field.crop];
+        
+        let staminaCost = 18;
+        if (game.tools.includes('seedlingRider')) {
+            staminaCost *= 0.4; // 秧马：移栽体力-60%
+        }
+        staminaCost = Math.floor(staminaCost);
+        
+        if (game.stamina < staminaCost) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            playErrorSound();
+            return;
+        }
+        
+        playDirtSound();
+        game.stamina -= staminaCost;
+        field.stage = 'transplanting';
+        field.step = 2;
+        field.growProgress = 20;
+        
+        const flavorText = cropData.type === 'rice'
+            ? '你弓着腰，把秧苗一棵一棵插进水里。腰酸背痛，但看着整整齐齐的秧苗，心里很踏实。'
+            : '小苗已经站稳了脚跟，开始长出新的叶子。';
+        
+        addLog(`🌱 完成了${cropData.name}的移栽。${flavorText}`, 'good');
+        
+        // 检查任务：移栽插秧
+        if (!game.quests.q3) {
+            game.quests.q3 = true;
+            queueQuestReward('q3', 50, '✅ 任务完成：移栽插秧，奖励50元');
+        }
+        if (!game.quests.q5) {
+            game.quests.q5 = true;
+            queueQuestReward('q5', 50, '✅ 任务完成：移栽插秧，奖励50元');
+        }
+        
+        game.needsRender = true;
+        saveGame();
+        updateUI();
+        showToast('移栽完成！', 'good');
+    });
 }
 
 // 浇水
@@ -21934,37 +21947,39 @@ function fertilizeField(fieldIdx, type = 'normal') {
 
 // 翻藤（红薯专属）
 function turnVine(fieldIdx, turnNum) {
-    if (!game.fields || fieldIdx < 0 || fieldIdx >= game.fields.length) { showToast('操作失败', 'bad'); return; }
-    const field = game.fields[fieldIdx];
-    let vineCost = 13;
-    if (game.tools.includes('hoe')) {
-        vineCost = Math.floor(vineCost * 0.9);
-    }
-    // toolMastery技能：所有农具体力消耗-5%/级
-    const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
-    if (toolMasteryLevel > 0) {
-        vineCost = Math.max(1, Math.floor(vineCost * (1 - toolMasteryLevel * 0.05)));
-    }
-    if (game.stamina < vineCost) {
-        showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-        playErrorSound();
-        return;
-    }
-    playWeedSound();
-    game.stamina -= vineCost;
-    
-    if (turnNum === 1) {
-        field.turnedVine1 = true;
-        addLog(`🍃 给第${field.id}块田的红薯翻了第一次藤。红薯藤乱爬，翻一翻能让养分都集中到块根上。`, 'info');
-    } else {
-        field.turnedVine2 = true;
-        addLog(`🍃 给第${field.id}块田的红薯翻了第二次藤。看着满地的藤蔓，想象着下面藏着的大红薯，心里美滋滋的。`, 'info');
-    }
-    
-    game.needsRender = true;
-    saveGame();
-    updateUI();
-    showToast('翻藤完成！', 'good');
+    withClickLock('turnVine_' + fieldIdx + '_' + turnNum, () => {
+        if (!game.fields || fieldIdx < 0 || fieldIdx >= game.fields.length) { showToast('操作失败', 'bad'); return; }
+        const field = game.fields[fieldIdx];
+        let vineCost = 13;
+        if (game.tools.includes('hoe')) {
+            vineCost = Math.floor(vineCost * 0.9);
+        }
+        // toolMastery技能：所有农具体力消耗-5%/级
+        const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
+        if (toolMasteryLevel > 0) {
+            vineCost = Math.max(1, Math.floor(vineCost * (1 - toolMasteryLevel * 0.05)));
+        }
+        if (game.stamina < vineCost) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            playErrorSound();
+            return;
+        }
+        playWeedSound();
+        game.stamina -= vineCost;
+        
+        if (turnNum === 1) {
+            field.turnedVine1 = true;
+            addLog(`🍃 给第${field.id}块田的红薯翻了第一次藤。红薯藤乱爬，翻一翻能让养分都集中到块根上。`, 'info');
+        } else {
+            field.turnedVine2 = true;
+            addLog(`🍃 给第${field.id}块田的红薯翻了第二次藤。看着满地的藤蔓，想象着下面藏着的大红薯，心里美滋滋的。`, 'info');
+        }
+        
+        game.needsRender = true;
+        saveGame();
+        updateUI();
+        showToast('翻藤完成！', 'good');
+    });
 }
 
 // 收割
@@ -24543,141 +24558,147 @@ function canCookFood(foodKey) {
 }
 
 function cookFood(foodKey) {
-    const food = COOKING_DATA[foodKey];
-    if (!food) return;
-    if (!game.cookedFoods) game.cookedFoods = {};
-    
-    if (!canCookFood(foodKey)) {
-        showToast('材料不够，做不了这道菜', 'bad');
-        return;
-    }
-    
-    // 检查体力
-    if (game.stamina < food.staminaCost) {
-        showToast('体力不足，无法烹饪！', 'bad');
-        return;
-    }
-    
-    const used = getStorageUsed();
-    const storageCap = game.storageCapacity || 2000;
-    if (used + 1 > storageCap) {
-        showToast('仓库满了，先腾点地方', 'bad');
-        return;
-    }
-    
-    game.stamina -= food.staminaCost;
-    
-    const ing = food.ingredients;
-    
-    if (ing.fishInventory) {
-        let remaining = ing.fishInventory;
-        for (const fishKey of Object.keys(game.fishInventory || {})) {
-            if (remaining <= 0) break;
-            const take = Math.min(remaining, game.fishInventory[fishKey] || 0);
-            game.fishInventory[fishKey] -= take;
-            remaining -= take;
+    withClickLock('cookFood_' + foodKey, () => {
+        const food = COOKING_DATA[foodKey];
+        if (!food) return;
+        if (!game.cookedFoods) game.cookedFoods = {};
+        
+        if (!canCookFood(foodKey)) {
+            showToast('材料不够，做不了这道菜', 'bad');
+            return;
         }
-    }
-    
-    if (ing.crops) {
-        for (const [cropKey, amount] of Object.entries(ing.crops)) {
-            game.crops[cropKey] -= amount;
+        
+        // 检查体力
+        if (game.stamina < food.staminaCost) {
+            showToast('体力不足，无法烹饪！', 'bad');
+            return;
         }
-    }
-    
-    if (ing.processedItems) {
-        for (const [itemKey, amount] of Object.entries(ing.processedItems)) {
-            game.processedItems[itemKey] -= amount;
+        
+        const used = getStorageUsed();
+        const storageCap = game.storageCapacity || 2000;
+        if (used + 1 > storageCap) {
+            showToast('仓库满了，先腾点地方', 'bad');
+            return;
         }
-    }
-    
-    if (ing.foragingItems) {
-        for (const [itemKey, amount] of Object.entries(ing.foragingItems)) {
-            game.foragingItems[itemKey] -= amount;
+        
+        game.stamina -= food.staminaCost;
+        
+        const ing = food.ingredients;
+        
+        if (ing.fishInventory) {
+            let remaining = ing.fishInventory;
+            for (const fishKey of Object.keys(game.fishInventory || {})) {
+                if (remaining <= 0) break;
+                const take = Math.min(remaining, game.fishInventory[fishKey] || 0);
+                game.fishInventory[fishKey] -= take;
+                remaining -= take;
+            }
         }
-    }
-    
-    game.cookedFoods[foodKey] = (game.cookedFoods[foodKey] || 0) + 1;
-    
-    // 统计
-    if (!game.stats) game.stats = {};
-    game.stats.totalCooked = (game.stats.totalCooked || 0) + 1;
-    
-    // 解锁图鉴
-    unlockCollectionItem('foods', foodKey);
-    
-    addLog(`🍳 做了一份${food.name}！${food.desc}`, 'good');
-    showToast(`做好了${food.name}！`, 'good');
-    
-    saveGame();
-    checkAchievements();
-    renderCookingPanel();
-    updateTopBar();
+        
+        if (ing.crops) {
+            for (const [cropKey, amount] of Object.entries(ing.crops)) {
+                game.crops[cropKey] -= amount;
+            }
+        }
+        
+        if (ing.processedItems) {
+            for (const [itemKey, amount] of Object.entries(ing.processedItems)) {
+                game.processedItems[itemKey] -= amount;
+            }
+        }
+        
+        if (ing.foragingItems) {
+            for (const [itemKey, amount] of Object.entries(ing.foragingItems)) {
+                game.foragingItems[itemKey] -= amount;
+            }
+        }
+        
+        game.cookedFoods[foodKey] = (game.cookedFoods[foodKey] || 0) + 1;
+        
+        // 统计
+        if (!game.stats) game.stats = {};
+        game.stats.totalCooked = (game.stats.totalCooked || 0) + 1;
+        
+        // 解锁图鉴
+        unlockCollectionItem('foods', foodKey);
+        
+        addLog(`🍳 做了一份${food.name}！${food.desc}`, 'good');
+        showToast(`做好了${food.name}！`, 'good');
+        
+        saveGame();
+        checkAchievements();
+        renderCookingPanel();
+        updateTopBar();
+    });
 }
 
 function eatFood(foodKey) {
-    const food = COOKING_DATA[foodKey];
-    if (!food) return;
-    if (!game.cookedFoods) game.cookedFoods = {};
-    
-    const have = game.cookedFoods[foodKey] || 0;
-    if (have < 1) {
-        showToast('没存货了', 'bad');
-        return;
-    }
-    
-    game.cookedFoods[foodKey] = have - 1;
-    
-    if (food.stamina) {
-        game.stamina = Math.min(game.maxStamina, game.stamina + food.stamina);
-    }
-    if (food.health) {
-        game.health = Math.min(game.maxHealth, game.health + food.health);
-    }
-    if (food.mood) {
-        game.mood = Math.min(100, (game.mood === undefined ? 50 : game.mood) + food.mood);
-    }
-    
-    addLog(`🍽️ 吃了一份${food.name}，${food.desc} 感觉浑身都有劲了！`, 'good');
-    showToast(`吃了${food.name}！体力+${food.stamina || 0}`, 'good');
-    
-    saveGame();
-    renderCookingPanel();
-    updateTopBar();
+    withClickLock('eatFood_' + foodKey, () => {
+        const food = COOKING_DATA[foodKey];
+        if (!food) return;
+        if (!game.cookedFoods) game.cookedFoods = {};
+        
+        const have = game.cookedFoods[foodKey] || 0;
+        if (have < 1) {
+            showToast('没存货了', 'bad');
+            return;
+        }
+        
+        game.cookedFoods[foodKey] = have - 1;
+        
+        if (food.stamina) {
+            game.stamina = Math.min(game.maxStamina, game.stamina + food.stamina);
+        }
+        if (food.health) {
+            game.health = Math.min(game.maxHealth, game.health + food.health);
+        }
+        if (food.mood) {
+            game.mood = Math.min(100, (game.mood === undefined ? 50 : game.mood) + food.mood);
+        }
+        
+        addLog(`🍽️ 吃了一份${food.name}，${food.desc} 感觉浑身都有劲了！`, 'good');
+        showToast(`吃了${food.name}！体力+${food.stamina || 0}`, 'good');
+        
+        saveGame();
+        renderCookingPanel();
+        updateTopBar();
+    });
 }
 
 function sellFood(foodKey) {
-    const food = COOKING_DATA[foodKey];
-    if (!food) return;
-    if (!game.cookedFoods) game.cookedFoods = {};
-    
-    const have = game.cookedFoods[foodKey] || 0;
-    if (have < 1) {
-        showToast('没存货了', 'bad');
-        return;
-    }
-    
-    // 应用售价加成
-    let sellBonusTotal = game.sellBonus || 0;
-    const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
-    if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
-    const price = food.sellPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
-    const money = Math.floor(price);
-    
-    game.cookedFoods[foodKey] = have - 1;
-    game.money += money;
-    
-    if (!game.stats) game.stats = {};
-    game.stats.totalSell = (game.stats.totalSell || 0) + money;
-    game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
-    
-    addLog(`💰 卖了一份${food.name}，赚了${money}元`, 'good');
-    showToast(`+${money}元`, 'good');
-    playCoinSound();
-    
-    saveGame();
-    renderCookingPanel();
-    updateTopBar();
+    withClickLock('sellFood_' + foodKey, () => {
+        const food = COOKING_DATA[foodKey];
+        if (!food) return;
+        if (!game.cookedFoods) game.cookedFoods = {};
+        
+        const have = game.cookedFoods[foodKey] || 0;
+        if (have < 1) {
+            showToast('没存货了', 'bad');
+            return;
+        }
+        
+        // 应用售价加成
+        let sellBonusTotal = game.sellBonus || 0;
+        const npcSellBonus = (typeof getNpcBonus === 'function') ? getNpcBonus('sellPrice') : 0;
+        if (npcSellBonus > 0) sellBonusTotal += npcSellBonus;
+        const price = food.sellPrice * (1 + Math.max(0, Math.min(2.0, sellBonusTotal)));
+        const money = Math.floor(price);
+        
+        game.cookedFoods[foodKey] = have - 1;
+        game.money += money;
+        
+        if (!game.stats) game.stats = {};
+        game.stats.totalSell = (game.stats.totalSell || 0) + money;
+        game.stats.totalEarned = (game.stats.totalEarned || 0) + money;
+        
+        addLog(`💰 卖了一份${food.name}，赚了${money}元`, 'good');
+        showToast(`+${money}元`, 'good');
+        playCoinSound();
+        
+        saveGame();
+        renderCookingPanel();
+        updateTopBar();
+    });
 }
 
 // ==================== 社区建设系统 ====================
