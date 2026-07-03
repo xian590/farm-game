@@ -999,7 +999,7 @@
 
         .log-item.new {
             background: rgba(243, 156, 18, 0.08);
-            animation: logHighlight 3s ease-out;
+            animation: logHighlight 3s ease-out forwards;
         }
 
         @keyframes logSlideIn {
@@ -2195,6 +2195,7 @@
             padding: 10px 14px;
             border-bottom: 1px solid #f1f3f5;
             transition: all 0.2s ease;
+            position: relative;
         }
         
         .quest-item:last-child {
@@ -3152,7 +3153,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.3.65';
+const GAME_VERSION = '1.3.66';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -11874,6 +11875,8 @@ function onNewDay() {
     // 新手引导：天数触发的步骤
     if (!game.tutorialCompleted) {
         if (game.day === 3 && game.tutorialStep === 5) advanceTutorial();
+        if (game.tutorialStep === 5 && game.day >= 4) advanceTutorial();
+        if (game.tutorialStep === 6 && game.day >= 5) advanceTutorial();
         if (game.day === 7 && game.tutorialStep === 7) advanceTutorial();
         if (game.day === 14 && game.tutorialStep === 8) advanceTutorial();
         if (game.day === 21 && game.tutorialStep === 9) {
@@ -14321,8 +14324,20 @@ function updateProcessingJobs() {
             if (!game.stats) game.stats = {};
             game.stats.totalProcessed = (game.stats.totalProcessed || 0) + job.outputAmount;
             
+            // 加工产出统计（成就解锁用）
+            if (job.outputItem === 'honey') {
+                game.stats.totalHoney = (game.stats.totalHoney || 0) + job.outputAmount;
+            }
+            if (job.outputItem === 'mushroom') {
+                game.stats.totalMushroom = (game.stats.totalMushroom || 0) + job.outputAmount;
+            }
+            if (job.outputItem === 'pickle') {
+                game.stats.totalPickle = (game.stats.totalPickle || 0) + job.outputAmount;
+            }
+            
             // 解锁图鉴
             unlockCollectionItem('processed', job.outputItem);
+            saveGame(); // 即时保存收集品解锁
             
             // 任务检查：累积加工产出100斤
             game.stats.processingCount = (game.stats.processingCount || 0) + job.outputAmount;
@@ -15306,8 +15321,16 @@ function renderSidebarQuests() {
         }
     });
     
-    // 只取前2个（避免拥挤）
-    const displayQuests = pendingQuests.slice(0, 2);
+    // 收集已完成但未领取的任务
+    const completedUnclaimed = [];
+    allQuests.forEach(quest => {
+        if (q[quest.id] && game.pendingQuestRewards && game.pendingQuestRewards.some(r => r.questId === quest.id)) {
+            completedUnclaimed.push(quest);
+        }
+    });
+    
+    // 合并：优先显示已完成未领取（需用户操作），然后是未完成的
+    const displayQuests = [...completedUnclaimed, ...pendingQuests].slice(0, 2);
     
     if (displayQuests.length === 0) {
         listEl.innerHTML = '<div style="color: #27ae60; font-size: 11px; text-align: center; padding: 10px 0;">🎉 全部完成！</div>';
@@ -15317,10 +15340,14 @@ function renderSidebarQuests() {
     let html = '';
     displayQuests.forEach(quest => {
         if (!quest || !quest.id) return;
+        // 判断是否已完成但未领取
+        const isCompletedUnclaimed = q[quest.id] && game.pendingQuestRewards && game.pendingQuestRewards.some(r => r.questId === quest.id);
         // 计算任务进度
         let progress = 0;
         
-        if (quest.id === 'q0') {
+        if (isCompletedUnclaimed) {
+            progress = 100;
+        } else if (quest.id === 'q0') {
             const hasPlowed = game.fields.some(f => f.step >= 1);
             progress = hasPlowed ? 100 : 0;
         } else if (quest.id === 'q1') {
@@ -15360,7 +15387,7 @@ function renderSidebarQuests() {
         }
         
         html += `
-            <div class="sidebar-quest-item">
+            <div class="sidebar-quest-item" style="position: relative;">
                 <div class="sidebar-quest-item-name">
                     <span>${quest.icon || '✨'}</span>
                     <span>${quest.name || '未知任务'}</span>
@@ -15368,6 +15395,7 @@ function renderSidebarQuests() {
                 <div class="sidebar-quest-progress">
                     <div class="sidebar-quest-progress-bar" style="width: ${Math.min(100, progress)}%"></div>
                 </div>
+                ${isCompletedUnclaimed ? '<span class="quest-badge" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:10px;height:10px;background:#e74c3c;border-radius:50%;"></span>' : ''}
             </div>
         `;
     });
@@ -22331,6 +22359,11 @@ function addLog(text, type = 'normal') {
         const firstLog = logEl.querySelector('.log-item');
         if (firstLog) firstLog.remove();
     }
+    
+    // 3秒后自动移除 new 高亮类，避免动画结束后残留背景
+    setTimeout(() => {
+        item.classList.remove('new');
+    }, 3000);
 }
 
 // ==================== 玩家反馈系统 ====================
@@ -24394,6 +24427,7 @@ function unlockAchievement(achKey) {
     if (currentMainTab === 'achievements') {
         renderAchievementsPanel();
     }
+    saveGame(); // 即时存档
 }
 
 function renderAchievementsPanel() {
