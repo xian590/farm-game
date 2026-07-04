@@ -1,0 +1,290 @@
+<!-- ========== 会员中心 ========== -->
+<section id="page-vip" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">会员中心</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <!-- 会员卡片 -->
+    <div class="glass-card p-5 mb-6 text-center relative overflow-hidden" style="background:linear-gradient(135deg,rgba(212,181,199,0.3),rgba(184,169,201,0.2));border:1.5px solid rgba(212,181,199,0.3)">
+      <div class="text-3xl mb-2">👑</div>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif" id="vip-tier-name">免费体验</h2>
+      <p class="text-sm mb-3" style="color:var(--text-soft)" id="vip-tier-desc">升级会员，解锁全部显化工具</p>
+      <div class="flex items-center justify-center gap-1 mb-3">
+        <span class="text-2xl">💎</span>
+        <span class="text-xl font-bold" style="color:var(--theme-text)" id="vip-crystal-count">0</span>
+        <span class="text-xs" style="color:var(--text-mute)">水晶</span>
+      </div>
+      <button id="vip-upgrade-btn" onclick="showVipPlans()" class="btn-primary w-full py-3 rounded-xl" style="display:none">升级会员</button>
+      <button id="vip-renew-btn" onclick="showVipPlans()" class="btn-soft w-full py-3 rounded-xl" style="display:none">续费会员</button>
+    </div>
+
+    <!-- 每日签到 -->
+    <div class="glass-card p-5 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-medium">📅 每日签到</h3>
+        <span class="text-xs" style="color:var(--text-mute)">连续 <span id="checkin-streak">0</span> 天</span>
+      </div>
+      <div class="grid grid-cols-7 gap-2 mb-3">
+        <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-1"><div class="text-xs" style="color:var(--text-mute)">一</div><div class="text-lg">💎</div><div class="text-[10px]" style="color:var(--text-mute)">+5</div></div>
+        <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-2"><div class="text-xs" style="color:var(--text-mute)">二</div><div class="text-lg">💎</div><div class="text-[10px]" style="color:var(--text-mute)">+5</div></div>
+        <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-3"><div class="text-xs" style="color:var(--text-mute)">三</div><div class="text-lg">💎</div><div class="text-[10px]" style="color:var(--text-mute)">+5</div></div>
+        <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-4"><div class="text-xs" style="color:var(--text-mute)">四</div><div class="text-lg">💎</div><div class="text-[10px]" style="color:var(--text-mute)">+5</div></div>
+        <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-5"><div class="text-xs" style="color:var(--text-mute)">五</div><div class="text-lg">💎</div><div class="text-[10px]" style="color:var(--text-mute)">+5</div></div>
+        <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-6"><div class="text-xs" style="color:var(--text-mute)">六</div><div class="text-lg">💎</div><div class="text-[10px]" style="color:var(--text-mute)">+10</div></div>
+        <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-7"><div class="text-xs" style="color:var(--text-mute)">日</div><div class="text-lg">🎁</div><div class="text-[10px]" style="color:var(--text-mute)">+20</div></div>
+      </div>
+      <button id="checkin-btn" onclick="doCheckIn()" class="btn-primary w-full py-3 rounded-xl">今日签到</button>
+      <button id="checkin-done" class="btn-soft w-full py-3 rounded-xl hidden" disabled>已签到 ✓</button>
+    </div>
+
+    <!-- 赚取水晶 -->
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-4">✨ 赚取水晶</h3>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">📅</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">每日签到</div><div class="text-xs" style="color:var(--text-mute)">+5 水晶</div></div>
+          </div>
+          <div class="text-xs px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)" id="task-checkin">进行中</div>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">⭐</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">完成打卡</div><div class="text-xs" style="color:var(--text-mute)">+3 水晶</div></div>
+          </div>
+          <div class="text-xs px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)" id="task-challenge">进行中</div>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">📝</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">记录情绪</div><div class="text-xs" style="color:var(--text-mute)">+2 水晶</div></div>
+          </div>
+          <div class="text-xs px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)" id="task-emotion">进行中</div>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">📤</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">分享卡片</div><div class="text-xs" style="color:var(--text-mute)">+5 水晶</div></div>
+          </div>
+          <div class="text-xs px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)" id="task-share">进行中</div>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">📖</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">阅读书籍</div><div class="text-xs" style="color:var(--text-mute)">+10 水晶/本</div></div>
+          </div>
+          <div class="text-xs px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)" id="task-book">进行中</div>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">🤝</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">邀请好友</div><div class="text-xs" style="color:var(--text-mute)">双方各 +30 水晶</div></div>
+          </div>
+          <button onclick="showInvitePage()" class="text-xs px-3 py-1.5 rounded-full" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white">去邀请</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 水晶商城 -->
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-4">🛒 水晶商城</h3>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">📖</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">解锁一本书</div><div class="text-xs" style="color:var(--text-mute)">永久解锁单本书籍</div></div>
+          </div>
+          <button onclick="unlockWithCrystals('book', 30)" class="text-xs px-3 py-1.5 rounded-full flex items-center gap-1" style="background:linear-gradient(135deg,#FDE68A,#F59E0B);color:white"><span>💎</span>30</button>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">🤖</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">AI 5次对话</div><div class="text-xs" style="color:var(--text-mute)">解锁AI闺蜜5次对话</div></div>
+          </div>
+          <button onclick="unlockWithCrystals('ai5', 10)" class="text-xs px-3 py-1.5 rounded-full flex items-center gap-1" style="background:linear-gradient(135deg,#FDE68A,#F59E0B);color:white"><span>💎</span>10</button>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl" style="background:rgba(255,255,255,0.5)">
+          <div class="flex items-center gap-3">
+            <div class="text-xl">🌙</div>
+            <div><div class="text-sm font-medium" style="color:var(--theme-text)">会员1天体验</div><div class="text-xs" style="color:var(--text-mute)">体验全部会员功能</div></div>
+          </div>
+          <button onclick="unlockWithCrystals('member1d', 50)" class="text-xs px-3 py-1.5 rounded-full flex items-center gap-1" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white"><span>💎</span>50</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 邀请好友 -->
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">🤝 邀请好友</h3>
+      <p class="text-sm mb-3" style="color:var(--text-soft)">邀请好友一起显化，双方各得 30 水晶！</p>
+      <div class="flex gap-2 mb-3">
+        <input type="text" id="my-invite-code" class="dream-input text-center font-mono" style="flex:1" readonly value="">
+        <button onclick="copyInviteCode()" class="btn-soft px-4 py-2 rounded-xl text-sm">复制</button>
+      </div>
+      <div class="flex gap-2 mb-3">
+        <input type="text" id="input-invite-code" class="dream-input" style="flex:1" placeholder="输入好友邀请码">
+        <button onclick="submitInviteCode()" class="btn-primary px-4 py-2 rounded-xl text-sm">领取</button>
+      </div>
+      <div class="text-center p-3 rounded-xl" style="background:rgba(212,181,199,0.1)">
+        <div class="text-sm" style="color:var(--text-soft)">已邀请 <span id="invited-count" class="font-bold" style="color:var(--theme-text)">0</span> 人</div>
+      </div>
+    </div>
+
+    <!-- 会员权益对比 -->
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-4">📊 会员权益对比</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs" style="min-width:320px">
+          <thead><tr><th class="text-left py-2" style="color:var(--text-mute)">功能</th><th class="text-center py-2" style="color:var(--text-mute)">免费</th><th class="text-center py-2" style="color:var(--theme-text)">会员</th><th class="text-center py-2" style="color:#F59E0B">高级</th></tr></thead>
+          <tbody style="color:var(--theme-text)">
+            <tr><td class="py-2">每日塔罗</td><td class="text-center">1张</td><td class="text-center font-medium">3张</td><td class="text-center font-medium">无限</td></tr>
+            <tr><td class="py-2">AI 闺蜜对话</td><td class="text-center">3次</td><td class="text-center font-medium">20次</td><td class="text-center font-medium">无限</td></tr>
+            <tr><td class="py-2">SATS 冥想</td><td class="text-center">1次/天</td><td class="text-center font-medium">3次/天</td><td class="text-center font-medium">无限</td></tr>
+            <tr><td class="py-2">经典书籍</td><td class="text-center">2本</td><td class="text-center font-medium">8本</td><td class="text-center font-medium">8本</td></tr>
+            <tr><td class="py-2">数据导出</td><td class="text-center">❌</td><td class="text-center font-medium">✅</td><td class="text-center font-medium">✅</td></tr>
+            <tr><td class="py-2">高级图表</td><td class="text-center">❌</td><td class="text-center font-medium">✅</td><td class="text-center font-medium">✅</td></tr>
+            <tr><td class="py-2">SP 完整专区</td><td class="text-center">部分</td><td class="text-center font-medium">✅</td><td class="text-center font-medium">✅</td></tr>
+            <tr><td class="py-2">AI 深度教练</td><td class="text-center">❌</td><td class="text-center">❌</td><td class="text-center font-medium">✅</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 会员订阅页 ========== -->
+<section id="page-vip-plans" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="showPage('vip')" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">升级会员</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <!-- 限时优惠条 -->
+    <div id="vip-limited-banner" class="p-4 rounded-2xl mb-6 text-center" style="background:linear-gradient(135deg,#FDE68A,#F59E0B);display:none">
+      <div class="text-sm font-medium text-white mb-1">🎉 新用户限时特惠</div>
+      <div class="text-2xl font-bold text-white">首月仅需 ¥6</div>
+      <div class="text-xs text-white opacity-80">原价 ¥18，限时72小时</div>
+      <button onclick="selectPlan('member_first_month')" class="mt-3 w-full py-2 rounded-xl bg-white text-sm font-medium" style="color:#F59E0B">立即抢购</button>
+    </div>
+
+    <!-- 会员方案 -->
+    <div class="space-y-4 mb-6">
+      <!-- 月度会员 -->
+      <div class="glass-card p-5 relative" style="border:1.5px solid rgba(212,181,199,0.3)">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="font-medium text-lg" style="color:var(--theme-text)">✨ 宇宙会员</h3>
+            <p class="text-xs" style="color:var(--text-mute)">解锁全部基础显化工具</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xl font-bold" style="color:var(--theme-text)">¥18</div>
+            <div class="text-xs" style="color:var(--text-mute)">/月</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">塔罗3张/天</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">AI 20次/天</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">8本书</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">数据导出</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">高级图表</span>
+        </div>
+        <button onclick="selectPlan('member_month')" class="btn-primary w-full py-3 rounded-xl">选择月度会员</button>
+      </div>
+
+      <!-- 年度会员 -->
+      <div class="glass-card p-5 relative" style="border:1.5px solid #F59E0B">
+        <div class="absolute -top-2 right-4 text-xs px-3 py-1 rounded-full text-white font-medium" style="background:linear-gradient(135deg,#F59E0B,#FDE68A)">最划算</div>
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="font-medium text-lg" style="color:var(--theme-text)">🌟 宇宙会员 · 年卡</h3>
+            <p class="text-xs" style="color:var(--text-mute)">每天只需 ¥0.35</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xl font-bold" style="color:#F59E0B">¥128</div>
+            <div class="text-xs" style="color:var(--text-mute)">/年 <span style="text-decoration:line-through">¥216</span></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">全部会员功能</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">省 ¥88</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">额外赠 100 水晶</span>
+        </div>
+        <button onclick="selectPlan('member_year')" class="w-full py-3 rounded-xl text-white font-medium" style="background:linear-gradient(135deg,#F59E0B,#FDE68A)">选择年度会员</button>
+      </div>
+
+      <!-- 高级会员 -->
+      <div class="glass-card p-5 relative" style="border:1.5px solid rgba(245,158,11,0.4)">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="font-medium text-lg" style="color:#F59E0B">👑 星际高级会员</h3>
+            <p class="text-xs" style="color:var(--text-mute)">深度显化教练 · 无限使用</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xl font-bold" style="color:#F59E0B">¥38</div>
+            <div class="text-xs" style="color:var(--text-mute)">/月</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(245,158,11,0.15);color:#B45309">全部会员功能</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(245,158,11,0.15);color:#B45309">AI 深度教练</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(245,158,11,0.15);color:#B45309">无限对话</span>
+          <span class="text-[10px] px-2 py-1 rounded-full" style="background:rgba(245,158,11,0.15);color:#B45309">优先响应</span>
+        </div>
+        <button onclick="selectPlan('vip_month')" class="w-full py-3 rounded-xl text-white font-medium" style="background:linear-gradient(135deg,#F59E0B,#D97706)">选择高级会员</button>
+      </div>
+    </div>
+
+    <!-- 订阅说明 -->
+    <div class="text-xs text-center" style="color:var(--text-mute)">
+      <p>🔒 订阅自动续期，可随时取消</p>
+      <p>💎 所有会员方案均包含水晶奖励</p>
+      <p>🌙 升级后所有功能立即解锁</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 限时优惠弹窗 ========== -->
+<div id="limited-offer-modal" class="modal-backdrop" onclick="if(event.target===this)closeLimitedOffer()">
+  <div class="modal-content p-6 text-center" style="max-width:340px">
+    <div class="text-4xl mb-3">🎁</div>
+    <h3 class="font-medium text-lg mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">限时特惠</h3>
+    <p class="text-sm mb-3" style="color:var(--text-soft)">新用户专享，错过再等一年</p>
+    <div class="p-4 rounded-2xl mb-4" style="background:linear-gradient(135deg,#FDE68A,#F59E0B)">
+      <div class="text-white text-sm font-medium mb-1">宇宙会员首月</div>
+      <div class="flex items-baseline justify-center gap-1">
+        <span class="text-white text-lg">¥</span>
+        <span class="text-white text-4xl font-bold">6</span>
+        <span class="text-white text-sm opacity-70" style="text-decoration:line-through">¥18</span>
+      </div>
+      <div class="text-white text-xs mt-1 opacity-80">限时72小时 · 剩余 <span id="offer-timer">23:59:59</span></div>
+    </div>
+    <button onclick="selectPlan('member_first_month');closeLimitedOffer()" class="btn-primary w-full py-3 rounded-xl mb-2">立即抢购</button>
+    <button onclick="closeLimitedOffer()" class="text-xs" style="color:var(--text-mute)">稍后再说</button>
+  </div>
+</div>
+
+<!-- ========== 功能锁定提示弹窗 ========== -->
+<div id="lock-modal" class="modal-backdrop" onclick="if(event.target===this)closeLockModal()">
+  <div class="modal-content p-6 text-center" style="max-width:340px">
+    <div class="text-4xl mb-3">🔒</div>
+    <h3 class="font-medium text-lg mb-2" style="font-family:'ZCOOL XiaoWei',sans-serif" id="lock-title">功能锁定</h3>
+    <p class="text-sm mb-4" style="color:var(--text-soft)" id="lock-desc">升级会员即可解锁此功能</p>
+    <div class="flex gap-2 mb-3">
+      <button onclick="closeLockModal();showPage('vip')" class="btn-primary flex-1 py-3 rounded-xl text-sm">升级会员</button>
+      <button onclick="closeLockModal()" class="btn-soft flex-1 py-3 rounded-xl text-sm">用水晶解锁</button>
+    </div>
+    <button onclick="closeLockModal()" class="text-xs" style="color:var(--text-mute)">稍后再说</button>
+  </div>
+</div>

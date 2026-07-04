@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.4.3';
+const GAME_VERSION = '1.4.4';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10899,6 +10899,8 @@ function saveGame() {
         delete game._skipNextWorkerProcess;
         delete game._questRewardTimeout;
         delete game._loadGameSpeedTimeout;
+        delete game._modalPauseStack;
+        delete game._loadGameSpeedTimeout;
         // 清理加工任务中的瞬态标志（避免 _loggedFull 被序列化到存档）
         if (game.processingJobs) {
             game.processingJobs.forEach(job => { delete job._loggedFull; });
@@ -11139,6 +11141,15 @@ function createDefaultGame() {
 // 存档兼容处理：给旧存档补上缺失的字段
 function fixSaveData() {
     if (!game || typeof game !== 'object') {
+        game = createDefaultGame ? createDefaultGame() : {};
+        return;
+    }
+    if (!game) return;
+    
+    // 补全版本号（极旧存档可能缺少）
+    if (!game.version) game.version = '1.0.0';
+    
+    // 补全核心游戏状态（极旧存档可能缺少这些基础字段）
         game = createDefaultGame ? createDefaultGame() : {};
         return;
     }

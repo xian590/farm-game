@@ -1,0 +1,683 @@
+// ===== DIARY_PROMPTS =====
+const DIARY_PROMPTS = [
+  "今天有哪些瞬间让我感到感恩？",
+  "如果我已经实现了最大的愿望，我现在会是什么感觉？",
+  "今天我做对了什么？",
+  "我想对一个月后的自己说什么？",
+  "今天宇宙给了我什么信号？",
+  "我现在的情绪在22级刻度的哪一级？",
+  "今天哪一刻我感觉最有力量？",
+  "我想放下什么？",
+  "如果没有任何限制，我会选择怎样度过今天？",
+  "我对自己的肯定语是什么？",
+  "今天我为梦想做了什么？",
+  "我感受到爱的三个瞬间是？",
+  "我想感谢自己的三件事？",
+  "如果未来的我写信给现在的我，会说什么？",
+  "今天我发现了自己的什么优点？"
+];
+
+// ===== 21天显化挑战系统 =====
+const CHALLENGE_TASKS = [
+  { week: 1, title: "清理与设定", tasks: [
+    "写下所有限制性信念，然后撕掉/删掉",
+    "创建你的愿景板",
+    "选择3句核心肯定语",
+    "睡前15分钟SATS视觉化练习",
+    "用修正法改写今天一件不开心的事",
+    "写下50件感恩的事",
+    "周复盘：记录这周的巧合和感受变化"
+  ]},
+  { week: 2, title: "深化与安住", tasks: [
+    "使用22级情绪刻度，记录全天情绪",
+    "正念身体扫描冥想30分钟",
+    "做一件平时舍不得做的事（体验丰盛）",
+    "给潜意识写一封信",
+    "写一封来自未来的信给自己",
+    "清理物理空间，为新能量腾位置",
+    "周复盘：对比第一周，记录变化"
+  ]},
+  { week: 3, title: "活在终点", tasks: [
+    "全天活在已经拥有的状态",
+    "慷慨日：给出你想得到的东西",
+    "深度镜子练习",
+    "禁食3D：一天不检查现实证据",
+    "用绘画/音乐/舞蹈表达你的愿景",
+    "宽恕日：宽恕所有伤害过你的人",
+    "庆祝日：庆祝你的新身份！"
+  ]}
+];
+
+let challengeState = { currentDay: 1, completedDays: [], streak: 0, lastCheckIn: null };
+
+function loadChallengeState() {
+  try { const s = StorageUtil.get('challenge_state', null); if (s) challengeState = s; } catch(e){}
+}
+function saveChallengeState() { StorageUtil.set('challenge_state', challengeState); }
+
+function initChallenge() {
+  loadChallengeState();
+  renderChallenge();
+}
+
+function renderChallenge() {
+  const d = document.getElementById('challenge-current-day');
+  const s = document.getElementById('challenge-streak');
+  const c = document.getElementById('challenge-completed');
+  const p = document.getElementById('challenge-progress');
+  const t = document.getElementById('challenge-tasks');
+  const b = document.getElementById('challenge-checkin-btn');
+  const m = document.getElementById('challenge-completed-msg');
+  const r = document.getElementById('challenge-roadmap');
+  if(!d||!s||!c||!p||!t||!b||!m||!r) return;
+  d.textContent = challengeState.currentDay;
+  s.textContent = challengeState.streak;
+  c.textContent = challengeState.completedDays.length;
+  p.style.width = (challengeState.completedDays.length/21*100)+'%';
+  const wk = Math.min(Math.floor((challengeState.currentDay-1)/7),2);
+  const dy = (challengeState.currentDay-1)%7;
+  const task = CHALLENGE_TASKS[wk] ? CHALLENGE_TASKS[wk].tasks[dy] : "保持你的显化状态";
+  const done = challengeState.completedDays.includes(challengeState.currentDay);
+  t.innerHTML = `<div class="flex items-start gap-3 p-3 rounded-xl ${done?'bg-green-50':'bg-white/50'}" style="border:1px solid rgba(212,181,199,0.2)"><div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${done?'bg-green-400 text-white':'bg-gray-200'}" style="font-size:12px">${done?'✓':challengeState.currentDay}</div><div><p class="font-medium text-sm" style="color:var(--theme-text)">第${challengeState.currentDay}天 · ${CHALLENGE_TASKS[wk]?CHALLENGE_TASKS[wk].title:'坚持'}</p><p class="text-sm mt-1" style="color:var(--text-soft)">${task}</p></div></div>`;
+  b.style.display = done ? 'none' : 'block';
+  m.style.display = done ? 'block' : 'none';
+  let rh='';
+  for(let i=1;i<=21;i++){
+    const done=challengeState.completedDays.includes(i);
+    const cur=i===challengeState.currentDay;
+    rh+=`<div class="aspect-square rounded-lg flex items-center justify-center text-xs font-medium ${done?'text-white':(cur?'':'text-gray-400')}" style="${done?'background:linear-gradient(135deg,#D4B5C7,#B8A9C9)':(cur?'background:rgba(212,181,199,0.3);border:2px solid #B8A9C9':'background:rgba(255,255,255,0.5)')}">${done?'✓':i}</div>`;
+  }
+  r.innerHTML=rh;
+}
+
+function challengeCheckIn() {
+  if(challengeState.completedDays.includes(challengeState.currentDay)) return;
+  challengeState.completedDays.push(challengeState.currentDay);
+  challengeState.streak++;
+  if(challengeState.currentDay%7===0) { showToast(`🎉 第${Math.floor(challengeState.currentDay/7)}周完成！`); createConfetti(); }
+  else showToast('✨ 今日打卡成功！');
+  if(challengeState.currentDay<21) challengeState.currentDay++;
+  saveChallengeState();
+  renderChallenge();
+}
+
+function resetChallenge() {
+  if(!confirm('确定要重置21天挑战吗？所有进度将清空。')) return;
+  challengeState={currentDay:1,completedDays:[],streak:0,lastCheckIn:null};
+  saveChallengeState();
+  renderChallenge();
+  showToast('挑战已重置');
+}
+
+// ===== 情绪导航器 =====
+const EMOTION_SCALE = [
+  {level:1,name:"绝望",emoji:"😫",desc:"最深的低谷，但这也意味着即将反弹",color:"#8B5CF6",exercise:"深呼吸5次，告诉自己'这只是暂时的'。写下3件你仍然拥有的小事。"},
+  {level:2,name:"恐惧",emoji:"😨",desc:"恐惧是未发生之事的影子",color:"#7C3AED",exercise:"问自己'最坏的结果是什么？我能承受吗？' 然后做 grounding 练习：说出5样看到的东西。"},
+  {level:3,name:"焦虑",emoji:"😰",desc:"对未来的担忧正在消耗你的现在",color:"#6366F1",exercise:"4-7-8呼吸法：吸气4秒，屏息7秒，呼气8秒。重复5轮。"},
+  {level:4,name:"怀疑",emoji:"🤔",desc:"怀疑是转变的前奏",color:"#818CF8",exercise:"写下'我怀疑______，但我也相信______'。让两种声音对话。"},
+  {level:5,name:"失望",emoji:"😞",desc:"期望与现实的落差",color:"#A78BFA",exercise:"修正法：闭上眼睛，想象那个让你失望的场景以完美结局重新播放。"},
+  {level:6,name:"担忧",emoji:"😟",desc:"轻度的不安在提醒你去行动",color:"#C4B5FD",exercise:"准备一个'担忧盒子'，把所有担忧写在小纸条上放进盒子，告诉自己'明天再处理'。"},
+  {level:7,name:"不耐烦",emoji:"😤",desc:"渴望改变的信号",color:"#DDD6FE",exercise:"问自己'如果已经实现了，我现在会做什么？' 然后去做那件事的一小部分。"},
+  {level:8,name:"无聊",emoji:"😐",desc:"稳定但缺乏热情",color:"#E9D5FF",exercise:"尝试一件新鲜事，或听一首能让你情绪上升的音乐。"},
+  {level:9,name:"满足",emoji:"😊",desc:"平静而舒适的状态",color:"#F5D5E0",exercise:"感恩练习：说出或写下此刻让你感恩的3件事。"},
+  {level:10,name:"希望",emoji:"🌱",desc:"向上生长的力量",color:"#FBCFE8",exercise:"视觉化：闭上眼睛，想象一个让你感到希望的场景，越详细越好。"},
+  {level:11,name:"乐观",emoji:"😄",desc:"相信好事正在发生",color:"#F9A8D4",exercise:"肯定语：大声说出'我值得一切美好，好事正在来的路上'。"},
+  {level:12,name:"期待",emoji:"🤩",desc:"对未来充满好奇与兴奋",color:"#F472B6",exercise:"写下'我期待______'，然后想象它实现的画面，沉浸在那个感觉里。"},
+  {level:13,name:"兴奋",emoji:"🥳",desc:"能量高涨，创造力爆发",color:"#EC4899",exercise:"行动！把这份兴奋转化为具体的下一步行动。"},
+  {level:14,name:"热情",emoji:"🔥",desc:"内在火焰在燃烧",color:"#DB2777",exercise:"分享！把你的热情传递给身边的人，能量会倍增。"},
+  {level:15,name:"爱",emoji:"❤️",desc:"连接与慈悲",color:"#BE185D",exercise:"心轮冥想：把手放在心口，想象粉色的光从心脏发出，包围全身。"},
+  {level:16,name:"感恩",emoji:"🙏",desc:"丰盛意识觉醒",color:"#9D174D",exercise:"写50件感恩的事，越多越好，写到流泪为止。"},
+  {level:17,name:"平和",emoji:"☮️",desc:"一切如是，无需改变",color:"#831843",exercise:"静坐15分钟，什么都不做，只是存在。"},
+  {level:18,name:"喜悦",emoji:"😆",desc:"纯粹的开心",color:"#701A75",exercise:"庆祝！做任何让你感到快乐的事，把这份快乐分享给世界。"},
+  {level:19,name:"自由",emoji:"🕊️",desc:"超越限制的感觉",color:"#86198F",exercise:"写下'如果我完全自由，我会______'，然后选择一件今天就能做的事。"},
+  {level:20,name:"赋能",emoji:"💪",desc:"我知道我可以创造一切",color:"#A21CAF",exercise:"回顾你的显化成功日记，确认你创造过的所有奇迹。"},
+  {level:21,name:"智慧",emoji:"🦉",desc:"洞察与理解",color:"#C026D3",exercise:"冥想一个问题，然后静默等待答案从内心升起。"},
+  {level:22,name:"合一",emoji:"✨",desc:"与宇宙合一的最高状态",color:"#D946EF",exercise:"SATS：在入睡前，沉浸在你已经是的一切之中。"}
+];
+
+let emotionNotes = [];
+function loadEmotionNotes() { try { const s = StorageUtil.get('emotion_notes', null); if (s) emotionNotes = s; } catch(e){} }
+function saveEmotionNotes() { StorageUtil.set('emotion_notes', emotionNotes.slice(-30)); }
+
+function onEmotionSlide(val) {
+  const e = EMOTION_SCALE[val-1] || EMOTION_SCALE[10];
+  const m = document.getElementById('emotion-marker');
+  const em = document.getElementById('emotion-emoji');
+  const n = document.getElementById('emotion-name');
+  const d = document.getElementById('emotion-desc');
+  const ex = document.getElementById('emotion-exercise');
+  if(m) m.style.left = (val/22*100)+'%';
+  if(em) em.textContent = e.emoji;
+  if(n) { n.textContent = e.name; n.style.color = e.color; }
+  if(d) d.textContent = e.desc;
+  if(ex) ex.innerHTML = `<div class="font-medium mb-1" style="color:${e.color}">${e.emoji} ${e.name} · 升阶练习</div><div>${e.exercise}</div>`;
+}
+
+function saveEmotionNote() {
+  const note = document.getElementById('emotion-note');
+  if(!note) return;
+  const text = note.value.trim();
+  if(!text) { showToast('请写下你的感受'); return; }
+  const val = parseInt(document.getElementById('emotion-slider').value);
+  const e = EMOTION_SCALE[val-1];
+  emotionNotes.unshift({ date: new Date().toLocaleDateString('zh-CN'), level: val, name: e.name, emoji: e.emoji, note: text });
+  saveEmotionNotes();
+  renderEmotionHistory();
+  note.value = '';
+  showToast('情绪记录已保存');
+}
+
+function renderEmotionHistory() {
+  const el = document.getElementById('emotion-history');
+  if(!el) return;
+  if(!emotionNotes.length) { el.innerHTML = '<p class="text-center text-sm" style="color:var(--text-mute)">还没有记录</p>'; return; }
+  el.innerHTML = emotionNotes.slice(0,10).map(n => `<div class="p-3 rounded-xl text-sm" style="background:rgba(255,255,255,0.5)"><div class="flex items-center gap-2 mb-1"><span>${n.emoji}</span><span class="font-medium">${n.name}</span><span class="text-xs ml-auto" style="color:var(--text-mute)">${n.date}</span></div><p style="color:var(--text-soft)">${n.note}</p></div>`).join('');
+}
+
+function initEmotion() {
+  loadEmotionNotes();
+  onEmotionSlide(11);
+  renderEmotionHistory();
+}
+
+// ===== SP显化专区 =====
+const SP_AFFIRMATIONS = {
+  all: ["我和TA的关系充满了爱、尊重和幸福","TA深深地爱着我，珍视我们的关系","我值得拥有一段充满爱的关系","我吸引了一个完美的伴侣","我和TA之间只有爱与和谐","TA正在想念我，准备联系我","我们之间的问题已经解决，关系比以前更好","我释放所有对关系的担忧，只专注于爱","TA被我的能量深深吸引","我们的爱情故事正在以最美好的方式展开"],
+  reunion: ["TA正在想念我，准备联系我","我们之间的问题已经解决，关系比以前更好","TA意识到我是TA生命中最重要的人","我们重新连接，比以前更亲密","TA正在回来的路上","旧故事已经结束，新故事正在展开"],
+  new: ["我吸引了一个完美的伴侣","我值得拥有一段充满爱的关系","我的理想伴侣正在进入我的生活","我准备好了迎接真爱","宇宙正在为我安排最完美的相遇","我散发出爱的频率，吸引着爱"],
+  deepen: ["我和TA的关系每天都在加深","TA对我越来越投入和专一","我们的沟通充满了理解和温柔","TA总是把我和我们的关系放在第一位","我们的爱每天都在增长","TA向我表达爱意的方式让我感到幸福"]
+};
+
+const SP_SCENES = [
+  {title:"重逢的拥抱",desc:"想象TA向你走来，你们紧紧拥抱，感受到彼此的温度和心跳。"},
+  {title:"甜蜜的电话",desc:"想象手机响起，是TA的来电，TA的声音充满了思念和爱意。"},
+  {title:"浪漫的约会",desc:"想象你们在一个美丽的地方约会，TA看着你，眼中满是爱意。"},
+  {title:"日常的温馨",desc:"想象一个普通的早晨，你们一起醒来，TA给你一个温柔的早安吻。"},
+  {title:"深度的对话",desc:"想象你们进行了一次心灵的对话，TA向你敞开心扉，分享内心最深处的感受。"}
+];
+
+let spCurrentCategory = 'all';
+let ignore3DMode = false;
+
+function loadSpState() { try { const s = StorageUtil.get('sp_ignore_3d', null); if (s) ignore3DMode = s; } catch(e){} }
+function saveSpState() { StorageUtil.set('sp_ignore_3d', ignore3DMode); }
+
+function initSp() {
+  loadSpState();
+  renderSpAffirmations();
+  renderSpScenes();
+  const t = document.getElementById('ignore-3d-toggle');
+  const s = document.getElementById('ignore-3d-status');
+  if(t) t.classList.toggle('on', ignore3DMode);
+  if(s) s.style.display = ignore3DMode ? 'block' : 'none';
+}
+
+function renderSpAffirmations() {
+  const el = document.getElementById('sp-affirmations');
+  if(!el) return;
+  const items = SP_AFFIRMATIONS[spCurrentCategory] || SP_AFFIRMATIONS.all;
+  el.innerHTML = items.map((a,i) => `<div class="p-3 rounded-xl flex items-start gap-3 cursor-pointer" style="background:rgba(255,255,255,0.5);border:1px solid rgba(212,181,199,0.2)" onclick="speakSpAffirmation('${a.replace(/'/g,"\\'")}')"><div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">${i+1}</div><p class="text-sm" style="color:var(--theme-text)">${a}</p></div>`).join('');
+}
+
+function switchSpCategory(btn, cat) {
+  spCurrentCategory = cat;
+  document.querySelectorAll('#page-sp .chip-soft').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSpAffirmations();
+}
+
+function speakSpAffirmation(text) {
+  if(window.speechSynthesis) { const u = new SpeechSynthesisUtterance(text); u.lang='zh-CN'; u.rate=0.9; u.pitch=1.1; window.speechSynthesis.speak(u); }
+  showToast('正在播放肯定语 ✨');
+}
+
+function renderSpScenes() {
+  const el = document.getElementById('sp-scenes');
+  if(!el) return;
+  el.innerHTML = SP_SCENES.map(s => `<div class="p-4 rounded-xl cursor-pointer" style="background:rgba(255,255,255,0.5);border:1px solid rgba(212,181,199,0.2)" onclick="playSpScene(this)"><div class="font-medium text-sm mb-1" style="color:var(--theme-text)">🎬 ${s.title}</div><p class="text-sm" style="color:var(--text-soft)">${s.desc}</p></div>`).join('');
+}
+
+function playSpScene(el) {
+  el.style.background = 'linear-gradient(135deg,rgba(232,181,200,0.2),rgba(200,165,216,0.2))';
+  setTimeout(() => { el.style.background = 'rgba(255,255,255,0.5)'; }, 2000);
+  showToast('闭上眼睛，沉浸在这个场景中 💕');
+}
+
+function toggleIgnore3D() {
+  ignore3DMode = !ignore3DMode;
+  const t = document.getElementById('ignore-3d-toggle');
+  const s = document.getElementById('ignore-3d-status');
+  if(t) t.classList.toggle('on', ignore3DMode);
+  if(s) s.style.display = ignore3DMode ? 'block' : 'none';
+  saveSpState();
+  showToast(ignore3DMode ? '🛡️ 忽略3D模式已开启' : '忽略3D模式已关闭');
+}
+
+// ===== 财富丰盛专区 =====
+const WEALTH_AFFIRMATIONS = [
+  "我是金钱的磁铁，钱从各种意想不到的渠道流向我",
+  "我值得拥有我所渴望的一切丰盛",
+  "我花钱的时候感到开心，因为我知道更多的钱正在来的路上",
+  "我的收入每个月都在增长",
+  "我是丰盛的，金钱爱我，我也爱金钱",
+  "我轻松吸引财富和机会",
+  "我的银行账户余额正在不断扩大",
+  "我感恩我现在拥有的，也欢迎更多丰盛的到来",
+  "我的财富是用来祝福自己和他人的工具",
+  "我释放所有对金钱的恐惧和限制，我完全自由"
+];
+
+let wealthChecks = [];
+let incomeLogs = [];
+
+function loadWealthData() {
+  try { const c = StorageUtil.get('wealth_checks', []); const i = StorageUtil.get('wealth_income', []); if(c) wealthChecks=c; if(i) incomeLogs=i; } catch(e){}
+}
+function saveWealthData() { StorageUtil.set('wealth_checks', wealthChecks); StorageUtil.set('wealth_income', incomeLogs); }
+
+function initWealth() {
+  loadWealthData();
+  renderWealthAffirmations();
+  renderMagicChecks();
+  renderIncomeLogs();
+  renderWealthSymbols();
+}
+
+function renderWealthAffirmations() {
+  const el = document.getElementById('wealth-affirmations');
+  if(!el) return;
+  el.innerHTML = WEALTH_AFFIRMATIONS.map((a,i) => `<div class="p-3 rounded-xl flex items-center gap-3 cursor-pointer" style="background:rgba(255,255,255,0.5);border:1px solid rgba(212,181,199,0.2)" onclick="speakWealthAffirmation('${a.replace(/'/g,"\\'")}')"><div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs" style="background:linear-gradient(135deg,#FDE68A,#F59E0B)">${i+1}</div><p class="text-sm" style="color:var(--theme-text)">${a}</p></div>`).join('');
+}
+
+function speakWealthAffirmation(text) {
+  if(window.speechSynthesis) { const u = new SpeechSynthesisUtterance(text); u.lang='zh-CN'; u.rate=0.9; u.pitch=1; window.speechSynthesis.speak(u); }
+  showToast('正在播放丰盛肯定语 💰');
+}
+
+function checkWealthBeliefs() {
+  const checked = Array.from(document.querySelectorAll('.wealth-belief:checked')).map(cb => cb.value);
+  const resultEl = document.getElementById('wealth-belief-result');
+  if(!resultEl) return;
+  resultEl.classList.remove('hidden');
+  if(checked.length >= 2) resultEl.innerHTML = `<div class="font-medium mb-1" style="color:#B45309">🧹 检测到 ${checked.length} 个限制性信念</div><div>这些信念正在阻碍你的丰盛流动。选择一句肯定语，每天重复21次，持续21天。</div>`;
+  else if(checked.length === 1) resultEl.innerHTML = `<div class="font-medium mb-1" style="color:#B45309">🌱 1个信念需要清理</div><div>你已经很棒了！只需要再释放一点点阻力，丰盛就会涌入。</div>`;
+  else resultEl.innerHTML = `<div class="font-medium mb-1" style="color:#B45309">✨ 你的财富意识很开放！</div><div>继续保持丰盛频率，你已经走在正确的道路上。</div>`;
+}
+
+function saveMagicCheck() {
+  const amt = document.getElementById('magic-check-amount');
+  const purpose = document.getElementById('magic-check-purpose');
+  if(!amt || !purpose) return;
+  const a = amt.value.trim(); const p = purpose.value.trim();
+  if(!a || !p) { showToast('请填写金额和用途'); return; }
+  wealthChecks.unshift({ date: new Date().toLocaleDateString('zh-CN'), amount: a, purpose: p });
+  saveWealthData();
+  renderMagicChecks();
+  amt.value = ''; purpose.value = '';
+  showToast('🪄 魔法支票已签发！'); createConfetti();
+}
+
+function renderMagicChecks() {
+  const el = document.getElementById('magic-check-history');
+  if(!el) return;
+  if(!wealthChecks.length) { el.innerHTML = '<p class="text-center text-sm" style="color:var(--text-mute)">还没有魔法支票</p>'; return; }
+  el.innerHTML = wealthChecks.slice(0,5).map(c => `<div class="p-3 rounded-xl text-sm flex items-center justify-between" style="background:rgba(254,243,199,0.3);border:1px solid rgba(251,191,36,0.15)"><div><div class="font-medium" style="color:#B45309">¥${c.amount}</div><div class="text-xs" style="color:var(--text-soft)">${c.purpose}</div></div><div class="text-xs" style="color:var(--text-mute)">${c.date}</div></div>`).join('');
+}
+
+function addIncomeLog() {
+  const amt = document.getElementById('wealth-income-amount');
+  const src = document.getElementById('wealth-income-source');
+  if(!amt || !src) return;
+  const a = amt.value.trim(); const s = src.value.trim();
+  if(!a || !s) { showToast('请填写金额和来源'); return; }
+  incomeLogs.unshift({ date: new Date().toLocaleDateString('zh-CN'), amount: a, source: s });
+  saveWealthData();
+  renderIncomeLogs();
+  amt.value = ''; src.value = '';
+  showToast('💰 进账已记录！感恩');
+}
+
+function renderIncomeLogs() {
+  const el = document.getElementById('wealth-income-list');
+  if(!el) return;
+  if(!incomeLogs.length) { el.innerHTML = '<p class="text-center text-sm" style="color:var(--text-mute)">还没有记录</p>'; return; }
+  el.innerHTML = incomeLogs.slice(0,10).map(l => `<div class="p-3 rounded-xl text-sm flex items-center justify-between" style="background:rgba(255,255,255,0.5)"><div><span class="font-medium" style="color:var(--theme-text)">+¥${l.amount}</span> <span style="color:var(--text-soft)">来自 ${l.source}</span></div><div class="text-xs" style="color:var(--text-mute)">${l.date}</div></div>`).join('');
+}
+
+function renderWealthSymbols() {
+  const el = document.getElementById('wealth-symbols');
+  if(!el) return;
+  const symbols = [
+    {s:"💧",t:"水",d:"财富流动"},{s:"🌳",t:"树",d:"根基稳固"},{s:"🔑",t:"钥匙",d:"打开机会"},{s:"🚪",t:"门",d:"新通道"},{s:"💎",t:"钻石",d:"珍贵价值"},{s:"🌊",t:"海浪",d:"丰盛涌入"}
+  ];
+  el.innerHTML = symbols.map(s => `<div class="p-3 rounded-xl text-center" style="background:rgba(255,255,255,0.5)"><div class="text-2xl mb-1">${s.s}</div><div class="text-xs font-medium" style="color:var(--theme-text)">${s.t}</div><div class="text-[10px]" style="color:var(--text-mute)">${s.d}</div></div>`).join('');
+}
+
+// ===== 电影疗愈模块 =====
+const MOVIE_PRESCRIPTIONS = [
+  {title:"《秘密》The Secret",emoji:"🔮",year:2006,theme:"吸引力法则入门",lesson:"思想创造现实的基础。看完你会明白：你的想法正在塑造你的世界。",scene:"初学者必看",mood:"想要理解显化原理"},
+  {title:"《土拨鼠之日》Groundhog Day",emoji:"🔄",year:1993,theme:"重复直到改变",lesson:"直到你学会功课，同样的情境会不断重复。改变内心，才能打破循环。",scene:"陷入循环时",mood:"觉得生活总在重复"},
+  {title:"《心灵奇旅》Soul",emoji:"🎹",year:2020,theme:"活在当下的意义",lesson:"火花不是目标，而是对生活的热情。显化不是抓取未来，而是享受当下。",scene:"焦虑未来时",mood:"迷失人生方向"},
+  {title:"《盗梦空间》Inception",emoji:"🌀",year:2010,theme:"植入信念",lesson:"潜意识接受真实的能力。一个想法可以像病毒一样生长，直到改变整个世界。",scene:"学习肯定语时",mood:"想理解潜意识如何工作"},
+  {title:"《彗星来的那一夜》Coherence",emoji:"🌌",year:2013,theme:"平行现实",lesson:"每个选择都创造一个新的现实分支。你不需要后悔，因为每个版本的你都在体验。",scene:"后悔过去时",mood:"纠结于选择"},
+  {title:"《她》Her",emoji:"💌",year:2013,theme:"意识与爱的本质",lesson:"爱是一种意识状态，不依赖于外在形式。显化SP不是操控，而是成为爱本身。",scene:"情感受伤时",mood:"对爱情失望"},
+  {title:"《奇异博士》Dr. Strange",emoji:"🧿",year:2016,theme:"多维现实",lesson:"现实只是你感知到的那一层。改变视角，就改变现实。",scene:"扩展认知时",mood:"想要突破限制"},
+  {title:"《降临》Arrival",emoji:"🛸",year:2016,theme:"时间与自由意志",lesson:"时间是非线性的，未来影响现在。你的终点状态正在召唤你向它移动。",scene:"理解显化时间线",mood:"急着想要结果"},
+  {title:"《楚门的世界》The Truman Show",emoji:"🎥",year:1998,theme:"觉醒",lesson:"你的世界是一个为你设计的体验。当你觉醒，整个舞台都会为你改变。",scene:"怀疑现实时",mood:"觉得被困住"},
+  {title:"《Eat Pray Love》",emoji:"🍝",year:2010,theme:"自我发现之旅",lesson:"通过外在旅行完成内在探索。显化不是改变地点，而是改变你携带的能量。",scene:"人生转折点",mood:"渴望改变"}
+];
+
+function initMovies() { renderMovies(); }
+function renderMovies() {
+  const el = document.getElementById('movie-list');
+  if(!el) return;
+  el.innerHTML = MOVIE_PRESCRIPTIONS.map(m => `<div class="glass-card p-5 card-hover" onclick="showToast('🎬 ${m.title} · ${m.lesson.substring(0,30)}...')"><div class="flex items-start gap-4"><div class="text-3xl flex-shrink-0">${m.emoji}</div><div class="flex-1"><div class="flex items-center gap-2 mb-1"><h3 class="font-medium" style="color:var(--theme-text)">${m.title}</h3><span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(212,181,199,0.2);color:var(--text-soft)">${m.year}</span></div><div class="text-xs mb-2" style="color:var(--text-mute)">🎬 ${m.theme} · 适合：${m.scene}</div><div class="text-sm p-3 rounded-xl" style="background:rgba(255,255,255,0.5);color:var(--text-soft)"><span class="font-medium" style="color:var(--theme-text)">显化 lesson：</span>${m.lesson}</div></div></div></div>`).join('');
+}
+
+// ===== AI 宇宙闺蜜 =====
+const AI_RESPONSES = {
+  "今天情绪很低落": ["抱抱你 🤗 情绪低落的时候，最重要的是不要评判自己。允许自己此刻就是这种感觉。试试深呼吸5次，然后对自己说：'我允许自己感受这一切，但我知道这不是我的终点。' 你想试试看吗？💕","亲爱的，低落的时候就像阴天，太阳并没有消失，只是暂时被云遮住了。☁️→☀️ 你现在在22级情绪刻度的哪一级呢？我们可以从那里慢慢往上走。"],
+  "SP不理我怎么办": ["这是3D在试图动摇你，但记住：3D只是旧意识的投影，不是真相！🚫 当SP '不理你' 的时候，其实是在给你空间去安住在你 '已经被爱' 的状态里。不要检查3D，回到你的肯定语。'TA正在想念我，准备联系我。' 重复21次，然后去睡觉。💤💕","🛡️ 启动忽略3D模式！SP 不理你 = 你正在 rearranging 这段关系。把 'TA不理我' 改成 'TA正在处理自己的情绪，准备以更成熟的方式回来'。修正法，现在就用！"],
+  "我想显化财富": ["太棒了！💰 财富显化第一步：检查你的信念。你觉得 '赚钱很难' 吗？或者 '有钱人不快乐'？如果勾选了，这些就是你要清理的障碍。然后签发一张魔法支票，填写你渴望的金额，感受已经拥有的喜悦！","你是丰盛的磁铁！现在闭上眼睛，想象你的银行账户里有一笔让你惊喜的数字。感受那种安全感、自由感和感恩。让这种感觉充满你... 这就是显化财富的秘密频率。✨"],
+  "给我一句今天的肯定语": ["✨ '我是宇宙最爱的孩子，今天发生的一切都是为了我的最高利益。' ✨ 重复21次，带着感觉说！","🌟 '我已经拥有了我想要的一切，此刻只是享受它显化的过程。' 🌟 这句适合在焦虑的时候用。","💕 '我和SP的关系充满了爱、尊重和幸福。' 💕 如果今天想显化爱情，用这句。","💰 '我是金钱的磁铁，钱从各种意想不到的渠道流向我。' 💰 这是今天的财富肯定语。"],
+  "我最近总是焦虑": ["焦虑是因为你在用想象力创造你不想要的东西。😰 每一次焦虑，你都在给那个'坏结果'浇水。试试这个：每次焦虑时，立刻做一个 '修正' —— 想象同一个场景以完美的结局展开。坚持3天，你会发现焦虑自然减少了。🌿","焦虑是情绪刻度的第7级。不需要跳到喜悦，只需要升到 '希望' 就够了。🌱 试试写下：'我允许自己焦虑，但我也相信一切都会好起来。' 然后去做一件让身体动起来的小事，比如整理房间或洗个热水澡。"],
+  default: ["我在听呢～💕 你可以多告诉我一些细节，或者试试我们的情绪导航器、21天挑战，这些都是为你准备的工具。","嗯嗯，我理解你的感受。显化有时候像是种花，你看不到根在生长，但它在。🌱 保持你的肯定语，不要检查3D，相信过程。","这是个很好的觉察！✨ 记录在你的显化日记里吧，过一段时间回头看，你会发现自己走了多远。","宇宙永远站在你这边。🌙 你所渴望的，也正在渴望你。保持你的频率，不要放弃。"]
+};
+
+let aiChatHistory = [];
+function loadAiHistory() { try { const s = StorageUtil.get('ai_chat_history', []); if (s) aiChatHistory = s; } catch(e){} }
+function saveAiHistory() { StorageUtil.set('ai_chat_history', aiChatHistory.slice(-50)); }
+
+function initAi() { loadAiHistory(); renderAiChat(); }
+function renderAiChat() {
+  const area = document.getElementById('ai-chat-area');
+  if(!area || !aiChatHistory.length) return;
+  aiChatHistory.forEach(msg => appendAiMessage(msg.text, msg.fromUser, false));
+}
+
+function appendAiMessage(text, fromUser, save) {
+  const area = document.getElementById('ai-chat-area');
+  if(!area) return;
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-3 ' + (fromUser ? 'flex-row-reverse' : '');
+  div.innerHTML = fromUser ? `<div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm" style="background:linear-gradient(135deg,#B8A9C9,#D4B5C7)">🌸</div><div class="p-4 rounded-2xl rounded-tr-sm text-sm" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white;max-width:75%">${text}</div>` : `<div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">🌙</div><div class="p-4 rounded-2xl rounded-tl-sm text-sm" style="background:rgba(255,255,255,0.8);color:var(--theme-text);max-width:75%">${text}</div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  if(save) { aiChatHistory.push({ text, fromUser, time: Date.now() }); saveAiHistory(); }
+}
+
+function sendAiMessage() {
+  const input = document.getElementById('ai-input');
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  appendAiMessage(text, true, true);
+  setTimeout(() => { const reply = generateAiReply(text); appendAiMessage(reply, false, true); }, 600 + Math.random() * 800);
+}
+
+function sendAiPrompt(text) {
+  const input = document.getElementById('ai-input');
+  if(input) input.value = text;
+  sendAiMessage();
+}
+
+function generateAiReply(text) {
+  for(const key in AI_RESPONSES) { if(key === 'default') continue; if(text.includes(key) || key.includes(text.substring(0,6))) { const r = AI_RESPONSES[key]; return r[Math.floor(Math.random()*r.length)]; } }
+  if(text.includes('财富') || text.includes('钱') || text.includes('穷')) { const r = AI_RESPONSES['我想显化财富']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('SP') || text.includes('他') || text.includes('她') || text.includes('复合') || text.includes('分手')) { const r = AI_RESPONSES['SP不理我怎么办']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('低落') || text.includes('难过') || text.includes('伤心') || text.includes('哭')) { const r = AI_RESPONSES['今天情绪很低落']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('焦虑') || text.includes('紧张') || text.includes('不安')) { const r = AI_RESPONSES['我最近总是焦虑']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('肯定语')) { const r = AI_RESPONSES['给我一句今天的肯定语']; return r[Math.floor(Math.random()*r.length)]; }
+  const d = AI_RESPONSES['default']; return d[Math.floor(Math.random()*d.length)];
+}
+
+// ===== 分享卡片功能 =====
+let currentShareText = '';
+function openShareCard(text) {
+  currentShareText = text || getDailyAffirmation() || '我正在显化我想要的一切 ✨';
+  const modal = document.getElementById('share-card-modal');
+  const contentEl = document.getElementById('share-card-content');
+  const dateEl = document.getElementById('share-card-date');
+  if(modal) modal.classList.add('show');
+  if(contentEl) contentEl.textContent = currentShareText;
+  if(dateEl) dateEl.textContent = new Date().toLocaleDateString('zh-CN', {month:'long', day:'numeric', weekday:'long'});
+}
+function closeShareCard() { const modal = document.getElementById('share-card-modal'); if(modal) modal.classList.remove('show'); }
+function getDailyAffirmation() { const all = [...(typeof WEALTH_AFFIRMATIONS !== 'undefined' ? WEALTH_AFFIRMATIONS : []), ...(typeof SP_AFFIRMATIONS !== 'undefined' ? (SP_AFFIRMATIONS.all || []) : [])]; if(all.length) return all[Math.floor(Math.random()*all.length)]; return null; }
+function downloadShareCard() { showToast('💡 提示：请截图保存这张卡片！'); const card = document.getElementById('share-card-preview'); if(card) { card.style.transform = 'scale(1.02)'; setTimeout(() => card.style.transform = 'scale(1)', 300); } }
+function copyShareText() {
+  const text = `✨ 宇宙许愿岛 · 显化日记\n\n📅 ${new Date().toLocaleDateString('zh-CN')}\n\n${currentShareText}\n\n🏝️ 下载宇宙许愿岛，一起显化梦想！`;
+  if(navigator.clipboard) { navigator.clipboard.writeText(text).then(() => showToast('分享文案已复制 ✨')); }
+  else showToast(text.substring(0, 60) + '...');
+}
+
+// ===== 梦境工坊 =====
+const DREAM_SYMBOLS = [
+  {symbol:"水",emoji:"💧",meaning:"情绪与潜意识流动。清澈=情绪健康；浑浊=需要清理；洪水=情绪过载。"},
+  {symbol:"蛇",emoji:"🐍",meaning:"转变与重生。蛇蜕皮象征旧我死去、新我诞生。恐惧代表抗拒改变。"},
+  {symbol:"飞翔",emoji:"🦋",meaning:"自由与超越。梦见飞翔代表你正在突破限制，渴望更高维度的生活。"},
+  {symbol:"房子",emoji:"🏠",meaning:"自我与内心。不同的房间代表不同的面向。地下室=潜意识；阁楼=高我。"},
+  {symbol:"门",emoji:"🚪",meaning:"新的机会与选择。打不开的门=恐惧；敞开的门=准备好迎接新开始。"},
+  {symbol:"镜子",emoji:"🪞",meaning:"自我认知与反思。镜中的你可能是你希望成为或正在成为的样子。"},
+  {symbol:"牙齿脱落",emoji:"🦷",meaning:"焦虑与无力感。常见于压力大或感到失控的时期。提醒自己：你有力量。"},
+  {symbol:"考试",emoji:"📝",meaning:"自我评判与测试。你在生活中某个领域感到"不够格"，需要肯定自己。"},
+  {symbol:"死亡",emoji:"🌙",meaning:"结束与新生。梦中的死亡几乎从不代表肉体死亡，而是旧阶段的结束。"},
+  {symbol:"婴儿",emoji:"👶",meaning:"新的创意、项目或自我面向。需要被呵护和培养。"},
+  {symbol:"钱",emoji:"💰",meaning:"自我价值与能量。丢失钱=担心价值被否定；收到钱=丰盛正在到来。"},
+  {symbol:"动物",emoji:"🐺",meaning:"本能与直觉。不同的动物代表不同的特质（狼=忠诚/野性，猫=独立/直觉）。"}
+];
+
+let dreamRecords = [];
+function loadDreams() { try { const s = StorageUtil.get('dream_records', []); if (s) dreamRecords = s; } catch(e){} }
+function saveDreams() { StorageUtil.set('dream_records', dreamRecords.slice(-50)); }
+
+function initDreams() {
+  loadDreams();
+  renderDreamSymbols();
+  renderDreamHistory();
+}
+
+function renderDreamSymbols() {
+  const el = document.getElementById('dream-symbols');
+  if(!el) return;
+  el.innerHTML = DREAM_SYMBOLS.map(s => `<div class="p-3 rounded-xl cursor-pointer" style="background:rgba(255,255,255,0.5);border:1px solid rgba(212,181,199,0.2)" onclick="showToast('${s.symbol}：${s.meaning.substring(0,40)}...')"><div class="text-xl mb-1">${s.emoji}</div><div class="font-medium text-xs" style="color:var(--theme-text)">${s.symbol}</div><div class="text-[10px] mt-1" style="color:var(--text-mute)">${s.meaning.substring(0,20)}...</div></div>`).join('');
+}
+
+function saveDream() {
+  const content = document.getElementById('dream-content');
+  const mood = document.getElementById('dream-mood');
+  const lucid = document.getElementById('dream-lucid');
+  if(!content) return;
+  const text = content.value.trim();
+  if(!text) { showToast('请描述你的梦境'); return; }
+  dreamRecords.unshift({
+    date: new Date().toLocaleDateString('zh-CN'),
+    content: text,
+    mood: mood ? mood.value : '',
+    lucid: lucid ? lucid.value : '',
+    id: Date.now()
+  });
+  saveDreams();
+  renderDreamHistory();
+  content.value = '';
+  if(mood) mood.value = '';
+  if(lucid) lucid.value = '';
+  showToast('🌙 梦境已记录');
+}
+
+function renderDreamHistory() {
+  const el = document.getElementById('dream-history');
+  if(!el) return;
+  if(!dreamRecords.length) { el.innerHTML = '<p class="text-center text-sm" style="color:var(--text-mute)">还没有梦境记录</p>'; return; }
+  el.innerHTML = dreamRecords.slice(0,10).map(d => `<div class="p-3 rounded-xl text-sm" style="background:rgba(255,255,255,0.5)"><div class="flex items-center justify-between mb-1"><span class="font-medium" style="color:var(--theme-text)">${d.date}</span><span class="text-xs" style="color:var(--text-mute)">${d.mood ? d.mood : ''} ${d.lucid ? (d.lucid==='是' ? '✨' : '') : ''}</span></div><p style="color:var(--text-soft)">${d.content.substring(0,100)}${d.content.length>100?'...':''}</p></div>`).join('');
+}
+
+// ===== 显化成功故事墙 =====
+const DEFAULT_STORIES = [
+  {title:"3天显化SP复合",category:"SP复合",content:"我和SP分手2个月，每天坚持SATS和肯定语。第3天早上醒来看到TA的消息，TA说昨晚梦到我，想见我。现在我们比以前更好了！💕",date:"2025-06-15",likes:128},
+  {title:"从负债到月入5万",category:"财富",content:"曾经负债累累，觉得自己不配有钱。每天做魔法支票和丰盛肯定语，2个月后意外接到一个大项目，月入5万。最重要的是心态变了！💰",date:"2025-05-20",likes:256},
+  {title:"找到理想工作",category:"工作",content:"失业3个月，焦虑到失眠。开始使用情绪导航器，每天升一级情绪。面试前一天做了SATS，想象自己收到offer的样子。第二天真的收到了！🎉",date:"2025-06-01",likes:89},
+  {title:"治愈了10年的焦虑",category:"自我成长",content:"以前每天焦虑到崩溃，吃药也没用。21天挑战第一周做完，发现自己能平静了。第三周结束时，焦虑消失了。这不仅是显化，是重生。🌱",date:"2025-04-10",likes:312},
+  {title:"身体奇迹般康复",category:"健康",content:"医生说需要手术，但我选择用修正法改写诊断结果。每天视觉化自己健康的身体，3个月后复查，医生惊讶地说'不需要手术了'。🏥",date:"2025-03-22",likes:178}
+];
+
+let userStories = [];
+function loadStories() { try { const s = StorageUtil.get('user_stories', []); if (s) userStories = s; } catch(e){} }
+function saveStories() { StorageUtil.set('user_stories', userStories); }
+
+function initStories() { loadStories(); renderStories('all'); }
+
+function renderStories(filter) {
+  const el = document.getElementById('stories-list');
+  if(!el) return;
+  const all = [...DEFAULT_STORIES, ...userStories];
+  const filtered = filter === 'all' ? all : all.filter(s => s.category === filter);
+  if(!filtered.length) { el.innerHTML = '<p class="text-center text-sm" style="color:var(--text-mute)">这个类别还没有故事</p>'; return; }
+  el.innerHTML = filtered.map((s,i) => `<div class="glass-card p-5"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">${s.category}</span><span class="text-xs" style="color:var(--text-mute)">${s.date}</span></div><div class="flex items-center gap-1 text-xs" style="color:var(--text-mute)"><span>❤️</span><span>${s.likes || 0}</span></div></div><h4 class="font-medium mb-2" style="color:var(--theme-text)">${s.title}</h4><p class="text-sm" style="color:var(--text-soft)">${s.content}</p></div>`).join('');
+}
+
+function filterStories(cat, btn) {
+  document.querySelectorAll('#page-stories .chip-soft').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStories(cat);
+}
+
+function submitStory() {
+  const title = document.getElementById('story-title');
+  const cat = document.getElementById('story-category');
+  const content = document.getElementById('story-content');
+  if(!title || !cat || !content) return;
+  const t = title.value.trim(); const c = cat.value; const txt = content.value.trim();
+  if(!t || !c || !txt) { showToast('请填写完整信息'); return; }
+  userStories.unshift({ title: t, category: c, content: txt, date: new Date().toLocaleDateString('zh-CN'), likes: 0 });
+  saveStories();
+  renderStories('all');
+  title.value = ''; cat.value = ''; content.value = '';
+  showToast('✨ 故事已发布！');
+}
+
+// ===== SATS冥想 =====
+const SATS_SCENES = [
+  {title:"睡前感恩仪式",desc:"躺在床上，回顾今天发生的3件好事。感受感恩之情从心脏扩散到全身。"},
+  {title:"理想的一天",desc:"想象你已经实现了愿望，从早晨醒来到晚上入睡的完整一天。越详细越好。"},
+  {title:"收到好消息",desc:"想象你收到了那个好消息——电话响起、消息弹出、门铃响起。感受那一刻的心跳。"},
+  {title:"与SP的温馨对话",desc:"想象你和SP在一个舒适的地方聊天，TA对你说了你一直渴望听到的话。"},
+  {title:"财富到账",desc:"想象查看银行账户，余额是一个让你惊喜的数字。感受安全、自由、感恩。"},
+  {title:"镜中的新我",desc:"站在镜子前，看着镜中的自己——你已经成为了你想成为的那个人。感受那个版本的能量。"}
+];
+
+let satsTimerInterval = null;
+let satsSeconds = 900; // 15 minutes
+let satsRunning = false;
+
+function initSats() { renderSatsScenes(); updateSatsTimerDisplay(); }
+function renderSatsScenes() {
+  const el = document.getElementById('sats-scenes');
+  if(!el) return;
+  el.innerHTML = SATS_SCENES.map((s,i) => `<div class="p-4 rounded-xl cursor-pointer" style="background:rgba(255,255,255,0.5);border:1px solid rgba(212,181,199,0.2)" onclick="selectSatsScene(${i},this)"><div class="font-medium text-sm mb-1" style="color:var(--theme-text)">🎬 ${s.title}</div><p class="text-sm" style="color:var(--text-soft)">${s.desc}</p></div>`).join('');
+}
+function selectSatsScene(idx, el) {
+  document.querySelectorAll('#sats-scenes > div').forEach(d => d.style.borderColor = 'rgba(212,181,199,0.2)');
+  el.style.borderColor = '#B8A9C9';
+  showToast(`已选择：${SATS_SCENES[idx].title} 🌙`);
+}
+function updateSatsTimerDisplay() {
+  const el = document.getElementById('sats-timer');
+  if(!el) return;
+  const m = Math.floor(satsSeconds / 60).toString().padStart(2, '0');
+  const s = (satsSeconds % 60).toString().padStart(2, '0');
+  el.textContent = `${m}:${s}`;
+}
+function startSatsTimer() {
+  if(satsRunning) return;
+  satsRunning = true;
+  const btnStart = document.getElementById('sats-btn-start');
+  const btnPause = document.getElementById('sats-btn-pause');
+  if(btnStart) btnStart.classList.add('hidden');
+  if(btnPause) btnPause.classList.remove('hidden');
+  satsTimerInterval = setInterval(() => {
+    if(satsSeconds > 0) { satsSeconds--; updateSatsTimerDisplay(); }
+    else { pauseSatsTimer(); showToast('🌙 SATS时间到，愿你带着美好入睡'); }
+  }, 1000);
+}
+function pauseSatsTimer() {
+  satsRunning = false;
+  if(satsTimerInterval) { clearInterval(satsTimerInterval); satsTimerInterval = null; }
+  const btnStart = document.getElementById('sats-btn-start');
+  const btnPause = document.getElementById('sats-btn-pause');
+  if(btnStart) btnStart.classList.remove('hidden');
+  if(btnPause) btnPause.classList.add('hidden');
+}
+function resetSatsTimer() {
+  pauseSatsTimer();
+  satsSeconds = 900;
+  updateSatsTimerDisplay();
+}
+
+// ===== 数据备份 =====
+function initBackup() { renderDataOverview(); }
+function renderDataOverview() {
+  const el = document.getElementById('data-overview');
+  if(!el) return;
+  const keys = ['cosmos_island_state_v3','challenge_state','emotion_notes','sp_ignore_3d','wealth_checks','wealth_income','ai_chat_history','dream_records','user_stories'];
+  let html = '';
+  for(const k of keys) {
+    const data = StorageUtil.get(k, null);
+    let size = 0;
+    if(data) { try { size = JSON.stringify(data).length; } catch(e){} }
+    html += `<div class="flex items-center justify-between p-3 rounded-xl text-sm" style="background:rgba(255,255,255,0.5)"><span style="color:var(--theme-text)">${k}</span><span style="color:var(--text-mute)">${size > 0 ? (size + ' bytes') : '空'}</span></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function exportAllData() {
+  const keys = ['cosmos_island_state_v3','challenge_state','emotion_notes','sp_ignore_3d','wealth_checks','wealth_income','ai_chat_history','dream_records','user_stories'];
+  const exportData = { exportDate: new Date().toISOString(), version: '2.0', data: {} };
+  for(const k of keys) { const v = StorageUtil.get(k, null); if(v !== null) exportData.data[k] = v; }
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `宇宙许愿岛备份_${new Date().toLocaleDateString('zh-CN')}.json`; a.click();
+  URL.revokeObjectURL(url);
+  showToast('备份文件已下载 💾');
+}
+
+function copyAllData() {
+  const keys = ['cosmos_island_state_v3','challenge_state','emotion_notes','sp_ignore_3d','wealth_checks','wealth_income','ai_chat_history','dream_records','user_stories'];
+  const exportData = { exportDate: new Date().toISOString(), version: '2.0', data: {} };
+  for(const k of keys) { const v = StorageUtil.get(k, null); if(v !== null) exportData.data[k] = v; }
+  const text = JSON.stringify(exportData, null, 2);
+  if(navigator.clipboard) { navigator.clipboard.writeText(text).then(() => showToast('备份数据已复制 📋')); }
+  else showToast('数据太长，请使用导出功能');
+}
+
+function importAllData() {
+  const el = document.getElementById('import-data-text');
+  if(!el) return;
+  const text = el.value.trim();
+  if(!text) { showToast('请粘贴备份数据'); return; }
+  try {
+    const data = JSON.parse(text);
+    if(!data.data || typeof data.data !== 'object') { showToast('数据格式错误'); return; }
+    for(const k in data.data) { StorageUtil.set(k, data.data[k]); }
+    showToast('✅ 数据导入成功！即将刷新...');
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) { showToast('❌ 导入失败：数据格式错误'); }
+}
+
+// ===== 导航扩展 =====
+function openModuleExtended(name) {
+  if (name === 'challenge') { showPage('challenge'); initChallenge(); return; }
+  if (name === 'emotion') { showPage('emotion'); initEmotion(); return; }
+  if (name === 'sp') { showPage('sp'); initSp(); return; }
+  if (name === 'wealth') { showPage('wealth'); initWealth(); return; }
+  if (name === 'movies') { showPage('movies'); initMovies(); return; }
+  if (name === 'ai') { showPage('ai'); initAi(); return; }
+  if (name === 'dreams') { showPage('dreams'); initDreams(); return; }
+  if (name === 'stories') { showPage('stories'); initStories(); return; }
+  if (name === 'sats') { showPage('sats'); initSats(); return; }
+  if (name === 'backup') { showPage('backup'); initBackup(); return; }
+  // fallback to original openModule
+  openModule(name);
+}

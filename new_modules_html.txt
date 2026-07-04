@@ -1,0 +1,414 @@
+<!-- ========== 21天显化挑战 ========== -->
+<section id="page-challenge" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">21天显化挑战</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-3xl mb-2">✨</div>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">第 <span id="challenge-current-day">1</span> 天</h2>
+      <p class="text-sm mb-4" style="color:var(--text-soft)">连续打卡 <span id="challenge-streak">0</span> 天</p>
+      <div class="progress-bar mb-2"><div id="challenge-progress" class="progress-fill" style="width:0%;background:linear-gradient(90deg,#D4B5C7,#B8A9C9)"></div></div>
+      <p class="text-xs" style="color:var(--text-mute)">已完成 <span id="challenge-completed">0</span>/21 天</p>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <div class="flex items-center gap-2 mb-4"><span class="text-xl">📋</span><h3 class="font-medium">今日任务</h3></div>
+      <div id="challenge-tasks" class="space-y-3"></div>
+      <button id="challenge-checkin-btn" onclick="challengeCheckIn()" class="btn-primary btn-primary-lg w-full mt-5" style="display:none">完成今日打卡</button>
+      <div id="challenge-completed-msg" class="text-center py-4" style="display:none">
+        <div class="text-3xl mb-2">🎉</div>
+        <p class="font-medium" style="color:var(--theme-primary)">今日任务已完成！</p>
+        <p class="text-sm mt-1" style="color:var(--text-soft)">明天继续，你正在创造奇迹</p>
+      </div>
+    </div>
+    <div class="glass-card p-5">
+      <h3 class="font-medium mb-4">📅 21天路线图</h3>
+      <div id="challenge-roadmap" class="grid grid-cols-7 gap-2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 情绪导航器 ========== -->
+<section id="page-emotion" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">情绪导航器</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6">
+      <h2 class="text-center font-medium mb-4" style="font-family:'ZCOOL XiaoWei',sans-serif">你现在在哪里？</h2>
+      <div class="emotion-scale mb-6"><div id="emotion-marker" class="emotion-marker" style="left:50%"></div></div>
+      <div class="flex justify-between text-xs mb-6" style="color:var(--text-mute)">
+        <span>绝望</span><span>抑郁</span><span>恐惧</span><span>愤怒</span><span>责备</span><span>失望</span><span>怀疑</span><span>担忧</span><span>乐观</span><span>希望</span><span>满足</span><span>喜悦</span>
+      </div>
+      <input type="range" id="emotion-slider" min="1" max="22" value="11" class="w-full mb-4" style="accent-color:#B8A9C9" oninput="onEmotionSlide(this.value)">
+      <div id="emotion-current" class="text-center p-4 rounded-xl" style="background:rgba(212,181,199,0.1)">
+        <div class="text-2xl mb-1" id="emotion-emoji">😐</div>
+        <div class="font-medium" id="emotion-name">中立</div>
+        <div class="text-sm mt-1" style="color:var(--text-soft)" id="emotion-desc">这是一个可以接受的起点</div>
+      </div>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">🚀 升阶练习</h3>
+      <div id="emotion-exercise" class="p-4 rounded-xl text-sm" style="background:rgba(255,255,255,0.5);border:1px solid rgba(212,181,199,0.2)">选择一个情绪等级来查看对应的升阶练习</div>
+    </div>
+    <div class="glass-card p-5">
+      <h3 class="font-medium mb-3">📝 情绪日记</h3>
+      <textarea id="emotion-note" class="dream-input mb-3" rows="3" placeholder="记录下此刻的感受..."></textarea>
+      <button onclick="saveEmotionNote()" class="btn-primary w-full py-3 rounded-xl">保存记录</button>
+      <div id="emotion-history" class="mt-4 space-y-2" style="max-height:200px;overflow-y:auto"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SP显化专区 ========== -->
+<section id="page-sp" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">SP显化专区</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-3xl mb-2">💕</div>
+      <h2 class="text-xl font-medium mb-2" style="font-family:'ZCOOL XiaoWei',sans-serif">显化你的特定之人</h2>
+      <p class="text-sm" style="color:var(--text-soft)">你不是在操控任何人，你在改变自己眼中的世界</p>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">💌 SP肯定语</h3>
+      <div class="flex gap-2 mb-4 flex-wrap">
+        <button class="chip-soft active" onclick="switchSpCategory(this,'all')">全部</button>
+        <button class="chip-soft" onclick="switchSpCategory(this,'reunion')">复合</button>
+        <button class="chip-soft" onclick="switchSpCategory(this,'new')">新人</button>
+        <button class="chip-soft" onclick="switchSpCategory(this,'deepen')">升温</button>
+      </div>
+      <div id="sp-affirmations" class="space-y-3"></div>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-medium">🚫 忽略3D模式</h3>
+        <div class="toggle-switch" id="ignore-3d-toggle" onclick="toggleIgnore3D()"></div>
+      </div>
+      <p class="text-sm mb-3" style="color:var(--text-soft)">开启后，系统会提醒你停止检查社交媒体和消息</p>
+      <div id="ignore-3d-status" class="text-center p-4 rounded-xl" style="display:none;background:rgba(212,181,199,0.1)">
+        <div class="text-2xl mb-1">🛡️</div><p class="font-medium">保护模式已开启</p><p class="text-xs mt-1" style="color:var(--text-soft)">你的能量正在被守护</p>
+      </div>
+    </div>
+    <div class="glass-card p-5">
+      <h3 class="font-medium mb-3">🎬 视觉化场景</h3>
+      <div id="sp-scenes" class="space-y-3"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 财富丰盛专区 ========== -->
+<section id="page-wealth" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">财富丰盛专区</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-3xl mb-2">💰</div>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">财富能量场</h2>
+      <p class="text-sm" style="color:var(--text-soft)">你值得拥有丰盛的一切</p>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">🔍 财富信念测试</h3>
+      <p class="text-sm mb-3" style="color:var(--text-soft)">勾选你有感觉的限制性信念</p>
+      <div id="wealth-beliefs" class="space-y-2">
+        <label class="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style="background:rgba(255,255,255,0.5)"><input type="checkbox" class="wealth-belief" value="赚钱必须很辛苦" style="accent-color:#B8A9C9;width:18px;height:18px"><span class="text-sm">赚钱必须很辛苦</span></label>
+        <label class="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style="background:rgba(255,255,255,0.5)"><input type="checkbox" class="wealth-belief" value="有钱人都不快乐" style="accent-color:#B8A9C9;width:18px;height:18px"><span class="text-sm">有钱人都不快乐</span></label>
+        <label class="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style="background:rgba(255,255,255,0.5)"><input type="checkbox" class="wealth-belief" value="谈钱很俗" style="accent-color:#B8A9C9;width:18px;height:18px"><span class="text-sm">谈钱很俗</span></label>
+        <label class="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style="background:rgba(255,255,255,0.5)"><input type="checkbox" class="wealth-belief" value="我不配赚很多钱" style="accent-color:#B8A9C9;width:18px;height:18px"><span class="text-sm">我不配赚很多钱</span></label>
+        <label class="flex items-center gap-3 p-3 rounded-xl cursor-pointer" style="background:rgba(255,255,255,0.5)"><input type="checkbox" class="wealth-belief" value="钱不够花是正常的" style="accent-color:#B8A9C9;width:18px;height:18px"><span class="text-sm">钱不够花是正常的</span></label>
+      </div>
+      <div id="wealth-belief-result" class="mt-4 p-3 rounded-xl text-sm hidden" style="background:rgba(245,230,200,0.3);border:1px solid rgba(245,158,11,0.2)"></div>
+      <button onclick="checkWealthBeliefs()" class="btn-primary w-full py-3 rounded-xl mt-4">查看我的财富模式</button>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">💫 丰盛肯定语</h3>
+      <div id="wealth-affirmations" class="space-y-3"></div>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">🪄 魔法支票</h3>
+      <p class="text-sm mb-3" style="color:var(--text-soft)">填写你渴望收到的金额，感受已经拥有的喜悦</p>
+      <div class="p-5 rounded-xl mb-4" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:1px solid #F59E0B;box-shadow:0 4px 20px rgba(251,191,36,0.15)">
+        <div class="text-center text-xs mb-2" style="color:#B45309">宇宙银行 · 无限额度</div>
+        <div class="flex items-center justify-center gap-2 mb-3">
+          <span class="text-2xl font-bold" style="color:#B45309">¥</span>
+          <input type="number" id="magic-check-amount" class="dream-input text-center text-xl font-bold" style="width:160px;color:#B45309;border-color:rgba(245,158,11,0.3)" placeholder="金额" min="0">
+        </div>
+        <input type="text" id="magic-check-purpose" class="dream-input text-sm text-center" placeholder="用途：感谢宇宙为我..." style="border-color:rgba(245,158,11,0.3)">
+      </div>
+      <button onclick="saveMagicCheck()" class="btn-primary w-full py-3 rounded-xl">签发魔法支票</button>
+      <div id="magic-check-history" class="mt-4 space-y-2"></div>
+    </div>
+    <div class="glass-card p-5">
+      <h3 class="font-medium mb-3">📈 收入显化日志</h3>
+      <div class="flex gap-2 mb-3">
+        <input type="number" id="wealth-income-amount" class="dream-input" placeholder="金额" style="flex:1">
+        <input type="text" id="wealth-income-source" class="dream-input" placeholder="来源" style="flex:2">
+      </div>
+      <button onclick="addIncomeLog()" class="btn-primary w-full py-3 rounded-xl mb-4">记录一笔进账</button>
+      <div id="wealth-income-list" class="space-y-2" style="max-height:200px;overflow-y:auto"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 电影疗愈模块 ========== -->
+<section id="page-movies" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">电影疗愈</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-3xl mb-2">🎬</div>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">显化电影处方</h2>
+      <p class="text-sm" style="color:var(--text-soft)">每一部电影都是一堂显化课</p>
+    </div>
+    <div id="movie-list" class="space-y-4"></div>
+  </div>
+</section>
+
+<!-- ========== AI 宇宙闺蜜 ========== -->
+<section id="page-ai" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="text-center">
+        <h1 class="text-lg font-medium" style="color:var(--theme-text)">宇宙闺蜜</h1>
+        <p class="text-xs" style="color:var(--text-mute)">你的专属显化陪伴</p>
+      </div>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div id="ai-chat-area" class="space-y-4 mb-4" style="min-height:300px">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">🌙</div>
+        <div class="p-4 rounded-2xl rounded-tl-sm text-sm" style="background:rgba(255,255,255,0.8);color:var(--theme-text);max-width:75%">嗨呀～我是你的宇宙闺蜜 🌙<br><br>今天心情怎么样？有什么想要显化的事情吗？你可以告诉我，我会陪你一起梳理情绪、设定意图，或者只是聊聊天 💕</div>
+      </div>
+    </div>
+    <div class="flex gap-2 flex-wrap mb-3">
+      <button onclick="sendAiPrompt('今天情绪很低落')" class="chip-soft text-xs">今天情绪很低落</button>
+      <button onclick="sendAiPrompt('SP不理我怎么办')" class="chip-soft text-xs">SP不理我怎么办</button>
+      <button onclick="sendAiPrompt('我想显化财富')" class="chip-soft text-xs">我想显化财富</button>
+      <button onclick="sendAiPrompt('给我一句今天的肯定语')" class="chip-soft text-xs">今日肯定语</button>
+      <button onclick="sendAiPrompt('我最近总是焦虑')" class="chip-soft text-xs">总是很焦虑</button>
+    </div>
+    <div class="flex gap-2">
+      <input type="text" id="ai-input" class="dream-input" placeholder="和宇宙闺蜜说点什么..." onkeydown="if(event.key==='Enter')sendAiMessage()" style="flex:1">
+      <button onclick="sendAiMessage()" class="btn-primary w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="padding:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 分享卡片模态框 ========== -->
+<div id="share-card-modal" class="modal-backdrop" onclick="if(event.target===this)closeShareCard()">
+  <div class="modal-content p-5" style="max-width:380px">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-medium">生成分享卡片</h3>
+      <button onclick="closeShareCard()" class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(212,181,199,0.15)">✕</button>
+    </div>
+    <div id="share-card-preview" class="rounded-2xl p-6 mb-4 text-center" style="background:linear-gradient(135deg,#FFFEFF,#FAF5F7);border:1px solid rgba(255,255,255,0.8);box-shadow:0 8px 32px rgba(184,169,201,0.15)">
+      <div class="text-xs mb-2" style="color:var(--text-mute)">✨ 宇宙许愿岛 · 显化日记</div>
+      <div id="share-card-date" class="text-xs mb-3" style="color:var(--text-mute)"></div>
+      <div id="share-card-content" class="text-sm font-medium leading-relaxed mb-4" style="color:var(--theme-text);font-family:'ZCOOL XiaoWei',sans-serif"></div>
+      <div class="flex items-center justify-center gap-2 text-xs" style="color:var(--text-mute)"><span>🏝️</span><span>宇宙许愿岛</span></div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="downloadShareCard()" class="btn-primary flex-1 py-3 rounded-xl text-sm">保存图片</button>
+      <button onclick="copyShareText()" class="btn-soft flex-1 py-3 rounded-xl text-sm">复制文字</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 梦境工坊 ========== -->
+<section id="page-dreams" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">梦境工坊</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-3xl mb-2">🌙</div>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">梦境是你的潜意识来信</h2>
+      <p class="text-sm" style="color:var(--text-soft)">记录梦境，解读象征，发现宇宙给你的信号</p>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">📝 记录昨晚的梦</h3>
+      <textarea id="dream-content" class="dream-input mb-3" rows="4" placeholder="描述你的梦境...越详细越好，颜色、情绪、人物、地点..."></textarea>
+      <div class="flex gap-2 mb-3">
+        <select id="dream-mood" class="dream-input" style="flex:1">
+          <option value="">梦境情绪</option><option value="愉悦">😊 愉悦</option><option value="焦虑">😰 焦虑</option><option value="恐惧">😨 恐惧</option><option value="平静">😌 平静</option><option value="兴奋">🤩 兴奋</option><option value="悲伤">😢 悲伤</option><option value="神秘">🔮 神秘</option>
+        </select>
+        <select id="dream-lucid" class="dream-input" style="flex:1">
+          <option value="">是否清醒梦</option><option value="是">✨ 是</option><option value="否">💤 不是</option><option value="模糊">🌫️ 模糊</option>
+        </select>
+      </div>
+      <button onclick="saveDream()" class="btn-primary w-full py-3 rounded-xl">记录梦境</button>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">🔮 常见梦境象征</h3>
+      <div id="dream-symbols" class="grid grid-cols-2 gap-2"></div>
+    </div>
+    <div class="glass-card p-5">
+      <h3 class="font-medium mb-3">📚 我的梦境日记</h3>
+      <div id="dream-history" class="space-y-3" style="max-height:400px;overflow-y:auto"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 显化成功故事墙 ========== -->
+<section id="page-stories" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">显化故事墙</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-3xl mb-2">✨</div>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">每一个显化都是奇迹</h2>
+      <p class="text-sm" style="color:var(--text-soft)">阅读他人的故事，分享你的奇迹，能量会倍增</p>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">📝 分享你的显化奇迹</h3>
+      <input type="text" id="story-title" class="dream-input mb-3" placeholder="给你的故事起个标题...">
+      <select id="story-category" class="dream-input mb-3">
+        <option value="">选择类别</option><option value="SP复合">💕 SP复合</option><option value="财富">💰 财富</option><option value="工作">💼 工作</option><option value="健康">🏥 健康</option><option value="自我成长">🌱 自我成长</option><option value="其他">🌟 其他</option>
+      </select>
+      <textarea id="story-content" class="dream-input mb-3" rows="4" placeholder="分享你的显化故事...用了多久？做了什么？最后怎么实现的？"></textarea>
+      <button onclick="submitStory()" class="btn-primary w-full py-3 rounded-xl">发布故事</button>
+    </div>
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
+      <button class="chip-soft active" onclick="filterStories('all',this)">全部</button>
+      <button class="chip-soft" onclick="filterStories('SP复合',this)">💕 SP复合</button>
+      <button class="chip-soft" onclick="filterStories('财富',this)">💰 财富</button>
+      <button class="chip-soft" onclick="filterStories('工作',this)">💼 工作</button>
+      <button class="chip-soft" onclick="filterStories('自我成长',this)">🌱 成长</button>
+    </div>
+    <div id="stories-list" class="space-y-4"></div>
+  </div>
+</section>
+
+<!-- ========== SATS深度冥想引导器 ========== -->
+<section id="page-sats" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">SATS冥想</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-3xl mb-2">🌙</div>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">SATS · 状态像似睡眠</h2>
+      <p class="text-sm" style="color:var(--text-soft)">临睡前的黄金15分钟，改写你的潜意识</p>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">🎬 选择你的场景</h3>
+      <div id="sats-scenes" class="space-y-3"></div>
+    </div>
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-5xl mb-4 font-medium" id="sats-timer" style="font-family:'ZCOOL XiaoWei',sans-serif;color:var(--theme-text)">15:00</div>
+      <div class="flex gap-2 justify-center">
+        <button onclick="startSatsTimer()" id="sats-btn-start" class="btn-primary px-6 py-2 rounded-xl">开始</button>
+        <button onclick="pauseSatsTimer()" id="sats-btn-pause" class="btn-soft px-6 py-2 rounded-xl hidden">暂停</button>
+        <button onclick="resetSatsTimer()" class="btn-soft px-6 py-2 rounded-xl">重置</button>
+      </div>
+      <p class="text-xs mt-4" style="color:var(--text-mute)">建议睡前进行，配合场景想象，直到自然入睡</p>
+    </div>
+    <div class="glass-card p-5">
+      <h3 class="font-medium mb-3">📖 SATS 核心指引</h3>
+      <div class="space-y-3 text-sm" style="color:var(--text-soft)">
+        <p><span class="font-medium" style="color:var(--theme-text)">1. 放松身体</span> — 从头顶到脚底，逐一放松每一块肌肉</p>
+        <p><span class="font-medium" style="color:var(--theme-text)">2. 想象场景</span> — 不是"看"画面，而是"进入"画面，成为其中的人</p>
+        <p><span class="font-medium" style="color:var(--theme-text)">3. 感受情绪</span> — 最关键：让"已经拥有"的感觉充满全身</p>
+        <p><span class="font-medium" style="color:var(--theme-text)">4. 循环重复</span> — 同一个场景在脑中反复播放，直到自然入睡</p>
+        <p><span class="font-medium" style="color:var(--theme-text)">5. 信任过程</span> — 不需要知道"怎么做"，只需要知道"已经成"</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 数据备份与导出 ========== -->
+<section id="page-backup" class="page" style="padding-bottom:100px;">
+  <div class="glass-header sticky top-0 z-40 px-5 py-4">
+    <div class="flex items-center justify-between max-w-lg mx-auto">
+      <button onclick="goHome()" class="soft-btn w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.6)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h1 class="text-lg font-medium" style="color:var(--theme-text)">数据备份</h1>
+      <div class="w-10"></div>
+    </div>
+  </div>
+  <div class="max-w-lg mx-auto px-5 py-6">
+    <div class="glass-card p-5 mb-6 text-center">
+      <div class="text-3xl mb-2">💾</div>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">守护你的显化数据</h2>
+      <p class="text-sm" style="color:var(--text-soft)">所有记录都值得被安全保存</p>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">📤 导出全部数据</h3>
+      <p class="text-sm mb-4" style="color:var(--text-soft)">将你的显化日记、情绪记录、打卡数据等导出为JSON文件，可跨设备迁移。</p>
+      <div class="flex gap-2">
+        <button onclick="exportAllData()" class="btn-primary flex-1 py-3 rounded-xl">导出备份文件</button>
+        <button onclick="copyAllData()" class="btn-soft flex-1 py-3 rounded-xl">复制到剪贴板</button>
+      </div>
+    </div>
+    <div class="glass-card p-5 mb-6">
+      <h3 class="font-medium mb-3">📥 导入数据</h3>
+      <p class="text-sm mb-4" style="color:var(--text-soft)">从备份文件恢复数据，或粘贴JSON文本。</p>
+      <textarea id="import-data-text" class="dream-input mb-3" rows="4" placeholder="粘贴备份JSON内容..."></textarea>
+      <button onclick="importAllData()" class="btn-primary w-full py-3 rounded-xl">导入数据</button>
+    </div>
+    <div class="glass-card p-5">
+      <h3 class="font-medium mb-3">📊 数据概览</h3>
+      <div id="data-overview" class="space-y-2"></div>
+    </div>
+  </div>
+</section>

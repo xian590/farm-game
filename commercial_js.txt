@@ -1,0 +1,386 @@
+// ===== 商业化系统 · 会员+水晶+裂变 =====
+const MEMBER_TIERS = {
+  free: { name: '免费体验', color: '#B8A9C9', dailyTarot: 1, dailyAI: 3, dailySats: 1, books: 2, export: false, advancedCharts: false, spFull: false, aiCoach: false, movies: false, dreams: true, stories: true },
+  member: { name: '宇宙会员', color: '#D4B5C7', dailyTarot: 3, dailyAI: 20, dailySats: 3, books: 8, export: true, advancedCharts: true, spFull: true, aiCoach: false, movies: true, dreams: true, stories: true },
+  vip: { name: '星际高级会员', color: '#F59E0B', dailyTarot: 999, dailyAI: 999, dailySats: 999, books: 8, export: true, advancedCharts: true, spFull: true, aiCoach: true, movies: true, dreams: true, stories: true }
+};
+
+const VIP_PRICES = {
+  member_month: { name: '月度会员', price: 18, period: '月', tier: 'member' },
+  member_year: { name: '年度会员', price: 128, period: '年', tier: 'member', bonus: 100 },
+  member_first_month: { name: '首月特惠', price: 6, period: '月', tier: 'member', limited: true },
+  vip_month: { name: '高级会员月卡', price: 38, period: '月', tier: 'vip' },
+  vip_year: { name: '高级会员年卡', price: 298, period: '年', tier: 'vip', bonus: 200 }
+};
+
+let vipState = { tier: 'free', expiry: null, firstUseDate: null, offerShown: false };
+let crystalState = { crystals: 0, dailyCheckIn: { date: null, streak: 0 }, inviteCode: null, invitedBy: null, invitedCount: 0, purchaseHistory: [], unlockedBooks: [], aiUnlocks: 0, tasksToday: {} };
+let todayUsage = { tarot: 0, ai: 0, sats: 0, date: null };
+
+function loadVipState() {
+  try {
+    const v = StorageUtil.get('vip_state', null); if (v) vipState = { ...vipState, ...v };
+    const c = StorageUtil.get('crystal_state', null); if (c) crystalState = { ...crystalState, ...c };
+    const u = StorageUtil.get('today_usage', null); if (u) todayUsage = { ...todayUsage, ...u };
+  } catch(e) {}
+  if (!vipState.firstUseDate) vipState.firstUseDate = new Date().toISOString();
+  resetDailyUsageIfNeeded();
+}
+
+function saveVipState() {
+  StorageUtil.set('vip_state', vipState);
+  StorageUtil.set('crystal_state', crystalState);
+  StorageUtil.set('today_usage', todayUsage);
+}
+
+function resetDailyUsageIfNeeded() {
+  const today = new Date().toLocaleDateString('zh-CN');
+  if (todayUsage.date !== today) { todayUsage = { tarot: 0, ai: 0, sats: 0, date: today }; saveVipState(); }
+}
+
+function getCurrentTier() {
+  if (vipState.tier === 'free') return 'free';
+  if (vipState.expiry && new Date(vipState.expiry) > new Date()) return vipState.tier;
+  vipState.tier = 'free'; saveVipState(); return 'free';
+}
+
+function getTierConfig() { return MEMBER_TIERS[getCurrentTier()] || MEMBER_TIERS.free; }
+
+function isFeatureLocked(feature) {
+  const tier = getTierConfig();
+  if (feature === 'export') return !tier.export;
+  if (feature === 'advancedCharts') return !tier.advancedCharts;
+  if (feature === 'spFull') return !tier.spFull;
+  if (feature === 'movies') return !tier.movies;
+  if (feature === 'aiCoach') return !tier.aiCoach;
+  return false;
+}
+
+function checkQuota(feature, action) {
+  resetDailyUsageIfNeeded();
+  const tier = getTierConfig();
+  if (feature === 'tarot') { if (todayUsage.tarot >= tier.dailyTarot) { showQuotaLock('塔罗', tier.dailyTarot); return false; } todayUsage.tarot++; saveVipState(); return true; }
+  if (feature === 'ai') { if (todayUsage.ai >= tier.dailyAI) { showQuotaLock('AI 对话', tier.dailyAI); return false; } todayUsage.ai++; saveVipState(); return true; }
+  if (feature === 'sats') { if (todayUsage.sats >= tier.dailySats) { showQuotaLock('SATS 冥想', tier.dailySats); return false; } todayUsage.sats++; saveVipState(); return true; }
+  if (feature === 'books') { return true; } // book lock handled by book count
+  return true;
+}
+
+function showQuotaLock(name, limit) {
+  showLockModal(`今日${name}次数已用完`, `免费用户每天可使用 ${limit} 次。升级会员获得更多次数，或用水晶解锁额外使用。`);
+}
+
+function showLockModal(title, desc) {
+  const t = document.getElementById('lock-title');
+  const d = document.getElementById('lock-desc');
+  const m = document.getElementById('lock-modal');
+  if(t) t.textContent = title || '功能锁定';
+  if(d) d.textContent = desc || '升级会员即可解锁此功能';
+  if(m) m.classList.add('show');
+}
+
+function closeLockModal() { const m = document.getElementById('lock-modal'); if(m) m.classList.remove('show'); }
+
+// ===== 会员页面 =====
+function initVip() {
+  loadVipState();
+  const tier = getCurrentTier();
+  const config = getTierConfig();
+  const nameEl = document.getElementById('vip-tier-name');
+  const descEl = document.getElementById('vip-tier-desc');
+  const crystalEl = document.getElementById('vip-crystal-count');
+  const upBtn = document.getElementById('vip-upgrade-btn');
+  const reBtn = document.getElementById('vip-renew-btn');
+  if(nameEl) { nameEl.textContent = config.name; nameEl.style.color = config.color; }
+  if(descEl) descEl.textContent = tier === 'free' ? '升级会员，解锁全部显化工具' : `有效期至 ${vipState.expiry ? new Date(vipState.expiry).toLocaleDateString('zh-CN') : '永久'}`;
+  if(crystalEl) crystalEl.textContent = crystalState.crystals;
+  if(upBtn) upBtn.style.display = tier === 'free' ? 'block' : 'none';
+  if(reBtn) reBtn.style.display = tier !== 'free' ? 'block' : 'none';
+  renderCheckIn();
+  renderTasks();
+  generateInviteCode();
+}
+
+function showVipPlans() { showPage('vip-plans'); startOfferTimer(); }
+
+// ===== 签到系统 =====
+function renderCheckIn() {
+  const streakEl = document.getElementById('checkin-streak');
+  if(streakEl) streakEl.textContent = crystalState.dailyCheckIn.streak || 0;
+  const today = new Date().toLocaleDateString('zh-CN');
+  const done = crystalState.dailyCheckIn.date === today;
+  const btn = document.getElementById('checkin-btn');
+  const doneBtn = document.getElementById('checkin-done');
+  if(btn) btn.style.display = done ? 'none' : 'block';
+  if(doneBtn) doneBtn.style.display = done ? 'block' : 'none';
+  // highlight checked days
+  for(let i=1;i<=7;i++){
+    const el = document.getElementById('checkin-d-'+i);
+    if(!el) continue;
+    if(i <= (crystalState.dailyCheckIn.streak || 0)) {
+      el.style.background = 'linear-gradient(135deg,#D4B5C7,#B8A9C9)';
+      el.querySelectorAll('div').forEach(d => d.style.color = 'white');
+    }
+  }
+}
+
+function doCheckIn() {
+  const today = new Date().toLocaleDateString('zh-CN');
+  if(crystalState.dailyCheckIn.date === today) { showToast('今天已经签到过了'); return; }
+  let streak = crystalState.dailyCheckIn.streak || 0;
+  // Check if consecutive
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yestStr = yesterday.toLocaleDateString('zh-CN');
+  if(crystalState.dailyCheckIn.date === yestStr) streak++; else streak = 1;
+  crystalState.dailyCheckIn = { date: today, streak };
+  let reward = 5;
+  if(streak >= 7) reward = 20;
+  if(streak >= 21) reward = 50;
+  if(streak >= 30) reward = 100;
+  crystalState.crystals += reward;
+  crystalState.tasksToday.checkin = true;
+  saveVipState();
+  renderCheckIn();
+  renderTasks();
+  updateCrystalDisplay();
+  showToast(`签到成功！连续 ${streak} 天，获得 ${reward} 水晶 ✨`);
+  createConfetti();
+}
+
+// ===== 任务追踪 =====
+function renderTasks() {
+  const t = crystalState.tasksToday;
+  const map = { 'checkin': 'task-checkin', 'challenge': 'task-challenge', 'emotion': 'task-emotion', 'share': 'task-share', 'book': 'task-book' };
+  for(const [k, id] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if(!el) continue;
+    if(t[k]) { el.textContent = '已完成'; el.style.background = 'linear-gradient(135deg,#D4B5C7,#B8A9C9)'; el.style.color = 'white'; }
+    else { el.textContent = '进行中'; el.style.background = 'rgba(212,181,199,0.15)'; el.style.color = 'var(--text-soft)'; }
+  }
+}
+
+function earnCrystals(amount, reason) {
+  crystalState.crystals += amount;
+  saveVipState();
+  updateCrystalDisplay();
+  showToast(`获得 ${amount} 水晶！${reason} 💎`);
+}
+
+function updateCrystalDisplay() {
+  const el = document.getElementById('vip-crystal-count');
+  if(el) el.textContent = crystalState.crystals;
+}
+
+// ===== 邀请系统 =====
+function generateInviteCode() {
+  if(!crystalState.inviteCode) {
+    crystalState.inviteCode = 'XY' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    saveVipState();
+  }
+  const el = document.getElementById('my-invite-code');
+  if(el) el.value = crystalState.inviteCode;
+  const countEl = document.getElementById('invited-count');
+  if(countEl) countEl.textContent = crystalState.invitedCount;
+}
+
+function copyInviteCode() {
+  const el = document.getElementById('my-invite-code');
+  if(!el) return;
+  if(navigator.clipboard) { navigator.clipboard.writeText(el.value).then(() => showToast('邀请码已复制 📋')); }
+  else showToast(`邀请码：${el.value}`);
+}
+
+function submitInviteCode() {
+  const input = document.getElementById('input-invite-code');
+  if(!input) return;
+  const code = input.value.trim().toUpperCase();
+  if(!code) { showToast('请输入邀请码'); return; }
+  if(code === crystalState.inviteCode) { showToast('不能输入自己的邀请码'); return; }
+  if(crystalState.invitedBy) { showToast('你已经领取过邀请奖励了'); return; }
+  // Simulate validation (in real app this would be server-side)
+  if(!code.startsWith('XY') || code.length < 6) { showToast('邀请码无效'); return; }
+  crystalState.invitedBy = code;
+  crystalState.crystals += 30;
+  saveVipState();
+  input.value = '';
+  updateCrystalDisplay();
+  showToast('邀请码验证成功！获得 30 水晶 🎉');
+  createConfetti();
+}
+
+function showInvitePage() { showPage('vip'); initVip(); window.scrollTo({ top: 1000, behavior: 'smooth' }); }
+
+// ===== 水晶解锁 =====
+function unlockWithCrystals(type, cost) {
+  if(crystalState.crystals < cost) { showToast(`水晶不足，还需要 ${cost - crystalState.crystals} 个 💎`); showPage('vip'); return; }
+  if(!confirm(`确认花费 ${cost} 水晶解锁？`)) return;
+  crystalState.crystals -= cost;
+  if(type === 'book') { /* would need to select a book, simplified for now */ showToast('已解锁书籍！📖'); }
+  if(type === 'ai5') { crystalState.aiUnlocks += 5; showToast('已解锁 5 次 AI 对话！🤖'); }
+  if(type === 'member1d') { 
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    vipState.tier = 'member'; vipState.expiry = tomorrow.toISOString();
+    showToast('已解锁 1 天会员体验！✨'); 
+  }
+  saveVipState();
+  updateCrystalDisplay();
+  createConfetti();
+}
+
+// ===== 订阅选择（模拟支付） =====
+function selectPlan(planId) {
+  const plan = VIP_PRICES[planId];
+  if(!plan) return;
+  const tierName = plan.tier === 'member' ? '宇宙会员' : '星际高级会员';
+  const period = plan.period === '月' ? '月' : '年';
+  const confirmMsg = `确认购买 ${tierName} ${plan.name}？\n价格：¥${plan.price}/${period}\n\n（此为演示，实际支付需接入支付系统）`;
+  if(!confirm(confirmMsg)) return;
+  // Simulate purchase
+  const duration = plan.period === '月' ? 30 : 365;
+  const expiry = new Date(); expiry.setDate(expiry.getDate() + duration);
+  vipState.tier = plan.tier;
+  vipState.expiry = expiry.toISOString();
+  crystalState.purchaseHistory.push({ plan: planId, date: new Date().toISOString(), price: plan.price });
+  if(plan.bonus) { crystalState.crystals += plan.bonus; showToast(`额外赠送 ${plan.bonus} 水晶！`); }
+  saveVipState();
+  showToast(`🎉 购买成功！已升级为 ${tierName}`);
+  createConfetti();
+  setTimeout(() => { goHome(); }, 1500);
+}
+
+// ===== 限时优惠弹窗 =====
+function showLimitedOffer() {
+  const m = document.getElementById('limited-offer-modal');
+  if(m) m.classList.add('show');
+  startOfferTimer();
+}
+
+function closeLimitedOffer() { const m = document.getElementById('limited-offer-modal'); if(m) m.classList.remove('show'); }
+
+function startOfferTimer() {
+  const el = document.getElementById('offer-timer');
+  if(!el) return;
+  let seconds = 24 * 3600 - 1; // 24h from first use
+  const update = () => {
+    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    el.textContent = `${h}:${m}:${s}`;
+    if(seconds > 0) { seconds--; setTimeout(update, 1000); }
+  };
+  update();
+}
+
+// ===== 自动促活弹窗 =====
+function checkAutoPromotions() {
+  loadVipState();
+  if(getCurrentTier() !== 'free') return;
+  // Show limited offer after first use (3 days)
+  const firstUse = new Date(vipState.firstUseDate || new Date());
+  const daysSince = Math.floor((new Date() - firstUse) / (1000 * 60 * 60 * 24));
+  if(daysSince >= 1 && !vipState.offerShown) {
+    vipState.offerShown = true;
+    saveVipState();
+    setTimeout(() => showLimitedOffer(), 3000);
+  }
+}
+
+// ===== 在现有功能中植入权限检查 =====
+// 1. Tarot - 限制每日次数
+const originalRenderTarot = window.renderTarot || function(){};
+window.renderTarot = function() { if(!checkQuota('tarot', 'draw')) return; originalRenderTarot(); };
+
+// 2. AI - 限制对话次数
+const originalSendAiMessage = window.sendAiMessage || function(){};
+window.sendAiMessage = function() { 
+  if(crystalState.aiUnlocks > 0) { crystalState.aiUnlocks--; saveVipState(); }
+  else if(!checkQuota('ai', 'chat')) return;
+  originalSendAiMessage(); 
+};
+
+// 3. SATS - 限制次数
+const originalStartSatsTimer = window.startSatsTimer || function(){};
+window.startSatsTimer = function() { if(!checkQuota('sats', 'session')) return; originalStartSatsTimer(); };
+
+// 4. Books - 限制可阅读数量
+const originalRenderLibrary = window.renderLibrary || function(){};
+window.renderLibrary = function() {
+  const tier = getTierConfig();
+  // Modify library rendering to show lock on books beyond limit
+  originalRenderLibrary();
+  // Add locks to books beyond tier.books
+  const bookIds = Object.keys(BOOK_DETAILS || {});
+  bookIds.forEach((id, idx) => {
+    if(idx >= tier.books) {
+      const spine = document.querySelector(`[data-book-id="${id}"]`);
+      if(spine) { spine.style.filter = 'grayscale(0.8)'; spine.title = '升级会员解锁'; }
+    }
+  });
+};
+
+// 5. Export - 锁定
+const originalExportAllData = window.exportAllData || function(){};
+window.exportAllData = function() { if(isFeatureLocked('export')) { showLockModal('数据导出', '导出数据是会员专属功能。升级会员即可备份所有显化记录。'); return; } originalExportAllData(); };
+
+// 6. Movies - 锁定
+const originalInitMovies = window.initMovies || function(){};
+window.initMovies = function() { if(isFeatureLocked('movies')) { showLockModal('电影疗愈', '电影疗愈是会员专属功能。升级会员解锁10部显化电影处方。'); return; } originalInitMovies(); };
+
+// 7. SP Full - 锁定完整内容
+const originalInitSp = window.initSp || function(){};
+window.initSp = function() { if(isFeatureLocked('spFull')) { showLockModal('SP显化专区', 'SP完整专区是会员专属功能。免费版可浏览基础肯定语。'); /* Still show but limited */ originalInitSp(); return; } originalInitSp(); };
+
+// 8. Growth advanced charts - 锁定
+const originalInitGrowth = window.renderGrowth || function(){};
+window.renderGrowth = function() { if(isFeatureLocked('advancedCharts')) { showLockModal('高级图表', '情绪趋势分析是会员专属功能。'); return; } originalInitGrowth(); };
+
+// ===== 书籍点击锁定 =====
+const originalOpenBookDetail = window.openBookDetail || function(){};
+window.openBookDetail = function(id, type) {
+  const tier = getTierConfig();
+  const bookIds = Object.keys(BOOK_DETAILS || {});
+  const idx = bookIds.indexOf(id);
+  if(idx >= 0 && idx >= tier.books && getCurrentTier() === 'free') {
+    showLockModal('书籍解锁', `你已解锁 ${tier.books} 本书。升级会员解锁全部 8 本经典。或用水晶单独解锁。`);
+    return;
+  }
+  originalOpenBookDetail(id, type);
+};
+
+// ===== 导航添加会员入口 =====
+function addVipNavEntry() {
+  const nav = document.querySelector('.bottom-nav');
+  if(!nav) return;
+  const existing = nav.querySelector('[onclick*="vip"]');
+  if(existing) return;
+  const lastItem = nav.querySelector('.nav-item:last-child');
+  if(!lastItem) return;
+  const vipItem = document.createElement('div');
+  vipItem.className = 'nav-item';
+  vipItem.setAttribute('onclick', "showPage('vip');initVip()");
+  vipItem.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>会员</span>`;
+  nav.insertBefore(vipItem, lastItem);
+}
+
+// ===== 在'我的'页面添加会员入口 =====
+function addVipToMePage() {
+  const mePage = document.getElementById('page-me');
+  if(!mePage) return;
+  const firstCard = mePage.querySelector('.glass-card');
+  if(!firstCard) return;
+  const vipCard = document.createElement('div');
+  vipCard.className = 'glass-card p-4 mb-4 cursor-pointer card-hover';
+  vipCard.setAttribute('onclick', "showPage('vip');initVip()");
+  vipCard.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">👑</div><div class="flex-1"><div class="font-medium text-sm" style="color:var(--theme-text)">会员中心</div><div class="text-xs" style="color:var(--text-mute)">升级解锁全部显化工具</div></div><div class="text-lg opacity-40">→</div></div>`;
+  mePage.insertBefore(vipCard, firstCard);
+}
+
+// ===== 自动初始化 =====
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    loadVipState();
+    addVipNavEntry();
+    addVipToMePage();
+    checkAutoPromotions();
+  }, 2000);
+});
