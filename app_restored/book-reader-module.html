@@ -1,0 +1,1330 @@
+<!-- ============================================================
+     书籍仿真翻书模块 - 宇宙许愿岛
+     包含：HTML结构 + CSS样式 + JS交互逻辑
+     功能：翻页、书签、笔记、页码、本地存储
+============================================================ -->
+
+<!-- ========== 书籍阅读器模态框 ========== -->
+<div id="book-reader-modal" class="book-reader-modal hidden">
+  <div class="book-reader-overlay" onclick="closeBookReader()"></div>
+  <div class="book-reader-container">
+    <!-- 顶部工具栏 -->
+    <div class="book-reader-header">
+      <div class="flex items-center gap-3">
+        <button onclick="closeBookReader()" class="book-reader-btn-icon" title="关闭">✕</button>
+        <div>
+          <div class="book-reader-title" id="br-book-title">书名</div>
+          <div class="book-reader-author" id="br-book-author">作者</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleBookmark()" id="br-bookmark-btn" class="book-reader-btn-icon" title="书签">🔖</button>
+        <button onclick="toggleNotePanel()" id="br-note-btn" class="book-reader-btn-icon" title="笔记">📝</button>
+        <button onclick="toggleToc()" class="book-reader-btn-icon" title="目录">📑</button>
+      </div>
+    </div>
+
+    <!-- 主体区域：书页 + 目录侧栏 + 笔记侧栏 -->
+    <div class="book-reader-body">
+      <!-- 目录侧栏 -->
+      <div id="br-toc-panel" class="br-toc-panel hidden">
+        <div class="br-toc-header">📑 目录</div>
+        <div class="br-toc-list" id="br-toc-list"></div>
+      </div>
+
+      <!-- 书页区域 -->
+      <div class="book-pages-wrapper" id="br-pages-wrapper">
+        <div class="book-pages-container" id="br-pages-container">
+          <!-- 左页 -->
+          <div class="book-page book-page-left" id="br-page-left">
+            <div class="book-page-content" id="br-page-left-content"></div>
+            <div class="book-page-number" id="br-page-left-num"></div>
+          </div>
+          <!-- 书脊阴影 -->
+          <div class="book-spine-shadow"></div>
+          <!-- 右页 -->
+          <div class="book-page book-page-right" id="br-page-right">
+            <div class="book-page-content" id="br-page-right-content"></div>
+            <div class="book-page-number" id="br-page-right-num"></div>
+          </div>
+        </div>
+
+        <!-- 翻页按钮 -->
+        <button class="br-page-btn br-page-prev" onclick="prevPage()" id="br-prev-btn">
+          <span>‹</span>
+        </button>
+        <button class="br-page-btn br-page-next" onclick="nextPage()" id="br-next-btn">
+          <span>›</span>
+        </button>
+      </div>
+
+      <!-- 笔记侧栏 -->
+      <div id="br-note-panel" class="br-note-panel hidden">
+        <div class="br-note-header">
+          <span>📝 我的笔记</span>
+          <span class="br-note-count" id="br-note-count">0条</span>
+        </div>
+        <div class="br-note-input-area">
+          <textarea id="br-note-input" class="br-note-textarea" placeholder="在这一页写下你的想法和感悟..."></textarea>
+          <button onclick="addNote()" class="br-note-add-btn">💾 保存笔记</button>
+        </div>
+        <div class="br-note-list" id="br-note-list">
+          <div class="br-note-empty">
+            <div class="text-3xl mb-2">📖</div>
+            <div class="text-xs opacity-60">还没有笔记<br/>边读边记，收获更大哦～</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部页码栏 -->
+    <div class="book-reader-footer">
+      <div class="flex items-center gap-3">
+        <span class="br-page-info">
+          第 <span id="br-current-spread">1</span> / <span id="br-total-spreads">1</span> 页
+        </span>
+        <div class="br-progress-bar">
+          <div class="br-progress-fill" id="br-progress-fill"></div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="goToPage(0)" class="br-mini-btn" title="封面">🏠</button>
+        <button onclick="prevPage()" class="br-mini-btn">← 上一页</button>
+        <button onclick="nextPage()" class="br-mini-btn">下一页 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 样式 ========== -->
+<style>
+/* 阅读器模态框 */
+.book-reader-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-reader-modal.hidden {
+  display: none;
+}
+
+.book-reader-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 20, 40, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.book-reader-container {
+  position: relative;
+  width: 95vw;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 800px;
+  background: linear-gradient(135deg, #FDF6F0, #F5E6D3);
+  border-radius: 20px;
+  box-shadow: 0 25px 80px rgba(93, 78, 109, 0.4), 0 10px 30px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 顶部栏 */
+.book-reader-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(212, 181, 199, 0.3), rgba(184, 169, 201, 0.2));
+  border-bottom: 1px solid rgba(184, 169, 201, 0.2);
+  flex-shrink: 0;
+}
+
+.book-reader-btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.6);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.book-reader-btn-icon:hover {
+  background: rgba(255,255,255,0.9);
+  transform: scale(1.05);
+}
+
+.book-reader-btn-icon.active {
+  background: linear-gradient(135deg, #D4B5C7, #B8A9C9);
+  color: white;
+}
+
+.book-reader-title {
+  font-family: 'Georgia', 'Noto Serif SC', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #5D4E6D;
+}
+
+.book-reader-author {
+  font-size: 11px;
+  color: #8B7E9C;
+  margin-top: 1px;
+}
+
+/* 主体区域 */
+.book-reader-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 目录侧栏 */
+.br-toc-panel {
+  width: 220px;
+  background: rgba(255,255,255,0.5);
+  border-right: 1px solid rgba(184, 169, 201, 0.2);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.br-toc-header {
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5D4E6D;
+  border-bottom: 1px solid rgba(184, 169, 201, 0.2);
+}
+
+.br-toc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.br-toc-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #5D4E6D;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.br-toc-item:hover {
+  background: rgba(212, 181, 199, 0.2);
+}
+
+.br-toc-item.active {
+  background: linear-gradient(135deg, #D4B5C7, #B8A9C9);
+  color: white;
+}
+
+.br-toc-item .toc-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+
+/* 笔记侧栏 */
+.br-note-panel {
+  width: 280px;
+  background: rgba(255,255,255,0.5);
+  border-left: 1px solid rgba(184, 169, 201, 0.2);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.br-note-header {
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5D4E6D;
+  border-bottom: 1px solid rgba(184, 169, 201, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.br-note-count {
+  font-size: 10px;
+  font-weight: normal;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(212, 181, 199, 0.3);
+  color: #8B7E9C;
+}
+
+.br-note-input-area {
+  padding: 12px;
+  border-bottom: 1px solid rgba(184, 169, 201, 0.15);
+}
+
+.br-note-textarea {
+  width: 100%;
+  height: 80px;
+  border: 1px solid rgba(184, 169, 201, 0.3);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: none;
+  background: rgba(255,255,255,0.8);
+  color: #5D4E6D;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.br-note-textarea:focus {
+  border-color: #D4B5C7;
+}
+
+.br-note-textarea::placeholder {
+  color: rgba(93, 78, 109, 0.4);
+}
+
+.br-note-add-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #D4B5C7, #B8A9C9);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.br-note-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(184, 169, 201, 0.4);
+}
+
+.br-note-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+}
+
+.br-note-empty {
+  text-align: center;
+  padding: 30px 10px;
+  color: #8B7E9C;
+}
+
+.br-note-item {
+  background: rgba(255,255,255,0.7);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid #D4B5C7;
+  position: relative;
+}
+
+.br-note-item .note-page {
+  font-size: 10px;
+  color: #B8A9C9;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.br-note-item .note-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #5D4E6D;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.br-note-item .note-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: rgba(93, 78, 109, 0.3);
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.br-note-item:hover .note-delete {
+  opacity: 1;
+}
+
+.br-note-item .note-delete:hover {
+  background: rgba(245, 108, 108, 0.1);
+  color: #F56C6C;
+}
+
+/* 书页区域 */
+.book-pages-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 20px 60px;
+  overflow: hidden;
+}
+
+.book-pages-container {
+  display: flex;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;
+  max-height: 560px;
+  position: relative;
+  perspective: 2000px;
+}
+
+.book-page {
+  flex: 1;
+  background: linear-gradient(to right, #FFFBF5 0%, #FDF6EE 50%, #F8EFE0 100%);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    inset 0 0 60px rgba(139, 110, 80, 0.08),
+    0 8px 30px rgba(93, 78, 109, 0.15);
+}
+
+.book-page-left {
+  border-radius: 8px 0 0 8px;
+  background: linear-gradient(to left, #FFFBF5 0%, #FDF6EE 50%, #F0E4D0 100%);
+  box-shadow: 
+    inset 0 0 60px rgba(139, 110, 80, 0.08),
+    -5px 8px 25px rgba(93, 78, 109, 0.12);
+}
+
+.book-page-right {
+  border-radius: 0 8px 8px 0;
+  background: linear-gradient(to right, #F0E4D0 0%, #FDF6EE 50%, #FFFBF5 100%);
+  box-shadow: 
+    inset 0 0 60px rgba(139, 110, 80, 0.08),
+    5px 8px 25px rgba(93, 78, 109, 0.12);
+}
+
+.book-spine-shadow {
+  width: 20px;
+  flex-shrink: 0;
+  background: linear-gradient(to right, 
+    rgba(93, 78, 109, 0.15) 0%, 
+    rgba(93, 78, 109, 0.3) 50%, 
+    rgba(93, 78, 109, 0.15) 100%);
+  position: relative;
+  z-index: 2;
+}
+
+.book-page-content {
+  padding: 40px 36px;
+  height: calc(100% - 40px);
+  overflow-y: auto;
+  color: #4A3F5A;
+  font-size: 13px;
+  line-height: 1.85;
+  font-family: 'Georgia', 'Noto Serif SC', 'Songti SC', serif;
+}
+
+.book-page-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.book-page-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.book-page-content::-webkit-scrollbar-thumb {
+  background: rgba(184, 169, 201, 0.3);
+  border-radius: 2px;
+}
+
+.book-page-content h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #5D4E6D;
+  margin-bottom: 8px;
+  text-align: center;
+  font-family: 'Georgia', 'Noto Serif SC', serif;
+}
+
+.book-page-content h2 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #7A6B8A;
+  margin: 20px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(184, 169, 201, 0.4);
+}
+
+.book-page-content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #8B7E9C;
+  margin: 16px 0 8px;
+}
+
+.book-page-content p {
+  margin-bottom: 12px;
+  text-indent: 2em;
+}
+
+.book-page-content p.no-indent {
+  text-indent: 0;
+}
+
+.book-page-content ul, .book-page-content ol {
+  margin: 10px 0 14px 2em;
+}
+
+.book-page-content li {
+  margin-bottom: 6px;
+}
+
+.book-page-content blockquote {
+  margin: 14px 0;
+  padding: 12px 16px;
+  background: rgba(212, 181, 199, 0.15);
+  border-left: 3px solid #D4B5C7;
+  border-radius: 0 6px 6px 0;
+  font-style: italic;
+  color: #7A6B8A;
+}
+
+.book-page-content .highlight-box {
+  margin: 14px 0;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(245, 230, 200, 0.4), rgba(240, 213, 224, 0.2));
+  border-radius: 10px;
+  border: 1px solid rgba(212, 181, 199, 0.3);
+}
+
+.book-page-content .highlight-box .box-title {
+  font-weight: 600;
+  color: #B8859C;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.book-page-content .book-cover-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.book-page-content .book-cover-page .cover-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.book-page-content .book-cover-page .cover-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #5D4E6D;
+  margin-bottom: 8px;
+  font-family: 'Georgia', 'Noto Serif SC', serif;
+}
+
+.book-page-content .book-cover-page .cover-author {
+  font-size: 13px;
+  color: #8B7E9C;
+  margin-bottom: 20px;
+}
+
+.book-page-content .book-cover-page .cover-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  background: rgba(212, 181, 199, 0.3);
+  color: #8B7E9C;
+  margin-bottom: 30px;
+}
+
+.book-page-content .book-cover-page .cover-quote {
+  font-size: 12px;
+  color: #7A6B8A;
+  font-style: italic;
+  max-width: 280px;
+  line-height: 1.8;
+}
+
+.book-page-number {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(93, 78, 109, 0.4);
+  font-family: 'Georgia', serif;
+}
+
+/* 翻页按钮 */
+.br-page-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.7);
+  color: #8B7E9C;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(93, 78, 109, 0.15);
+  z-index: 10;
+}
+
+.br-page-btn:hover {
+  background: linear-gradient(135deg, #D4B5C7, #B8A9C9);
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.br-page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: translateY(-50%);
+}
+
+.br-page-prev {
+  left: 12px;
+}
+
+.br-page-next {
+  right: 12px;
+}
+
+/* 底部栏 */
+.book-reader-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, rgba(212, 181, 199, 0.2), rgba(184, 169, 201, 0.15));
+  border-top: 1px solid rgba(184, 169, 201, 0.2);
+  flex-shrink: 0;
+}
+
+.br-page-info {
+  font-size: 12px;
+  color: #7A6B8A;
+  white-space: nowrap;
+}
+
+.br-progress-bar {
+  width: 200px;
+  height: 6px;
+  background: rgba(184, 169, 201, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.br-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #D4B5C7, #B8A9C9);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.br-mini-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.6);
+  color: #7A6B8A;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.br-mini-btn:hover {
+  background: rgba(255,255,255,0.9);
+}
+
+/* 翻页动画 */
+.book-page.flipping-next {
+  animation: flipNext 0.6s ease-in-out forwards;
+  transform-origin: left center;
+  z-index: 10;
+}
+
+.book-page.flipping-prev {
+  animation: flipPrev 0.6s ease-in-out forwards;
+  transform-origin: right center;
+  z-index: 10;
+}
+
+@keyframes flipNext {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(-180deg); }
+}
+
+@keyframes flipPrev {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
+}
+
+/* 书签提示 */
+.bookmark-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #D4B5C7, #B8A9C9);
+  color: white;
+  border-radius: 20px;
+  font-size: 13px;
+  z-index: 2000;
+  box-shadow: 0 4px 20px rgba(184, 169, 201, 0.4);
+  animation: bookmarkPop 0.3s ease;
+}
+
+@keyframes bookmarkPop {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .book-reader-container {
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+  }
+  
+  .book-pages-container {
+    flex-direction: column;
+    max-height: none;
+  }
+  
+  .book-spine-shadow {
+    display: none;
+  }
+  
+  .book-page-left, .book-page-right {
+    border-radius: 8px;
+  }
+  
+  .br-toc-panel, .br-note-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 20;
+    width: 80%;
+    max-width: 280px;
+  }
+  
+  .br-toc-panel { left: 0; }
+  .br-note-panel { right: 0; }
+  
+  .book-pages-wrapper {
+    padding: 10px 40px;
+  }
+  
+  .book-page-content {
+    padding: 24px 20px;
+    font-size: 14px;
+  }
+}
+</style>
+
+<!-- ========== JavaScript 逻辑 ========== -->
+<script>
+// ============================================================
+//  书籍阅读器状态
+// ============================================================
+let currentBook = null;
+let currentSpread = 0; // 当前跨页索引
+let bookPages = []; // 当前书的分页内容
+let bookToc = []; // 目录
+let brShowToc = false;
+let brShowNote = false;
+
+// ============================================================
+//  打开书籍阅读器
+// ============================================================
+function openBookReader(bookId) {
+  const book = BOOK_DETAILS[bookId];
+  if (!book) return;
+  
+  currentBook = book;
+  currentSpread = 0;
+  
+  // 生成页面内容
+  buildBookPages(book);
+  buildBookToc(book);
+  
+  // 更新标题
+  document.getElementById('br-book-title').textContent = book.title;
+  document.getElementById('br-book-author').textContent = book.author;
+  
+  // 渲染第一页
+  renderSpread(0);
+  updatePageNav();
+  updateBookmarkBtn();
+  renderNotes();
+  
+  // 显示
+  document.getElementById('book-reader-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  
+  // 重置侧栏
+  brShowToc = false;
+  brShowNote = false;
+  document.getElementById('br-toc-panel').classList.add('hidden');
+  document.getElementById('br-note-panel').classList.add('hidden');
+}
+
+function closeBookReader() {
+  document.getElementById('book-reader-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  currentBook = null;
+}
+
+// ============================================================
+//  构建书页内容（将书籍内容分页）
+// ============================================================
+function buildBookPages(book) {
+  bookPages = [];
+  
+  // 第1页：封面
+  bookPages.push({
+    type: 'cover',
+    content: `
+      <div class="book-cover-page">
+        <div class="cover-icon">${book.cover}</div>
+        <div class="cover-title">${book.title}</div>
+        <div class="cover-author">${book.author}</div>
+        <div class="cover-tag">${book.level}</div>
+        <div class="cover-quote">「 ${book.intro.whyRead} 」</div>
+      </div>
+    `,
+    tocLabel: '封面'
+  });
+  
+  // 第2页：书籍介绍
+  bookPages.push({
+    type: 'intro',
+    content: `
+      <h2>📖 关于这本书</h2>
+      <p>${book.intro.book}</p>
+      <h3>👤 关于作者</h3>
+      <p>${book.intro.author}</p>
+      <div class="highlight-box">
+        <div class="box-title">💡 为什么读这本书？</div>
+        <p class="no-indent" style="margin:0">${book.intro.whyRead}</p>
+      </div>
+    `,
+    tocLabel: '书籍介绍'
+  });
+  
+  // 核心观点章节
+  book.coreIdeas.forEach((idea, idx) => {
+    bookPages.push({
+      type: 'core-idea',
+      content: `
+        <h2>核心观点 ${idx + 1}</h2>
+        <h3>${idea.title}</h3>
+        ${idea.content.split('\n\n').map(p => `<p>${p}</p>`).join('')}
+      `,
+      tocLabel: `${idx + 1}. ${idea.title}`
+    });
+  });
+  
+  // 核心方法章节
+  bookPages.push({
+    type: 'methods-intro',
+    content: `<h2>🛠️ 核心方法</h2>
+      <p style="text-indent:0">这本书介绍了以下 ${book.methods.length} 个核心方法，每个方法都有详细步骤和例子，跟着做就能上手 👇</p>
+      <ul>
+        ${book.methods.map((m, i) => `<li><b>方法${i+1}：${m.title}</b></li>`).join('')}
+      </ul>`,
+    tocLabel: '核心方法'
+  });
+  
+  book.methods.forEach((method, idx) => {
+    bookPages.push({
+      type: 'method',
+      content: `
+        <h3>方法 ${idx + 1}：${method.title}</h3>
+        <p style="text-indent:0"><b>📝 操作步骤：</b></p>
+        <ol>
+          ${method.steps.map(s => `<li>${s}</li>`).join('')}
+        </ol>
+        <div class="highlight-box">
+          <div class="box-title">💡 举个例子</div>
+          <p class="no-indent" style="margin:0">${method.example}</p>
+        </div>
+      `,
+      tocLabel: `方法${idx+1}: ${method.title}`
+    });
+  });
+  
+  // 新手误区
+  bookPages.push({
+    type: 'mistakes',
+    content: `
+      <h2>⚠️ 新手常见误区</h2>
+      <p style="text-indent:0">刚开始学习的时候，很容易踩这些坑。来看看你有没有中招～</p>
+      ${book.mistakes.map((m, i) => `
+        <div style="margin-bottom:14px">
+          <p style="text-indent:0"><b>❓ 误区${i+1}：${m.q}</b></p>
+          <p style="margin-top:4px">${m.a}</p>
+        </div>
+      `).join('')}
+    `,
+    tocLabel: '新手误区'
+  });
+  
+  // 本周练习
+  bookPages.push({
+    type: 'practice',
+    content: `
+      <h2>📅 本周练习作业</h2>
+      <p style="text-indent:0">光说不练假把式！跟着下面的计划，一周练下来，你会明显感觉到变化 🌸</p>
+      ${book.weeklyPractice.map((day, i) => `
+        <div style="margin-bottom:12px; padding:10px 12px; background:rgba(212,181,199,0.1); border-radius:8px">
+          <div style="font-weight:600; color:#B8859C; margin-bottom:4px">${day.day}</div>
+          <div style="font-size:12px; margin-bottom:4px">${day.task}</div>
+          <div style="font-size:11px; color:#8B7E9C; opacity:0.8">💡 ${day.tip}</div>
+        </div>
+      `).join('')}
+    `,
+    tocLabel: '本周练习'
+  });
+  
+  // 常见问题
+  bookPages.push({
+    type: 'faq',
+    content: `
+      <h2>❓ 常见问题解答</h2>
+      <p style="text-indent:0">大家在读这本书的时候，最常问的问题都在这里了～</p>
+      ${book.faq.map((q, i) => `
+        <div style="margin-bottom:14px">
+          <p style="text-indent:0"><b>Q${i+1}：${q.q}</b></p>
+          <p style="margin-top:4px"><b>A：</b>${q.a}</p>
+        </div>
+      `).join('')}
+    `,
+    tocLabel: '常见问题'
+  });
+  
+  // 最后一页：结语
+  bookPages.push({
+    type: 'ending',
+    content: `
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; padding:40px 20px">
+        <div style="font-size:48px; margin-bottom:20px">✨</div>
+        <h2 style="border:none; text-align:center; margin-bottom:16px">读完啦！</h2>
+        <p style="text-indent:0; max-width:300px; margin-bottom:20px">
+          恭喜你读完了《${book.title}》！<br/>
+          知识不是力量，<b>行动</b>才是。<br/>
+          从今天开始，把书里的方法用起来吧～
+        </p>
+        <div style="font-size:12px; color:#8B7E9C; opacity:0.7">
+          —— 宇宙许愿岛 📚
+        </div>
+      </div>
+    `,
+    tocLabel: '结语'
+  });
+}
+
+// ============================================================
+//  构建目录
+// ============================================================
+function buildBookToc(book) {
+  bookToc = bookPages.map((page, idx) => ({
+    pageIndex: idx,
+    label: page.tocLabel,
+    icon: getTocIcon(page.type)
+  }));
+  
+  const tocList = document.getElementById('br-toc-list');
+  tocList.innerHTML = bookToc.map((item, idx) => `
+    <div class="br-toc-item ${idx === currentSpread ? 'active' : ''}" onclick="goToPage(${item.pageIndex})">
+      <span class="toc-icon">${item.icon}</span>
+      <span>${item.label}</span>
+    </div>
+  `).join('');
+}
+
+function getTocIcon(type) {
+  const icons = {
+    'cover': '📕',
+    'intro': '📖',
+    'core-idea': '💡',
+    'methods-intro': '🛠️',
+    'method': '📝',
+    'mistakes': '⚠️',
+    'practice': '📅',
+    'faq': '❓',
+    'ending': '✨'
+  };
+  return icons[type] || '📄';
+}
+
+// ============================================================
+//  渲染跨页（左右两页）
+// ============================================================
+function renderSpread(spreadIdx) {
+  const leftPageIdx = spreadIdx * 2;
+  const rightPageIdx = spreadIdx * 2 + 1;
+  
+  const leftContent = bookPages[leftPageIdx] ? bookPages[leftPageIdx].content : '';
+  const rightContent = bookPages[rightPageIdx] ? bookPages[rightPageIdx].content : '';
+  
+  document.getElementById('br-page-left-content').innerHTML = leftContent;
+  document.getElementById('br-page-right-content').innerHTML = rightContent;
+  
+  document.getElementById('br-page-left-num').textContent = bookPages[leftPageIdx] ? `— ${leftPageIdx + 1} —` : '';
+  document.getElementById('br-page-right-num').textContent = bookPages[rightPageIdx] ? `— ${rightPageIdx + 1} —` : '';
+  
+  // 滚动到顶部
+  document.getElementById('br-page-left-content').scrollTop = 0;
+  document.getElementById('br-page-right-content').scrollTop = 0;
+  
+  // 更新目录高亮
+  document.querySelectorAll('.br-toc-item').forEach((el, idx) => {
+    const itemPageIdx = bookToc[idx]?.pageIndex;
+    const isActive = (itemPageIdx >= leftPageIdx && itemPageIdx <= rightPageIdx);
+    el.classList.toggle('active', isActive);
+  });
+}
+
+// ============================================================
+//  翻页
+// ============================================================
+function nextPage() {
+  const maxSpread = Math.ceil(bookPages.length / 2) - 1;
+  if (currentSpread >= maxSpread) return;
+  
+  currentSpread++;
+  renderSpread(currentSpread);
+  updatePageNav();
+  updateBookmarkBtn();
+  playPageSound();
+}
+
+function prevPage() {
+  if (currentSpread <= 0) return;
+  
+  currentSpread--;
+  renderSpread(currentSpread);
+  updatePageNav();
+  updateBookmarkBtn();
+  playPageSound();
+}
+
+function goToPage(pageIdx) {
+  const spreadIdx = Math.floor(pageIdx / 2);
+  const maxSpread = Math.ceil(bookPages.length / 2) - 1;
+  currentSpread = Math.max(0, Math.min(spreadIdx, maxSpread));
+  renderSpread(currentSpread);
+  updatePageNav();
+  updateBookmarkBtn();
+}
+
+function updatePageNav() {
+  const maxSpread = Math.ceil(bookPages.length / 2) - 1;
+  document.getElementById('br-current-spread').textContent = currentSpread + 1;
+  document.getElementById('br-total-spreads').textContent = maxSpread + 1;
+  
+  const progress = ((currentSpread + 1) / (maxSpread + 1)) * 100;
+  document.getElementById('br-progress-fill').style.width = progress + '%';
+  
+  document.getElementById('br-prev-btn').disabled = currentSpread <= 0;
+  document.getElementById('br-next-btn').disabled = currentSpread >= maxSpread;
+}
+
+// ============================================================
+//  目录切换
+// ============================================================
+function toggleToc() {
+  brShowToc = !brShowToc;
+  document.getElementById('br-toc-panel').classList.toggle('hidden', !brShowToc);
+  if (brShowToc && brShowNote) {
+    brShowNote = false;
+    document.getElementById('br-note-panel').classList.add('hidden');
+  }
+}
+
+// ============================================================
+//  书签功能
+// ============================================================
+function toggleBookmark() {
+  if (!currentBook) return;
+  
+  const bookId = currentBook.id;
+  const pageIdx = currentSpread * 2;
+  const key = `bookmarks_${bookId}`;
+  
+  let bookmarks = [];
+  try {
+    bookmarks = JSON.parse(localStorage.getItem(key) || '[]');
+  } catch(e) {}
+  
+  const existingIdx = bookmarks.findIndex(b => b.spread === currentSpread);
+  
+  if (existingIdx >= 0) {
+    // 取消书签
+    bookmarks.splice(existingIdx, 1);
+    showBookmarkToast('🔖 已取消书签');
+  } else {
+    // 添加书签
+    const pageLabel = bookPages[pageIdx]?.tocLabel || `第${pageIdx+1}页`;
+    bookmarks.push({
+      spread: currentSpread,
+      page: pageIdx + 1,
+      label: pageLabel,
+      time: Date.now()
+    });
+    showBookmarkToast('🔖 已添加书签');
+  }
+  
+  localStorage.setItem(key, JSON.stringify(bookmarks));
+  updateBookmarkBtn();
+}
+
+function updateBookmarkBtn() {
+  if (!currentBook) return;
+  
+  const bookId = currentBook.id;
+  const key = `bookmarks_${bookId}`;
+  
+  let bookmarks = [];
+  try {
+    bookmarks = JSON.parse(localStorage.getItem(key) || '[]');
+  } catch(e) {}
+  
+  const isBookmarked = bookmarks.some(b => b.spread === currentSpread);
+  const btn = document.getElementById('br-bookmark-btn');
+  btn.classList.toggle('active', isBookmarked);
+  btn.textContent = isBookmarked ? '📌' : '🔖';
+}
+
+function showBookmarkToast(msg) {
+  const existing = document.querySelector('.bookmark-toast');
+  if (existing) existing.remove();
+  
+  const toast = document.createElement('div');
+  toast.className = 'bookmark-toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 1500);
+}
+
+// ============================================================
+//  笔记功能
+// ============================================================
+function toggleNotePanel() {
+  brShowNote = !brShowNote;
+  document.getElementById('br-note-panel').classList.toggle('hidden', !brShowNote);
+  if (brShowNote && brShowToc) {
+    brShowToc = false;
+    document.getElementById('br-toc-panel').classList.add('hidden');
+  }
+  document.getElementById('br-note-btn').classList.toggle('active', brShowNote);
+}
+
+function addNote() {
+  if (!currentBook) return;
+  
+  const input = document.getElementById('br-note-input');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const bookId = currentBook.id;
+  const pageIdx = currentSpread * 2;
+  const key = `notes_${bookId}`;
+  
+  let notes = [];
+  try {
+    notes = JSON.parse(localStorage.getItem(key) || '[]');
+  } catch(e) {}
+  
+  const pageLabel = bookPages[pageIdx]?.tocLabel || `第${pageIdx+1}页`;
+  
+  notes.unshift({
+    id: Date.now(),
+    spread: currentSpread,
+    page: pageIdx + 1,
+    pageLabel: pageLabel,
+    text: text,
+    time: Date.now()
+  });
+  
+  localStorage.setItem(key, JSON.stringify(notes));
+  input.value = '';
+  renderNotes();
+  
+  showBookmarkToast('📝 笔记已保存');
+}
+
+function deleteNote(noteId) {
+  if (!currentBook) return;
+  
+  const bookId = currentBook.id;
+  const key = `notes_${bookId}`;
+  
+  let notes = [];
+  try {
+    notes = JSON.parse(localStorage.getItem(key) || '[]');
+  } catch(e) {}
+  
+  notes = notes.filter(n => n.id !== noteId);
+  localStorage.setItem(key, JSON.stringify(notes));
+  renderNotes();
+}
+
+function renderNotes() {
+  if (!currentBook) return;
+  
+  const bookId = currentBook.id;
+  const key = `notes_${bookId}`;
+  
+  let notes = [];
+  try {
+    notes = JSON.parse(localStorage.getItem(key) || '[]');
+  } catch(e) {}
+  
+  document.getElementById('br-note-count').textContent = `${notes.length}条`;
+  
+  const listEl = document.getElementById('br-note-list');
+  
+  if (notes.length === 0) {
+    listEl.innerHTML = `
+      <div class="br-note-empty">
+        <div class="text-3xl mb-2">📖</div>
+        <div class="text-xs opacity-60">还没有笔记<br/>边读边记，收获更大哦～</div>
+      </div>
+    `;
+    return;
+  }
+  
+  listEl.innerHTML = notes.map(n => `
+    <div class="br-note-item">
+      <div class="note-page">📄 ${n.pageLabel} · 第${n.page}页</div>
+      <div class="note-text">${escapeHtml(n.text)}</div>
+      <button class="note-delete" onclick="deleteNote(${n.id})" title="删除">✕</button>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============================================================
+//  翻页音效（轻量）
+// ============================================================
+function playPageSound() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 800;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+// ============================================================
+//  键盘快捷键
+// ============================================================
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('book-reader-modal').classList.contains('hidden')) return;
+  
+  if (e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault();
+    nextPage();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    prevPage();
+  } else if (e.key === 'Escape') {
+    closeBookReader();
+  }
+});
+
+// ============================================================
+//  触摸滑动翻页
+// ============================================================
+(function initTouchSwipe() {
+  let startX = 0;
+  let startY = 0;
+  const wrapper = document.getElementById('br-pages-wrapper');
+  
+  if (!wrapper) return;
+  
+  wrapper.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  
+  wrapper.addEventListener('touchend', function(e) {
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const diffX = endX - startX;
+    const diffY = endY - startY;
+    
+    if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+      if (diffX > 0) {
+        prevPage();
+      } else {
+        nextPage();
+      }
+    }
+  }, { passive: true });
+})();
+</script>

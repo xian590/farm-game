@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.4.2';
+const GAME_VERSION = '1.4.3';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -9812,6 +9812,9 @@ function calculateOfflineReward() {
         // 重置每日操作
         game.dailyActions = {exercise: 0, chat: 0, fish: 0, read: 0, foraging: 0, sideHustle: 0};
         game.dailyProcessed = {};
+        // 重置每日NPC交互记录，避免日期循环后错误匹配
+        game.lastChatDay = {};
+        game.lastGiftDay = {};
         // 村民每天帮你干活（浇水除草）并扣日薪
         if (game.hiredWorker && NPC_DATA[game.hiredWorker]) {
             const npc = NPC_DATA[game.hiredWorker];
