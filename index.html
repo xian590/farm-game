@@ -3269,7 +3269,7 @@ window.addEventListener('unhandledrejection', function(e) {
     const errorLog = { time: new Date().toISOString(), message: String(e.reason), stack: e.reason && e.reason.stack ? e.reason.stack : '', url: location.href };
     const ERROR_LOG_KEY = 'farm_game_error_log';
     try {
-        let logs = JSON.parse(safeStorageGet(ERROR_LOG_KEY, '[]'));
+        let logs = (function() { try { return JSON.parse(safeStorageGet(ERROR_LOG_KEY, '[]')); } catch(e) { return []; } })();
         if (!Array.isArray(logs)) logs = [];
         logs.push(errorLog);
         if (logs.length > 20) logs.shift();
