@@ -10826,6 +10826,7 @@ function renderBackpack() {
 }
 
 function useItem(itemId) {
+    if (!game) return;
     if (!game.items[itemId] || game.items[itemId] <= 0) return;
     const item = ITEM_EFFECTS[itemId];
     if (!item) {
@@ -10859,7 +10860,7 @@ function saveGame() {
     if (!game) return;
     if (game._savePending) return;
     game._savePending = true;
-    setTimeout(() => { game._savePending = false; }, 500);
+    setTimeout(() => { if (game) game._savePending = false; }, 500);
     // 保存前备份瞬态字段（必须在 try 最外层声明，避免 finally 引用 TDZ 变量）
     const _needsRender = game.needsRender;
     const _tickCount = game.tickCount;
@@ -12069,6 +12070,7 @@ function advanceSeason(silent = false) {
         addLog(`🍂 季节更替，${removedCount}块田里的作物因不适应新季节而枯萎了。`, 'bad');
         if (!silent) {
             setTimeout(() => {
+                if (!game) return;
                 if (game.currentEvent) return; // 如果事件弹窗正在显示，不显示季节弹窗
                 showModal('🍂 季节更替', `随着${SEASON_NAMES[game.season]}的到来，${removedCount}块田里的作物因不适应新季节而枯萎了。<br><br><span style="color: #999; font-size: 13px;">💡 提示：不同季节适合种植不同作物，春天适合水稻、红薯、大豆、小麦等。</span>`, function() {
                     // 季节弹窗关闭后再触发事件
@@ -14413,6 +14415,7 @@ function applyEventBranches(event, option) {
 }
 
 function handleEventChoice(optionIdx) {
+    if (!game) return;
     const eventId = game.currentEvent;
     let event = EVENTS[eventId];
     // 支持故事事件
@@ -23020,6 +23023,8 @@ function addLog(text, type = 'normal') {
     
     // 3秒后移除new高亮（CSS动画处理，避免JS timer泄漏）
     // .log-item.new 在CSS中定义了animation
+    
+    if (!game) return;
     
     let timeStr = `[第${game.totalDay || game.day}天]`;
     let icon = '';
