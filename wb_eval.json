@@ -1,1 +1,1 @@
-{"action":"evaluate","args":{"code":"(async()=>{const r=await fetch('http://localhost:8765/browser_final_test.js');const code=await r.text();eval(code);return window.__farmTestResults;})()"},"session":"manifestation-test-v64"}
+{"action":"evaluate","args":{"code":"JSON.stringify({errors: window.__consoleErrors || [], game: typeof game, modal: document.getElementById(\"modal-overlay\")?.style.display})"},"session":"farm-test"}
