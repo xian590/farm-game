@@ -1,8 +1,1 @@
-{
-  "action": "screenshot",
-  "args": {
-    "format": "png",
-    "path": "farm_status_2026-06-29_0917.png"
-  },
-  "session": "farm-game"
-}
+{"action":"screenshot","args":{},"session":"xingyuan-v64-test"}

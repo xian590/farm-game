@@ -1,0 +1,1 @@
+action:cdp args:method:Target.createTarget args:params:{url:http://localhost:8765/index-manifestation.html} session:cosmos-test

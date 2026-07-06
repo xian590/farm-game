@@ -1,0 +1,13 @@
+[2026-07-05 22:29:24] ==================================================
+[2026-07-05 22:29:24] Browser test started
+[2026-07-05 22:29:24] Block 2 syntax: PASS
+[2026-07-05 22:29:24] HTTP server started on 127.0.0.1:8765
+[2026-07-05 22:29:27] Navigate: {"ok": true, "data": {"success": true, "url": "http://127.0.0.1:8765/index-manifestation.html", "tabId": 936896480}}
+[2026-07-05 22:29:33] Init check: {"ok": true, "data": {"type": "object", "value": {"__initDone": "boolean", "initType": "function", "sk": "null"}}}
+[2026-07-05 22:29:33] Init check: PASS
+[2026-07-05 22:29:33] Screenshot: {"ok": true, "data": {"format": "png", "path": "C:\\Users\\Administrator\\Documents\\kimi\\workspace\\autotest_screenshot.png", "sizeBytes": 225750, "mimeType": "image/png"}}
+[2026-07-05 22:29:33] goHome: {"ok": true, "data": {"type": "object", "value": {"done": true}}}
+[2026-07-05 22:29:35] Page switch: PASS
+[2026-07-05 22:29:35] Home screenshot: {"ok": true, "data": {"format": "png", "path": "C:\\Users\\Administrator\\Documents\\kimi\\workspace\\autotest_home.png", "sizeBytes": 249463, "mimeType": "image/png"}}
+[2026-07-05 22:29:35] ALL TESTS PASSED
+[2026-07-05 22:29:35] ==================================================

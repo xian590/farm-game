@@ -1,0 +1,14 @@
+{
+  "errors": [],
+  "warnings": [],
+  "info": [
+    "纯 HTML 标签平衡 OK",
+    "所有 onclick 独立函数调用都已定义",
+    "HTML 属性引号匹配 OK",
+    "所有 Script 块语法 OK",
+    "所有 ID 唯一 (638 个)",
+    "section 标签平衡: 66/66",
+    "所有 showPage 目标页面存在 (48 个)",
+    "CSS 花括号平衡 OK"
+  ]
+}

@@ -1,0 +1,53 @@
+=== SETINTERVAL FINDINGS ===
+Total setInterval assignments: 13
+Total clearInterval calls: 19
+No setInterval leaks detected.
+
+=== SETTIMEOUT FINDINGS ===
+Total setTimeout assignments: 9
+Total clearTimeout calls: 8
+Potential leaks: 1
+  Line 8900: "typingSoundTimeout" has no clearTimeout
+    => typingSoundTimeout = setTimeout(() => { typingSoundTimeout = null; }, 60);
+
+=== ADDEVENTLISTENER FINDINGS ===
+Total addEventListener calls: 16
+Total removeEventListener calls: 0
+Potential leaks: 16
+  Line 8735: No removeEventListener for document.click
+    => document.addEventListener('click', e => {
+  Line 8771: No removeEventListener for window.unhandledrejection
+    => window.addEventListener('unhandledrejection', function(event) {
+  Line 8780: No removeEventListener for window.online
+    => window.addEventListener('online', () => showToast('🌐 网络已连接'));
+  Line 8781: No removeEventListener for window.offline
+    => window.addEventListener('offline', () => showToast('📴 进入离线模式，数据仍安全保存'));
+  Line 8784: No removeEventListener for document.visibilitychange
+    => document.addEventListener('visibilitychange', () => {
+  Line 11457: No removeEventListener for star.mousedown
+    => star.addEventListener('mousedown', onStart);
+  Line 11458: No removeEventListener for document.mousemove
+    => document.addEventListener('mousemove', onMove);
+  Line 11459: No removeEventListener for document.mouseup
+    => document.addEventListener('mouseup', onEnd);
+  Line 11460: No removeEventListener for star.touchstart
+    => star.addEventListener('touchstart', onStart, { passive: false });
+  Line 11461: No removeEventListener for document.touchmove
+    => document.addEventListener('touchmove', onMove, { passive: false });
+  Line 11462: No removeEventListener for document.touchend
+    => document.addEventListener('touchend', onEnd);
+  Line 15111: No removeEventListener for m.click
+    => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
+  Line 15263: No removeEventListener for document.click
+    => document.addEventListener('click', function initAudioOnce() {
+  Line 17088: No removeEventListener for document.DOMContentLoaded
+    => document.addEventListener('DOMContentLoaded', function() {
+  Line 17651: No removeEventListener for document.DOMContentLoaded
+    => document.addEventListener('DOMContentLoaded', handleRouteParam);
+  Line 17659: No removeEventListener for window.beforeinstallprompt
+    => window.addEventListener('beforeinstallprompt', e => {
+
+=== SUMMARY ===
+setInterval leaks: 0
+setTimeout leaks: 1
+addEventListener leaks: 16

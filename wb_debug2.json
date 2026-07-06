@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"try { showPage('habit-calendar'); document.getElementById('habit-name-input').value = '测试习惯'; addHabit(); 'OK'; } catch(e) { e.stack || e.message; }"},"session":"xingyuan-test"}

@@ -1,0 +1,28 @@
+{
+  "errors": [
+    "未闭合标签 <h4> 在位置 638376",
+    "未闭合标签 <h4> 在位置 638662",
+    "未闭合标签 <h4> 在位置 639315",
+    "未闭合标签 <ul> 在位置 639639",
+    "未闭合标签 <li> 在位置 639717",
+    "未闭合标签 <p> 在位置 640076",
+    "未闭合标签 <buffersize> 在位置 916670",
+    "onclick 缺失函数: querySelector, querySelectorAll, stopPropagation, replace, substring, getElementById, remove, setItem"
+  ],
+  "warnings": [
+    "多余的闭合标签 </g> 在位置 490294",
+    "多余的闭合标签 </g> 在位置 495410",
+    "多余的闭合标签 </p> 在位置 638524",
+    "发现 2 处可能危险的 innerHTML 拼接"
+  ],
+  "info": [
+    "DOCTYPE 正确",
+    "找到 3 个 script 块",
+    "找到 594 个 onclick 属性",
+    "所有 ID 唯一 (638 个)",
+    "发现 155 处 innerHTML 赋值",
+    "发现 281 个未转义的 & 符号（部分可能是 URL 参数）",
+    "所有 showPage 目标页面存在 (48 个)",
+    "外部资源: 4 个 link, 2 个 script src"
+  ]
+}
