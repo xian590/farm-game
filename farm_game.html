@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.4.5';
+const GAME_VERSION = '1.4.6';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4235,10 +4235,10 @@ function toggleSettings() {
 function closeSettings() {
     const overlay = document.getElementById('settings-overlay');
     if (overlay) overlay.style.display = 'none';
-    const pauseStackLength = game._modalPauseStack ? game._modalPauseStack.length : 0;
+    const pauseStackLength = game && game._modalPauseStack ? game._modalPauseStack.length : 0;
     setTimeout(() => {
         // 检查模态框栈是否已变化（用户又打开了新模态框）
-        if (game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
+        if (game && game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
             return; // 有新的模态框打开，不恢复暂停
         }
         // 关闭设置面板时恢复游戏（使用栈式恢复）
@@ -14308,12 +14308,14 @@ function showEventPopup(event) {
 function showEventModal(event) {
     if (modalClosing) return;
     // 打开模态框时暂停游戏
-    if (!game._modalPauseStack) game._modalPauseStack = [];
-    if (!gamePaused) {
-        game._modalPauseStack.push(false);
-        togglePause();
-    } else {
-        game._modalPauseStack.push(true);
+    if (game) {
+        if (!game._modalPauseStack) game._modalPauseStack = [];
+        if (!gamePaused) {
+            game._modalPauseStack.push(false);
+            togglePause();
+        } else {
+            game._modalPauseStack.push(true);
+        }
     }
     const titleEl = document.getElementById('modal-title');
     const contentEl = document.getElementById('modal-content');
@@ -23394,12 +23396,14 @@ function showModal(title, content, onConfirm, onCancel, options) {
         }
     }
     // 打开模态框时暂停游戏
-    if (!game._modalPauseStack) game._modalPauseStack = [];
-    if (!gamePaused) {
-        game._modalPauseStack.push(false);
-        togglePause();
-    } else {
-        game._modalPauseStack.push(true);
+    if (game) {
+        if (!game._modalPauseStack) game._modalPauseStack = [];
+        if (!gamePaused) {
+            game._modalPauseStack.push(false);
+            togglePause();
+        } else {
+            game._modalPauseStack.push(true);
+        }
     }
     if (typeof content === 'string' && !options.allowHtml) {
         content = escapeHtml(content);
@@ -23557,10 +23561,10 @@ function closeEventModal() {
         previousActiveElement = null;
     }
     // === 焦点恢复结束 ===
-    const pauseStackLength = game._modalPauseStack ? game._modalPauseStack.length : 0;
+    const pauseStackLength = game && game._modalPauseStack ? game._modalPauseStack.length : 0;
     setTimeout(() => {
         // 检查模态框栈是否已变化（用户又打开了新模态框）
-        if (game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
+        if (game && game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
             return; // 有新的模态框打开，不恢复暂停
         }
         // 关闭模态框时恢复游戏（使用栈式恢复）
@@ -23590,10 +23594,10 @@ function closeModal() {
     modalOverlay.style.animation = 'fadeOut 0.2s ease forwards';
     const modalContent = modalOverlay.querySelector('.modal-content');
     if (modalContent) modalContent.style.animation = 'popOut 0.2s ease forwards';
-    const pauseStackLength = game._modalPauseStack ? game._modalPauseStack.length : 0;
+    const pauseStackLength = game && game._modalPauseStack ? game._modalPauseStack.length : 0;
     window._closeModalTimeout = setTimeout(() => {
         // 检查模态框栈是否已变化（用户又打开了新模态框）
-        if (game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
+        if (game && game._modalPauseStack && game._modalPauseStack.length > pauseStackLength) {
             return; // 有新的模态框打开，不恢复暂停
         }
         modalOverlay.style.display = 'none';
@@ -24245,12 +24249,14 @@ function queueQuestReward(questId, money, text, reputation) {
 function showQuestRewardModal() {
     if (!game || !game.pendingQuestRewards || game.pendingQuestRewards.length === 0) return;
     // 打开模态框时暂停游戏
-    if (!game._modalPauseStack) game._modalPauseStack = [];
-    if (!gamePaused) {
-        game._modalPauseStack.push(false);
-        togglePause();
-    } else {
-        game._modalPauseStack.push(true);
+    if (game) {
+        if (!game._modalPauseStack) game._modalPauseStack = [];
+        if (!gamePaused) {
+            game._modalPauseStack.push(false);
+            togglePause();
+        } else {
+            game._modalPauseStack.push(true);
+        }
     }
     
     const reward = game.pendingQuestRewards[0];
