@@ -1,0 +1,1 @@
+{"action":"evaluate","args":{"code":"\n            // Clear all caches and reload\n            if (caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));\n            localStorage.clear();\n            sessionStorage.clear();\n            location.href = 'https://xian590.github.io/farm-game/?v=147&nocache=' + Date.now();\n        "},"session":"farm-test"}

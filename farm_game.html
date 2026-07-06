@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.4.6';
+const GAME_VERSION = '1.4.7';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4195,7 +4195,7 @@ function toggleSettings() {
         closeSettings();
     } else {
         // 打开设置面板时暂停游戏
-        if (!game._modalPauseStack) game._modalPauseStack = [];
+        if (game && !game._modalPauseStack) game._modalPauseStack = [];
         if (!gamePaused) {
             game._modalPauseStack.push(false);
             togglePause();
@@ -4257,7 +4257,7 @@ function closeSettings() {
 // ==================== 弹窗统一管理：防止叠加 ====================
 function closeAllModals() {
     // 清理暂停栈
-    if (game._modalPauseStack) {
+    if (game && game._modalPauseStack) {
         // 如果游戏在暂停状态，恢复游戏
         if (gamePaused && game._modalPauseStack.length > 0) {
             togglePause();
@@ -14309,7 +14309,7 @@ function showEventModal(event) {
     if (modalClosing) return;
     // 打开模态框时暂停游戏
     if (game) {
-        if (!game._modalPauseStack) game._modalPauseStack = [];
+        if (game && !game._modalPauseStack) game._modalPauseStack = [];
         if (!gamePaused) {
             game._modalPauseStack.push(false);
             togglePause();
@@ -14323,7 +14323,7 @@ function showEventModal(event) {
     if (!titleEl || !contentEl || !overlayEl) return;
     
     // 清理所有残留的暂停状态，防止强制关闭其他弹窗后状态不一致
-    if (game._modalPauseStack && game._modalPauseStack.length > 0) {
+    if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
         if (gamePaused) {
             togglePause();
         }
@@ -23397,7 +23397,7 @@ function showModal(title, content, onConfirm, onCancel, options) {
     }
     // 打开模态框时暂停游戏
     if (game) {
-        if (!game._modalPauseStack) game._modalPauseStack = [];
+        if (game && !game._modalPauseStack) game._modalPauseStack = [];
         if (!gamePaused) {
             game._modalPauseStack.push(false);
             togglePause();
@@ -23454,7 +23454,7 @@ function showModal(title, content, onConfirm, onCancel, options) {
     
     contentEl.innerHTML = content;
     // 清理所有残留的暂停状态，防止强制关闭事件弹窗后状态不一致
-    if (game._modalPauseStack && game._modalPauseStack.length > 0) {
+    if (game && game._modalPauseStack && game._modalPauseStack.length > 0) {
         if (gamePaused) {
             togglePause();
         }
@@ -24250,7 +24250,7 @@ function showQuestRewardModal() {
     if (!game || !game.pendingQuestRewards || game.pendingQuestRewards.length === 0) return;
     // 打开模态框时暂停游戏
     if (game) {
-        if (!game._modalPauseStack) game._modalPauseStack = [];
+        if (game && !game._modalPauseStack) game._modalPauseStack = [];
         if (!gamePaused) {
             game._modalPauseStack.push(false);
             togglePause();
