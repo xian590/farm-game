@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { const clickable = document.querySelectorAll('button, a, [onclick]'); let result = []; for (let el of clickable) { const text = el.textContent.trim(); if (text.length > 0 && text.length < 20) { result.push(text); } } return JSON.stringify(result.slice(0, 50)); })()"},"session":"farm-game"}

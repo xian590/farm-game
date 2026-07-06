@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{try{const btn=document.querySelector('.field-actions button, .field-card button');if(btn){btn.click();return 'PREPARED';}else{return 'NO_BTN';}}catch(e){return e.message;}})()"},"session":"farm-game"}

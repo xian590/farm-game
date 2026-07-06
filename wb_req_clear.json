@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{localStorage.removeItem('farm_game_save_v1');return 'CLEARED';})()"},"session":"farm-game"}

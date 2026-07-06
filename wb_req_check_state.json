@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{return JSON.stringify({gameDataExists:typeof gameData!=='undefined',day:typeof gameData!=='undefined'?gameData.day:null,mode:typeof gameData!=='undefined'?gameData.mode:null,selectVisible:!!document.getElementById('select-container'),mainVisible:!!document.getElementById('main-container')})})()"},"session":"farm-game"}

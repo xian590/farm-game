@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(() => { const tabs = document.querySelectorAll('.sidebar-tab'); for (let tab of tabs) { if (tab.textContent.includes('堆肥工坊')) { tab.click(); return 'clicked compost tab'; } } return 'compost tab not found'; })()"
-  },
-  "session": "farm-game"
-}

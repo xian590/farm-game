@@ -23683,8 +23683,8 @@ function confirmModal() {
         modal.style.margin = '0';
         modal.style.transform = 'none';
         
-        startX = e.clientX || e.touches[0].clientX;
-        startY = e.clientY || e.touches[0].clientY;
+        startX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        startY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
         initialLeft = parseFloat(modal.style.left) || 0;
         initialTop = parseFloat(modal.style.top) || 0;
         
@@ -23700,8 +23700,8 @@ function confirmModal() {
     function onMove(e) {
         if (!isDragging || !currentModal) return;
         if (e.preventDefault) e.preventDefault();
-        const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-        const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+        const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
         const dx = clientX - startX;
         const dy = clientY - startY;
         currentModal.style.left = (initialLeft + dx) + 'px';

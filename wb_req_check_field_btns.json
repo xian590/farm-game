@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{const f=game.fields[0];const btns=document.querySelectorAll('.field-actions button, .field-card button');return JSON.stringify({stage:f.stage,prepared:f.prepared,crop:f.crop,seedAvailable:game.seeds.rice_spring,btnTexts:Array.from(btns).map(b=>b.textContent.trim())})})()"},"session":"farm-game"}

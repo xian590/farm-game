@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(() => { const btns = document.querySelectorAll('button'); for (let b of btns) { if (b.textContent.includes('知道了')) { b.click(); return 'clicked'; } } return 'not found'; })()"},"session":"farm-game"}

@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{if(typeof selectMode==='function'){selectMode('normal');return 'SELECTED_NORMAL';}else{return 'NOT_FOUND:'+typeof selectMode;}})()"},"session":"farm-game"}

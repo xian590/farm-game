@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{const btn=document.querySelector('.sidebar-tab[data-tab=\"shop\"]');if(btn){btn.click();return 'CLICKED_SHOP';}else{return 'NOT_FOUND';}})()"},"session":"farm-game"}

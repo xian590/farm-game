@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(() => { const modal = document.querySelector('.modal, .backpack-modal, [class*=backpack]'); if (!modal) return 'no modal'; const items = modal.querySelectorAll('*'); let result = []; for (let el of items) { const text = el.textContent.trim(); if (text && text.length < 50 && text.length > 0) { if (!result.includes(text)) { result.push(text); } } } return JSON.stringify(result.slice(0, 30)); })()"
-  },
-  "session": "farm-game"
-}

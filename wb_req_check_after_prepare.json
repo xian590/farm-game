@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{const f=game.fields[0];return JSON.stringify({stage:f.stage,prepared:f.prepared,crop:f.crop,money:game.money,stamina:game.stamina})})()"},"session":"farm-game"}

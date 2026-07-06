@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(() => { const all = document.querySelectorAll('*'); let results = []; for (let el of all) { const text = el.textContent.trim(); if ((text.includes('集市') || text.includes('市场')) && text.length < 100) { results.push({tag: el.tagName, class: el.className, text: text}); } } return JSON.stringify(results.slice(0, 20)); })()"
-  },
-  "session": "farm-game"
-}

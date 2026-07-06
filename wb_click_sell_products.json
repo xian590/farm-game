@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(() => { const all = document.querySelectorAll('*'); for (let el of all) { if (el.textContent.trim() === '🍚 出售农副产品') { el.click(); return 'clicked sell products'; } } return 'sell products not found'; })()"
-  },
-  "session": "farm-game"
-}

@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(() => { if (window.app && window.app.router) { window.app.router.push('/villagers'); return 'router pushed'; } if (window.location.hash) { window.location.hash = '#/villagers'; return 'hash changed'; } const all = document.querySelectorAll('*'); let villagers = []; for (let el of all) { const text = el.textContent.trim(); if (text && text.length < 50 && (text.includes('村民') || text.includes('NPC') || text.includes('好感'))) { if (!villagers.includes(text)) { villagers.push(text); } } } return JSON.stringify(villagers.slice(0, 20)); })()"
-  },
-  "session": "farm-game"
-}

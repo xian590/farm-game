@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{try{if(typeof buySeed==='function'){buySeed('rice_spring');return 'BOUGHT_RICE_SPRING:'+JSON.stringify({money:game.money,seeds:game.seeds});}else{return 'BUYSEED_NOT_FOUND';}}catch(e){return e.message;}})()"},"session":"farm-game"}

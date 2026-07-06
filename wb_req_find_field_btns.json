@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"(()=>{const btns=document.querySelectorAll('.field-actions button, .field-card button, [class*=field] button');return JSON.stringify({count:btns.length,texts:Array.from(btns).slice(0,5).map(b=>b.textContent.trim())})})()"},"session":"farm-game"}

@@ -1,1 +1,0 @@
-{"action":"evaluate","args":{"code":"try { showModal(\"测试\", \"测试内容\", () => console.log(\"ok\")); \"success\"; } catch(e) { e.message; }"},"session":"farm-test"}

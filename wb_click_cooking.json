@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(() => { const tabs = document.querySelectorAll('.sidebar-tab'); for (let tab of tabs) { if (tab.textContent.includes('农家烹饪')) { tab.click(); return 'clicked cooking tab'; } } return 'cooking tab not found'; })()"
-  },
-  "session": "farm-game"
-}

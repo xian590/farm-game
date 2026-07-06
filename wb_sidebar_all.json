@@ -1,7 +1,0 @@
-{
-  "action": "evaluate",
-  "args": {
-    "code": "(() => { const tabs = document.querySelectorAll('.sidebar-tab'); let result = []; for (let tab of tabs) { result.push(tab.textContent.trim()); } return JSON.stringify(result); })()"
-  },
-  "session": "farm-game"
-}
