@@ -3233,7 +3233,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.4.7';
+const GAME_VERSION = '1.4.8';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -12075,7 +12075,7 @@ function advanceSeason(silent = false) {
                     if (!game.currentEvent && Math.random() < 0.55) {
                         triggerRandomEvent();
                     }
-                });
+                }, null, { allowHtml: true });
             }, 300);
         } else {
             // 静默模式下，如果事件弹窗未显示，直接触发事件
@@ -14289,7 +14289,7 @@ function triggerNightEvent() {
     // 显示弹窗
     showModal(selectedEvent.name, escapeHtml(selectedEvent.desc) + '<br><br>' + 
         '<span style="color: ' + (selectedEvent.type === 'good' ? '#27ae60' : '#e74c3c') + ';">' +
-        escapeHtml(selectedEvent.effectText) + '</span>');
+        escapeHtml(selectedEvent.effectText) + '</span>', null, null, { allowHtml: true });
     
     saveGame();
     updateUI();
@@ -23504,7 +23504,7 @@ function showTutorial() {
     const step = TUTORIAL_STEPS[stepIdx];
     showModal(step.title, step.content, () => {
         // 确认按钮：知道了
-    });
+    }, null, { allowHtml: true });
     // 设置 secondary 按钮为"跳过全部引导"
     const modalSecondary = document.querySelector('.modal-btn.secondary');
     if (modalSecondary) {
