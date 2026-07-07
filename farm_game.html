@@ -5302,7 +5302,7 @@ const VILLAGE_PROJECTS = {
 // 农家乐系统
 const FARM_STAY_DATA = {
     level: [
-        { name: '茅草棚', emoji: '🛖', cost: 3000, dailyIncome: 30, maxGuests: 2, desc: '搭个茅草棚，招待过路客' },
+        { name: '茅草棚', emoji: '🏠', cost: 3000, dailyIncome: 30, maxGuests: 2, desc: '搭个茅草棚，招待过路客' },
         { name: '农家小院', emoji: '🏡', cost: 8000, dailyIncome: 80, maxGuests: 5, desc: '收拾出两间客房，城里人爱来' },
         { name: '田园民宿', emoji: '🏘️', cost: 20000, dailyIncome: 200, maxGuests: 12, desc: '装修一新，周末爆满' },
         { name: '度假农庄', emoji: '🌄', cost: 50000, dailyIncome: 500, maxGuests: 30, desc: '全村的骄傲，旅游团都来' }
@@ -10751,7 +10751,7 @@ function showOfflineReward(reward) {
     content += `</div>`;
     
     // 显示弹窗
-    showModal('离线收益', content, null);
+    showModal('离线收益', content, null, null, { allowHtml: true });
 }
 
 
@@ -21140,7 +21140,7 @@ function renderFarmStayPanel() {
         </div>`;
     } else {
         html += '<div class="shop-category">🏡 尚未开业</div>';
-        html += '<div class="shop-item" style="opacity:0.6;"><div class="shop-item-info"><div class="shop-item-icon">🛖</div><div><div class="shop-item-name">茅草棚</div><div class="shop-item-desc">先从最简单的茅草棚开始</div></div></div></div>';
+        html += '<div class="shop-item" style="opacity:0.6;"><div class="shop-item-info"><div class="shop-item-icon">🏠</div><div><div class="shop-item-name">茅草棚</div><div class="shop-item-desc">先从最简单的茅草棚开始</div></div></div></div>';
     }
     
     // 升级
@@ -21192,7 +21192,7 @@ function renderFarmStayPanel() {
                         <div>
                             <div class="shop-item-name">${dish.name}（已做${made}份）</div>
                             <div class="shop-item-desc">${dish.desc}</div>
-                            <div class="shop-item-desc">原料：${Object.entries(dish.cost).map(([k,v]) => v + ({rice:'斤稻谷',fish:'条鱼',fruit:'斤水果',riceWine:'斤米酒',chicken:'只鸡',lamb:'只羊',vegetable:'斤蔬菜'}[k]||k)).join('、')}</div>
+                            <div class="shop-item-desc">原料：${Object.entries(dish.cost).map(([k,v]) => v + ({rice:'斤稻谷',fish:'条鱼',fruit:'斤水果',riceWine:'斤米酒',chicken:'只鸡',lamb:'只羊',cabbage:'斤白菜',egg:'个鸡蛋',vegetable:'斤蔬菜'}[k]||k)).join('、')}</div>
                         </div>
                     </div>
                     <div class="shop-item-price">
@@ -21308,7 +21308,11 @@ function makeDish(dishKey) {
             else if (game.processedItems && game.processedItems[ingredient] !== undefined) have = game.processedItems[ingredient];
             else have = 0;
             
-            if (have < amount) { showToast(`食材不足：需要${amount}个${ingredient}`, 'bad'); playErrorSound(); return; }
+            if (have < amount) {
+                const ingredientNames = { fish: '鱼', fruit: '水果', riceWine: '米酒', chicken: '鸡', lamb: '羊', egg: '鸡蛋', rice: '稻谷', sweet: '红薯', wheat: '小麦', corn: '玉米', soybean: '大豆', potato: '土豆', peanut: '花生', pepper: '辣椒', cabbage: '白菜', radish: '萝卜', eggplant: '茄子', garlic: '大蒜', vegetable: '蔬菜' };
+                const ingName = ingredientNames[ingredient] || ingredient;
+                showToast(`食材不足：需要${amount}个${ingName}`, 'bad'); playErrorSound(); return;
+            }
         }
         
         // 消耗原料
@@ -22881,6 +22885,9 @@ function upgradeHouse(targetHouse) {
         
         // 只能升级下一级
         if (targetIndex !== currentIndex + 1) {
+            const now = Date.now();
+            if (game._houseUpgradeToastCooldown && now - game._houseUpgradeToastCooldown < 3000) return;
+            game._houseUpgradeToastCooldown = now;
             showToast('只能升级下一级房屋！', 'bad');
             playErrorSound();
             return;
@@ -23533,10 +23540,15 @@ const TUTORIAL_STEPS = [
 
 function showTutorial() {
     if (!game || game.tutorialCompleted) return;
+    if (game._tutorialFinalShown) return;
     const stepIdx = Math.min(game.tutorialStep, 9);
     if (stepIdx < 0 || stepIdx >= TUTORIAL_STEPS.length) return;
     
     const step = TUTORIAL_STEPS[stepIdx];
+    if (stepIdx === 9) {
+        game._tutorialFinalShown = true;
+        game.tutorialCompleted = true;
+    }
     showModal(step.title, step.content, () => {
         // 确认按钮：知道了
     }, null, { allowHtml: true });
@@ -24958,6 +24970,7 @@ function contributeToProject(projKey, type) {
         }
         
         projData.progress += contributed;
+        projData.progress = Math.round(projData.progress * 10) / 10;
         // 浮点数误差修正
         if (projData.progress > proj.totalProgress && Math.abs(projData.progress - proj.totalProgress) < 1) {
             projData.progress = proj.totalProgress;
