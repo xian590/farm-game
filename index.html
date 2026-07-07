@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>李家村 - 农耕模拟器</title>
     <style>
         * {
@@ -19,6 +19,7 @@
             height: 100vh;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+            -webkit-text-size-adjust: 100%;
             -webkit-touch-callout: none;
         }
         body.select-open {
@@ -2079,7 +2080,7 @@
                 border-radius: 12px 12px 0 0;
                 transition: height 0.3s ease, max-height 0.3s ease;
                 will-change: height, max-height;
-                padding-bottom: env(safe-area-inset-bottom, 0);
+                padding-bottom: max(env(safe-area-inset-bottom, 0), 20px);
             }
             .event-log.expanded {
                 max-height: calc(50vh - 180px);
@@ -3334,6 +3335,16 @@ window.addEventListener('beforeunload', function() {
         try { saveGame(); } catch(e) { console.error('beforeunload存档失败', e); }
     }
 });
+window.addEventListener('pagehide', function(e) {
+    if (game && typeof saveGame === 'function') {
+        try { saveGame(); } catch(e) { console.error('pagehide存档失败', e); }
+    }
+});
+document.addEventListener('freeze', function() {
+    if (game && typeof saveGame === 'function') {
+        try { saveGame(); } catch(e) { console.error('freeze存档失败', e); }
+    }
+});
 window.addEventListener('error', function(e) {
     try {
         // 限制写入频率：每5秒最多写入一次，避免频繁I/O导致卡顿
@@ -4421,12 +4432,19 @@ document.addEventListener('click', function initAudioOnFirstClick() {
 
 // 微信内置浏览器：监听WeixinJSBridgeReady，确保音频可初始化
 if (isWeixin) {
-    document.addEventListener('WeixinJSBridgeReady', function() {
+    if (typeof window.WeixinJSBridge !== 'undefined' && window.WeixinJSBridge) {
         initAudio();
         if (audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume().catch(() => {});
         }
-    }, false);
+    } else {
+        document.addEventListener('WeixinJSBridgeReady', function() {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+        }, false);
+    }
 }
 
 // ==================== 游戏数据 ====================
@@ -10996,7 +11014,7 @@ function saveGame() {
     if (!game) return;
     if (game._savePending) return;
     game._savePending = true;
-    setTimeout(() => { if (game) game._savePending = false; }, 500);
+    setTimeout(() => { if (game) game._savePending = false; }, 2000);
     // 保存前备份瞬态字段（必须在 try 最外层声明，避免 finally 引用 TDZ 变量）
     const _needsRender = game.needsRender;
     const _tickCount = game.tickCount;
@@ -11926,7 +11944,7 @@ function exportSave() {
                 // 最终降级：显示弹窗让用户手动复制
                 showModal(
                     '导出存档',
-                    '<div style="text-align:left;"><p>请长按复制以下存档代码，保存到备忘录或微信收藏：</p><textarea readonly style="width:100%;height:120px;margin-top:10px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:16px;resize:none;" onclick="this.select()">' + escapeHtml(saveData.substring(0, 500)) + '...</textarea><p style="font-size:11px;color:#999;margin-top:8px;">💡 提示：点击文本框即可全选，然后复制</p></div>',
+                    '<div style="text-align:left;"><p>请长按复制以下存档代码，保存到备忘录或微信收藏：</p><textarea readonly style="width:100%;height:120px;margin-top:10px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:16px;resize:none;" onclick="this.focus(); this.setSelectionRange(0, this.value.length);">' + escapeHtml(saveData) + '</textarea><p style="font-size:11px;color:#999;margin-top:8px;">💡 提示：点击文本框即可全选，然后复制</p></div>',
                     null
                 );
             }
@@ -17136,7 +17154,7 @@ function renderFishingPanel() {
     if (game.fishToday.day !== game.day) {
         game.fishToday = { day: game.day, count: 0 };
     }
-    const canFish = game.fishToday.count < 5 && game.stamina >= 15;
+    const canFish = game.fishToday.count < 5 && game.stamina >= 25;
     const isDaytime = game.time >= 6 && game.time < 20;
     
     html += `<div style="margin-bottom: 20px;">`;
@@ -17267,6 +17285,7 @@ function sellAllFish() {
 function sellForagingItem(itemId, amount) {
     withClickLock('sellForagingItem_' + itemId + '_' + amount, () => {
         if (!game) return;
+        if (!amount || amount <= 0) { showToast('无效数量', 'bad'); return; }
         if (!game.foragingItems || !game.foragingItems[itemId] || game.foragingItems[itemId] < amount) {
             showToast('库存不足', 'bad');
             return;
@@ -18527,7 +18546,7 @@ function getSkillLevel(exp) {
 // 增加技能经验
 function addSkillExp(skillKey, amount) {
     // 参数安全检查
-    if (!amount || !isFinite(amount) || amount < 0) {
+    if (amount === undefined || amount === null || !isFinite(amount) || amount < 0) {
         console.warn('addSkillExp: 无效的经验值', amount);
         return;
     }
@@ -19420,6 +19439,7 @@ function sellProcessedItem(itemKey, amount) {
         const item = PROCESSED_ITEMS[itemKey];
         if (!item) return;
         
+        if (!amount || amount <= 0) { showToast('无效数量', 'bad'); return; }
         const have =(game.processedItems && game.processedItems[itemKey]) || 0;
         if (have < amount) {
             showToast('库存不足', 'bad');
@@ -24102,9 +24122,9 @@ function renderCountdownContent() {
                 <div class="countdown-item-name">🎣 河边钓鱼</div>
                 <div class="countdown-item-desc">消耗25体力，卖鱼赚钱</div>
             </div>
-            <div class="countdown-item-time">${Math.max(0, 2 - fishCount)}/2</div>
+            <div class="countdown-item-time">${Math.max(0, 5 - fishCount)}/5</div>
             <div class="countdown-item-progress">
-                <div class="countdown-item-progress-bar" style="width: ${(fishCount / 2) * 100}%"></div>
+                <div class="countdown-item-progress-bar" style="width: ${(fishCount / 5) * 100}%"></div>
             </div>
         </div>
     `;
