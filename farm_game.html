@@ -3261,7 +3261,7 @@ function safeStorageRemove(key) {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.4.8';
+const GAME_VERSION = '1.5.6';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10930,6 +10930,7 @@ function saveGame() {
         delete game._loadGameSpeedTimeout;
         delete game._modalPauseStack;
         delete game._loadGameSpeedTimeout;
+        delete game.currentEvent; // 事件弹窗状态不应跨会话保存
         // 清理加工任务中的瞬态标志（避免 _loggedFull 被序列化到存档）
         if (game.processingJobs) {
             game.processingJobs.forEach(job => { delete job._loggedFull; });
@@ -10989,7 +10990,7 @@ function exportSaveFile() {
     }
     showToast('正在导出存档...', 'info');
     try {
-        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout', '_loggedFull'];
+        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout', '_loggedFull', 'currentEvent'];
         const backups = {};
         transientKeys.forEach(k => { backups[k] = game[k]; delete game[k]; });
         // 清理 processingJobs 中的瞬态字段
@@ -11518,7 +11519,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
     }
     
     // 补全事件
-    if (game.currentEvent === undefined) if (game) game.currentEvent = null;
+    if (game) game.currentEvent = null; // 强制重置：事件弹窗不可能跨会话保持
     if (!game.eventHistory) game.eventHistory = [];
     if (game.eventHistory.length > 100) game.eventHistory = game.eventHistory.slice(-100);
     if (game.nextSeasonBonus === undefined) game.nextSeasonBonus = 0;
@@ -13991,7 +13992,7 @@ const STORY_EVENTS = [
         ],
         minDay: 5,
         maxDay: 60,
-        probability: 0.08
+        probability: 0.12
     },
 ];
 
@@ -14060,7 +14061,7 @@ function triggerRandomEvent() {
                 random -= event.probability || 0;
                 if (random <= 0) {
                     // 检查今天是否已触发过该事件
-                    const todayEvents = (game.eventHistory || []).filter(e => e.day === game.day);
+                    const todayEvents = (game.eventHistory || []).filter(e => e.totalDay === game.totalDay);
                     if (todayEvents.some(e => e.eventId === event.id)) {
                         return;
                     }
@@ -14070,7 +14071,7 @@ function triggerRandomEvent() {
             }
             // Fallback to last event
             const event = availableStoryEvents[availableStoryEvents.length - 1];
-            const todayEvents = (game.eventHistory || []).filter(e => e.day === game.day);
+            const todayEvents = (game.eventHistory || []).filter(e => e.totalDay === game.totalDay);
             if (todayEvents.some(e => e.eventId === event.id)) {
                 return;
             }
@@ -14183,7 +14184,7 @@ function triggerRandomEvent() {
     if (!selectedEvent) return;
     
     // 检查今天是否已触发过该事件
-    const todayEvents = (game.eventHistory || []).filter(e => e.day === game.day);
+    const todayEvents = (game.eventHistory || []).filter(e => e.totalDay === game.totalDay);
     if (todayEvents.some(e => e.eventId === selectedEvent.id)) {
         return;
     }
@@ -14715,7 +14716,7 @@ function handleEventChoice(optionIdx) {
     // 记录事件（限制历史长度防止存档膨胀）
     if (game.eventHistory) {
         game.eventHistory.push({
-            day: game.day,
+            totalDay: game.totalDay,
             season: game.season,
             eventId: eventId,
             choice: optionIdx,
