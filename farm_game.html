@@ -2950,10 +2950,6 @@
     <span class="tab-emoji">📜</span>
     <span class="tab-text">日志</span>
 </div>
-                <div class="sidebar-tab" data-tab="log" title="查看事件日志">
-    <span class="tab-emoji">📜</span>
-    <span class="tab-text">日志</span>
-</div>
                 <div class="sidebar-tab" data-tab="leaderboard" title="查看排行榜">🏆 排行榜</div>
                 <div class="sidebar-tab" data-tab="achievements">🏆 成就殿堂</div>
             <div class="sidebar-tab" data-tab="processing">🏡 农家副业</div>
@@ -5211,7 +5207,7 @@ const MARKET_DATA = {
         { id: 'sweet', name: '红薯', emoji: '🍠', buyPrice: 2, sellPrice: 1, desc: '粗粮' },
         { id: 'wheat', name: '小麦', emoji: '🌾', buyPrice: 3, sellPrice: 2, desc: '做面粉' },
         { id: 'corn', name: '玉米', emoji: '🌽', buyPrice: 3, sellPrice: 2, desc: '做玉米油' },
-        { id: 'soybean', name: '大豆', emoji: '🫘', buyPrice: 3, sellPrice: 2, desc: '做豆腐' },
+        { id: 'soybean', name: '大豆', emoji: '🌱', buyPrice: 3, sellPrice: 2, desc: '做豆腐' },
         { id: 'potato', name: '土豆', emoji: '🥔', buyPrice: 3, sellPrice: 2, desc: '做薯片' },
         { id: 'peanut', name: '花生', emoji: '🥜', buyPrice: 4, sellPrice: 3, desc: '榨油用' },
         { id: 'pepper', name: '辣椒', emoji: '🌶️', buyPrice: 3, sellPrice: 2, desc: '调味' },
@@ -5245,7 +5241,7 @@ const ANIMAL_DATA = {
     sheep: { name: '羊', emoji: '🐑', buyCost: 800, dailyFeed: {wheat: 2, sweet: 1}, growthDays: 35, sellPrice: 3000, product: 'wool', productName: '羊毛', productEmoji: '🧶', productPrice: 25, productDays: 7 },
     chicken: { name: '鸡', emoji: '🐔', buyCost: 50, dailyFeed: {rice: 1, corn: 0}, growthDays: 14, sellPrice: 150, product: 'egg', productName: '鸡蛋', productEmoji: '🥚', productPrice: 3, productDays: 1 },
     duck: { name: '鸭', emoji: '🦆', buyCost: 60, dailyFeed: {rice: 1, corn: 0}, growthDays: 16, sellPrice: 180, product: 'duck_egg', productName: '鸭蛋', productEmoji: '🥚', productPrice: 4, productDays: 2 },
-    goose: { name: '鹅', emoji: '🪿', buyCost: 100, dailyFeed: {wheat: 1, corn: 1}, growthDays: 20, sellPrice: 300, product: 'goose_egg', productName: '鹅蛋', productEmoji: '🥚', productPrice: 8, productDays: 3 }
+    goose: { name: '鹅', emoji: '🦢', buyCost: 100, dailyFeed: {wheat: 1, corn: 1}, growthDays: 20, sellPrice: 300, product: 'goose_egg', productName: '鹅蛋', productEmoji: '🥚', productPrice: 8, productDays: 3 }
 };
 
 // 果园数据
@@ -6424,7 +6420,7 @@ const NPC_DATA = {
     },
     laoyufu: {
         name: '吴大柱',
-        title: '老渔夫',
+        title: '吴大柱',
         emoji: '👴‍🎣',
         desc: '村里河边住了大半辈子的老渔夫，知道哪里鱼多、什么季节出什么鱼。',
         likes: { liquor: 9, cigarette: 7, sugar: 3, cloth: 2, snack: 4 },
@@ -6438,7 +6434,7 @@ const NPC_DATA = {
     },
     zhouzhuzhu: {
         name: '周大柱',
-        title: '大柱',
+        title: '周大柱',
         emoji: '👨‍🌾',
         desc: '你家隔壁的邻居，朴实憨厚，有一身好力气。',
         likes: { liquor: 6, cigarette: 6, sugar: 5, snack: 6, cloth: 3 },
@@ -6519,7 +6515,7 @@ const NPC_DATA = {
     // 新NPC：铁匠王
     wangtiejian: {
         name: '王铁柱',
-        title: '王铁匠',
+        title: '王铁柱',
         emoji: '⚒️',
         desc: '村里的铁匠，打制的锄头、镰刀锋利耐用。脾气火爆，但心肠热。',
         likes: { liquor: 9, cigarette: 8, sugar: 3, snack: 6, cloth: 2 },
@@ -12105,10 +12101,12 @@ function advanceSeason(silent = false) {
                 if (!game) return;
                 if (game.currentEvent) return; // 如果事件弹窗正在显示，不显示季节弹窗
                 showModal('🍂 季节更替', `随着${SEASON_NAMES[game.season]}的到来，${removedCount}块田里的作物因不适应新季节而枯萎了。<br><br><span style="color: #999; font-size: 13px;">💡 提示：不同季节适合种植不同作物，春天适合水稻、红薯、大豆、小麦等。</span>`, function() {
-                    // 季节弹窗关闭后再触发事件
-                    if (!game.currentEvent && Math.random() < 0.55) {
-                        triggerRandomEvent();
-                    }
+                    // 季节弹窗关闭后再触发事件，延迟500ms确保modalClosing已复位
+                    setTimeout(() => {
+                        if (game && !game.currentEvent && Math.random() < 0.55) {
+                            triggerRandomEvent();
+                        }
+                    }, 500);
                 }, null, { allowHtml: true });
             }, 300);
         } else {
@@ -14340,7 +14338,7 @@ function showEventPopup(event) {
 }
 
 function showEventModal(event) {
-    if (modalClosing) return;
+    if (modalClosing) { modalClosing = false; } // 允许事件弹窗覆盖
     // 打开模态框时暂停游戏
     if (game) {
         if (game && !game._modalPauseStack) game._modalPauseStack = [];
@@ -20899,7 +20897,7 @@ function renderAnimalsPanel() {
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🐷 畜牧</div>';
-    html += '<p class="panel-desc">养点畜生，积少成多。猪牛羊鸡鸭鹅，想养什么养什么。</p>';
+    html += '<p class="panel-desc">养些家禽家畜，积少成多。猪牛羊鸡鸭鹅，想养什么养什么。</p>';
     
     // 已养的动物
     for (const [animalKey, animals] of Object.entries(game.animals || {})) {
@@ -24384,9 +24382,9 @@ function renderExplorePanel() {
         html += `<div style="font-size: 13px; color: #666; margin-bottom: 8px;">${layer.desc}</div>`;
         
         // 计算实际体力消耗（应用工具精通减免）
-        const toolMasteryLevelMine = game.skills && game.skills.toolMastery || 0;
-        const mineStaminaDiscount = 1 - (toolMasteryLevelMine * 0.05);
-        const actualMineCost = Math.max(1, Math.floor(layer.staminaCost * mineStaminaDiscount));
+        const toolMasteryLevelMine = game.skills && game.skills.toolMastery && game.skills.toolMastery.level || 0;
+        const mineStaminaDiscount = Math.max(0.1, 1 - (toolMasteryLevelMine * 0.05));
+        const actualMineCost = Math.max(1, Math.floor((layer.staminaCost || 10) * mineStaminaDiscount));
         
         html += `<div style="font-size: 13px; color: #e67e22; margin-bottom: 8px;">💪 消耗体力：${actualMineCost}</div>`;
         
@@ -24460,8 +24458,8 @@ function mineLayer(layerKey) {
         }
         
         // 工具精通减免体力消耗
-        const toolMasteryLevel = game.skills && game.skills.toolMastery || 0;
-        const staminaDiscount = 1 - (toolMasteryLevel * 0.05); // 每级减5%
+        const toolMasteryLevel = game.skills && game.skills.toolMastery && game.skills.toolMastery.level || 0;
+        const staminaDiscount = Math.max(0.1, 1 - (toolMasteryLevel * 0.05)); // 每级减5%
         const staminaCost = Math.max(1, Math.floor(layer.staminaCost * staminaDiscount));
         
         game.stamina -= staminaCost;
@@ -24848,7 +24846,7 @@ function renderCommunityPanel() {
             html += `<div style="width:100%;background:#e0e0e0;border-radius:4px;height:12px;margin-bottom:8px;">`;
             html += `<div style="width:${progressPercent}%;background:#27ae60;height:12px;border-radius:4px;transition:width 0.5s;"></div>`;
             html += `</div>`;
-            html += `<div style="font-size: 12px; color: #666; margin-bottom: 8px;">${projData.progress}/${proj.totalProgress} 进度</div>`;
+            html += `<div style="font-size: 12px; color: #666; margin-bottom: 8px;">${Math.floor(projData.progress)}/${proj.totalProgress} 进度</div>`;
             
             // 所需材料
             html += `<div style="font-size: 13px; margin-bottom: 8px;">`;
