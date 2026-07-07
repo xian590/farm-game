@@ -4220,6 +4220,7 @@
 </nav>
 
 <!-- ========== Modal：测试 ========== -->
+<div id="test-modal" class="modal-backdrop" onclick="if(event.target===this)closeTest()">
 <div id="test-modal" class="modal-backdrop" onclick="if(event.target===this)closeTestResult()">
   <div class="modal-content p-5" onclick="event.stopPropagation()">
     <div id="test-content"></div>
@@ -9504,8 +9505,9 @@ function renderMeTab() {
   if (levelEl) levelEl.textContent = typeof getLevel === 'function' ? getLevel() : (state.level || '新手');
   const personaEl = document.getElementById('me-persona-name');
   if (personaEl) {
-    if (state.mainPersona && PERSONAS && PERSONAS[state.mainPersona]) {
-      personaEl.textContent = PERSONAS[state.mainPersona].name;
+    const persona = PERSONAS ? PERSONAS.find(x => x.id === state.mainPersona) : null;
+    if (persona) {
+      personaEl.textContent = persona.name;
       personaEl.style.opacity = '1';
     } else {
       personaEl.textContent = '待解锁';
@@ -9513,13 +9515,14 @@ function renderMeTab() {
     }
   }
   const personaCard = document.getElementById('me-persona-card');
-  if (personaCard && state.mainPersona && PERSONAS && PERSONAS[state.mainPersona]) {
-    const p = PERSONAS[state.mainPersona];
-    personaCard.innerHTML = `<div class="text-center py-4"><div class="text-2xl mb-1">${p.emoji || '👸'}</div><div class="font-medium text-sm" style="color:var(--theme-text)">${p.name || '花公主'}</div><div class="text-xs mt-1" style="color:var(--text-mute)">${p.desc || '你的专属花公主身份'}</div></div>`;
+  if (personaCard) {
+    const p = PERSONAS ? PERSONAS.find(x => x.id === state.mainPersona) : null;
+    if (p) {
+      personaCard.innerHTML = `<div class="text-center py-4"><div class="text-2xl mb-1">${p.flower || '👸'}</div><div class="font-medium text-sm" style="color:var(--theme-text)">${p.name || '花公主'}</div><div class="text-xs mt-1" style="color:var(--text-mute)">${p.trait || '你的专属花公主身份'}</div></div>`;
+    }
   }
 }
 
-// 5个主tab切换
 function switchTab(tab) {
   const pageMap = {
     island: 'island',

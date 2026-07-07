@@ -1916,7 +1916,7 @@
                 flex-shrink: 0;
                 font-size: 11px;
                 padding: 8px 10px;
-                min-height: 36px;
+                min-height: 44px;
                 border-left: none;
                 border-bottom: 3px solid transparent;
                 scroll-snap-align: center;
@@ -1931,7 +1931,7 @@
                 margin-bottom: 2px;
             }
             .sidebar-tab .tab-text {
-                font-size: 10px;
+                font-size: 11px;
             }
             .sidebar-tab.active {
                 border-left-color: transparent;
@@ -2185,14 +2185,14 @@
             .sidebar-tab {
                 font-size: 10px;
                 padding: 6px 8px;
-                min-width: 48px;
-                min-height: 32px;
+                min-width: 52px;
+                min-height: 44px;
             }
             .sidebar-tab .tab-emoji {
                 font-size: 12px;
             }
             .sidebar-tab .tab-text {
-                font-size: 9px;
+                font-size: 11px;
             }
             .sidebar-tabs {
                 gap: 2px;
@@ -3326,7 +3326,7 @@ function saveGameToSession() {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.5.15';
+const GAME_VERSION = '1.5.17';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -4944,7 +4944,7 @@ const PROCESSING_DATA = {
         id: 'fishDrying', name: '腌鱼晒场', emoji: '🌊',
         desc: '把鲜鱼腌制后晒干，保存时间长，赶集能卖好价钱。',
         buildCost: 120, unlockCondition: '钓鱼熟练度Lv2或攒够2000块钱',
-        inputType: 'fish', inputAmount: 2, outputItem: 'driedFish', outputAmount: 5,
+        inputType: 'fish', inputAmount: 2, outputItem: 'driedFish', outputAmount: 3,
         dailyCapacity: 10, staminaCost: 12,
         upgradeCost: [200, 500],
         levelCapacity: [15, 30, 60],
@@ -9332,7 +9332,7 @@ function formatNumber(value, decimals = 0) {
     return value.toFixed(decimals);
 }
 function formatPercent(value) {
-    if (!isFinite(value)) return '0%';
+    if (value == null || !isFinite(value)) return '0%';
     return (value * 100).toFixed(0) + '%';
 }
 
@@ -11056,7 +11056,6 @@ function saveGame(force = false) {
         delete game._questRewardTimeout;
         delete game._loadGameSpeedTimeout;
         delete game._modalPauseStack;
-        delete game._loadGameSpeedTimeout;
         delete game._roundTickCounter; // 计数器不应跨会话保存
         delete game.currentEvent; // 事件弹窗状态不应跨会话保存
         // 清理加工任务中的瞬态标志（避免 _loggedFull 被序列化到存档）
@@ -12051,6 +12050,9 @@ let gamePaused = false; // 暂停状态
 let gameSpeed = 1; // 游戏速度倍率
 
 function setGameSpeed(speed) {
+    speed = parseFloat(speed) || 1;
+    if (speed < 1) speed = 1;
+    if (speed > 50) speed = 50;
     gameSpeed = speed;
     safeStorageSet('farm_game_speed', speed);
     
@@ -12373,6 +12375,7 @@ function gameTick() {
 }
 
 function getStaminaRegenRate() {
+    if (!game) return 3.75;
     const house = HOUSE_DATA[game.house];
     let rate = house ? house.staminaRegen : 15;
     // 每游戏小时恢复的体力值（除以4是为了平衡，避免恢复太快）
@@ -14471,6 +14474,7 @@ function triggerNightEvent() {
     
     saveGame();
     updateUI();
+    });
 }
 
 // 显示故事事件弹窗（用于 STORY_EVENTS 数组中的事件）
@@ -17964,6 +17968,7 @@ function petThePet(petId) {
 
 // 喂宠物
 function feedThePet(petId) {
+    withClickLock('feedThePet_' + petId, () => {
     const p = game.pets[petId];
     if (!p) return;
     if (p.fedToday) {
@@ -17989,6 +17994,7 @@ function feedThePet(petId) {
     saveGame();
     updateUI();
     showToast('心情+10', 'good');
+    });
 }
 
 // 锻炼
@@ -18906,6 +18912,8 @@ function hireWorker(npcKey) {
 }
 
 function fireWorker(npcKey) {
+    withClickLock('fireWorker_' + npcKey, () => {
+    if (!game) return;
     const npc = NPC_DATA[npcKey];
     if (!npc) return;
     
@@ -19247,6 +19255,7 @@ function upgradeProcessing(buildingKey) {
 // 手动加工（玩家点击按钮触发）
 function manualProcess(buildingKey) {
     withClickLock('manualProcess_' + buildingKey, () => {
+        if (!game) return;
         const building = PROCESSING_DATA[buildingKey];
         if (!building) {
             showToast('加工建筑不存在', 'bad');
@@ -19545,6 +19554,7 @@ function isTechUnlocked(techId) {
 
 // 获取科技加成总和
 function getTechBonus(effectType) {
+    if (!game) return 0;
     let total = 0;
     if (!game.unlockedTechs) return total;
     
@@ -19599,6 +19609,7 @@ function addNpcFavor(npcId, val) {
 
 // 获取NPC好感度加成总和
 function getNpcBonus(effectType) {
+    if (!game) return 0;
     let total = 0;
     if (!game.npcMilestones) return total;
     
@@ -20425,6 +20436,7 @@ function renderPetsPanel() {
 
 // 领养宠物
 function adoptPet(petKey) {
+    withClickLock('adoptPet_' + petKey, () => {
     const pet = PET_DATA[petKey];
     
     if (game.totalDay < pet.unlockDay) {
@@ -20723,7 +20735,7 @@ function renderBankPanel() {
     }
     
     let html = '<div class="panel-title">🏦 银行</div>';
-    html += '<p class="panel-desc">钱多了放银行，每日单利。日利率0.02%。</p>';
+    html += '<p class="panel-desc">钱多了放银行，每日单利。日利率0.1%。</p>';
     
     // 当前存款
     html += `<div class="shop-item"><div class="shop-item-info"><div class="shop-item-icon">🏦</div><div><div class="shop-item-name">当前存款</div><div class="shop-item-desc">${game.bankDeposit || 0} 元</div></div></div></div>`;
@@ -20933,6 +20945,7 @@ function renderMarketPanel() {
 
 function buyMarketItem(itemId, price) {
     withClickLock('buyMarketItem_' + itemId, () => {
+        if (!price || price <= 0) { showToast('价格异常', 'bad'); return; }
         const stock = game.marketStock && game.marketStock.specialItems && game.marketStock.specialItems[itemId] !== undefined ? game.marketStock.specialItems[itemId] : undefined;
         if (stock !== undefined && stock <= 0) { showToast('该商品已售罄', 'bad'); return; }
         if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
@@ -20951,6 +20964,7 @@ function buyMarketItem(itemId, price) {
 
 function buyCrop(cropId, price) {
     withClickLock('buyCrop_' + cropId, () => {
+        if (!price || price <= 0) { showToast('价格异常', 'bad'); return; }
         if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         if (getStorageUsed() + 1 > game.storageCapacity) {
             showToast('仓库满了，先腾点地方', 'bad');
@@ -20967,6 +20981,8 @@ function buyCrop(cropId, price) {
 
 function sellMarketCrop(cropId, price) {
     withClickLock('sellMarketCrop_' + cropId, () => {
+        if (!game) return;
+        if (!price || price <= 0) { showToast('价格异常', 'bad'); return; }
         if (!game.crops[cropId] || game.crops[cropId] <= 0) { showToast('没有库存', 'bad'); return; }
         
         // 应用售价加成
@@ -21455,6 +21471,7 @@ function upgradeFarmStay() {
 
 function makeDish(dishKey) {
     withClickLock('makeDish_' + dishKey, () => {
+        if (!game) return;
         const dish = FARM_STAY_DATA.dishes[dishKey];
         if (!dish) return;
         
@@ -21649,6 +21666,7 @@ function harvestAnimalProduct(animalKey, idx) {
 
 function sellAnimalProduct(productKey, amount) {
     withClickLock('sellAnimalProduct_' + productKey + '_' + amount, () => {
+        if (!amount || amount <= 0) { showToast('无效数量', 'bad'); return; }
         const prices = { milk: 8, egg: 3, duck_egg: 4, goose_egg: 8, wool: 25 };
         const names = { milk: '牛奶', egg: '鸡蛋', duck_egg: '鸭蛋', goose_egg: '鹅蛋', wool: '羊毛' };
         const emojis = { milk: '🥛', egg: '🥚', duck_egg: '🥚', goose_egg: '🥚', wool: '🧶' };
@@ -21728,6 +21746,7 @@ function harvestFruit(treeIdx) {
 
 function sellFruit(fruitKey, amount) {
     withClickLock('sellFruit_' + fruitKey + '_' + amount, () => {
+        if (!amount || amount <= 0) { showToast('无效数量', 'bad'); return; }
         const data = ORCHARD_DATA[fruitKey];
         if (!data || !game.fruits || !game.fruits[fruitKey] || game.fruits[fruitKey] < amount) return;
         
@@ -22492,6 +22511,7 @@ function sellCrop(cropKey, amount) {
 }
 
 function getSellPriceMultiplier() {
+    if (!game) return 1;
     let multiplier = 1;
     const npcSellPrice = getNpcBonus('sellPrice');
     if (npcSellPrice > 0) {
@@ -22505,6 +22525,7 @@ function getSellPriceMultiplier() {
 }
 
 function _doSellCrop(cropKey, sellAmount, price) {
+    if (!game) return;
     const owned = game.crops[cropKey] || 0;
     if (sellAmount > owned) sellAmount = owned;
     if (sellAmount <= 0) return;
@@ -23338,8 +23359,9 @@ function fallbackCopyQQ(qq) {
         }
     } catch(e) {
         showToast('QQ号：' + qq + '，请手动复制添加', 'info');
+    } finally {
+        if (textarea.parentNode) document.body.removeChild(textarea);
     }
-    document.body.removeChild(textarea);
 }
 
 function openFeedbackModal() {
@@ -24490,6 +24512,10 @@ function queueQuestReward(questId, money, text, reputation) {
     const quest = QUEST_DATA[questId];
     if (!quest) return;
     
+    // 防止重复入队
+    const alreadyQueued = game.pendingQuestRewards.some(r => r.questId === questId);
+    if (alreadyQueued) return;
+    
     game.pendingQuestRewards.push({
         questId: questId,
         name: quest.name,
@@ -24558,7 +24584,8 @@ function claimQuestReward() {
     
     const reward = game.pendingQuestRewards.shift();
     if (reward.money > 0) {
-        game.money += reward.money;
+        const safeMoney = Math.max(0, Math.min(reward.money, 100000000));
+        game.money += safeMoney;
     }
     if (reward.reputation > 0) {
         let repGain = reward.reputation;
@@ -24902,6 +24929,7 @@ function canCookFood(foodKey) {
 
 function cookFood(foodKey) {
     withClickLock('cookFood_' + foodKey, () => {
+        if (!game) return;
         const food = COOKING_DATA[foodKey];
         if (!food) return;
         if (!game.cookedFoods) game.cookedFoods = {};
