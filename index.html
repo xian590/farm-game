@@ -2136,6 +2136,20 @@
             .event-log {
                 box-shadow: inset 0 0 8px rgba(139, 115, 85, 0.08);
             }
+            /* 移动端增大触摸目标 */
+            .settings-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 22px;
+            }
+            .sidebar-tabs {
+                touch-action: pan-x;
+            }
+            #settings-overlay .modal-btn {
+                min-width: 70px;
+                font-size: 12px;
+                padding: 10px 8px;
+            }
         }
         
         /* 超小屏幕手机优化 */
@@ -12043,9 +12057,9 @@ function startGameLoop() {
     }
     // 2秒 = 2游戏小时，24秒 = 1游戏天（比原来120秒/天快5倍）
     const baseInterval = 2000;
-    let safeSpeed = Math.max(1, Math.min(100, parseFloat(gameSpeed) || 1));
+    let safeSpeed = Math.max(1, Math.min(50, parseFloat(gameSpeed) || 1)); // 限制最大50倍速，避免20ms卡死
     if (!isFinite(safeSpeed) || safeSpeed <= 0) safeSpeed = 1;
-    const interval = baseInterval / safeSpeed;
+    const interval = Math.max(33, baseInterval / safeSpeed); // 最小间隔33ms（约30fps），防止回调堆积卡死
     gameLoopInterval = setInterval(gameTick, interval);
     if (game && !game.started) {
         game.started = true;
@@ -15570,7 +15584,7 @@ function getQuestProgress(questId) {
     
     // 根据任务类型精确计算进度
     const progressMap = {
-        q0: game.fields[0] && game.fields[0].prepared ? 100 : 0,
+        q0: (game.fields || [])[0] && (game.fields || [])[0].prepared ? 100 : 0,
         q1: game.seeds.rice_spring > 0 ? 100 : (game.money > 30 ? 50 : 20),
         q2: game.fields[0] && game.fields[0].stage === 'seedling' ? 100 : (game.seeds.rice_spring > 0 ? 50 : 0),
         q3: game.fields[0] && game.fields[0].stage === 'growing' ? 100 : (game.fields[0] && game.fields[0].stage === 'seedling' ? 70 : 0),
@@ -22829,6 +22843,7 @@ function rentNewField() {
 }
 
 function getNextFieldRent() {
+    if (!game || !game.fields) return 200;
     const baseRent = 200;
     const n = game.fields.length + 1;
     return Math.floor(baseRent * Math.pow(1.18, n - 1));
@@ -23767,6 +23782,7 @@ function confirmModal() {
         document.addEventListener('touchmove', onMove, { passive: false });
         document.addEventListener('mouseup', onEnd);
         document.addEventListener('touchend', onEnd);
+        document.addEventListener('touchcancel', onEnd);
         
         e.preventDefault();
     }
@@ -23793,6 +23809,7 @@ function confirmModal() {
         document.removeEventListener('touchmove', onMove, { passive: false });
         document.removeEventListener('mouseup', onEnd);
         document.removeEventListener('touchend', onEnd);
+        document.removeEventListener('touchcancel', onEnd);
     }
     
     // 为所有弹窗标题栏添加拖拽事件
