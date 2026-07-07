@@ -10984,6 +10984,7 @@ function saveGame() {
         delete game._loadGameSpeedTimeout;
         delete game._modalPauseStack;
         delete game._loadGameSpeedTimeout;
+        delete game._roundTickCounter; // 计数器不应跨会话保存
         delete game.currentEvent; // 事件弹窗状态不应跨会话保存
         // 清理加工任务中的瞬态标志（避免 _loggedFull 被序列化到存档）
         if (game.processingJobs) {
@@ -11026,7 +11027,11 @@ function saveGame() {
     }
     
     // 保存新的 saveCount
-    game._saveCount = saveCount % 1000;
+    if (isFinite(saveCount)) {
+        game._saveCount = saveCount % 1000;
+    } else {
+        game._saveCount = 0;
+    }
     
     // 里程碑检查已在 onNewDay 中调用，避免 saveGame 中重复检查
     // if (typeof checkMilestones === 'function' && game.day > 0) {
@@ -11046,7 +11051,7 @@ function exportSaveFile() {
     }
     showToast('正在导出存档...', 'info');
     try {
-        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout', '_loggedFull', 'currentEvent'];
+        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout', '_loggedFull', 'currentEvent', '_roundTickCounter'];
         const backups = {};
         transientKeys.forEach(k => { backups[k] = game[k]; delete game[k]; });
         // 清理 processingJobs 中的瞬态字段
@@ -12254,7 +12259,7 @@ function gameTick() {
     updateProcessingJobs();
     
     // 防止浮点数累积（每10tick执行一次，避免每tick都全量扫描）
-    if (!game._roundTickCounter) game._roundTickCounter = 0;
+    if (game._roundTickCounter === undefined) game._roundTickCounter = 0;
     game._roundTickCounter++;
     if (game._roundTickCounter >= 10) {
         game._roundTickCounter = 0;
@@ -12265,7 +12270,7 @@ function gameTick() {
     if (game) game.needsRender = true;
     
     // tickCount 初始化（确保判断前存在）
-    if (!game.tickCount) game.tickCount = 0;
+    if (game.tickCount === undefined) game.tickCount = 0;
     game.tickCount++;
     if (game.tickCount > 1000000) game.tickCount = 0;
     
@@ -14794,14 +14799,6 @@ function handleEventChoice(optionIdx) {
     
     // 清除当前事件
     if (game) game.currentEvent = null;
-    
-    // 防止浮点数累积（每10tick执行一次，避免每tick都全量扫描）
-    if (!game._roundTickCounter) game._roundTickCounter = 0;
-    game._roundTickCounter++;
-    if (game._roundTickCounter >= 10) {
-        game._roundTickCounter = 0;
-        roundGameState();
-    }
     
     // 关闭弹窗
     closeEventModal();
@@ -21590,7 +21587,7 @@ function buyTree(treeKey) {
         const data = ORCHARD_DATA[treeKey];
         if (!data) return;
         if (data.season && data.season !== game.season) {
-            showToast('🌸 ' + data.name + '只能在' + SEASON_NAMES[data.season] + '种植，现在是' + SEASON_NAMES[game.season] || '未知季节', 'warn');
+            showToast('🌸 ' + data.name + '只能在' + SEASON_NAMES[data.season] + '种植，现在是' + (SEASON_NAMES[game.season] || '未知季节') + '。', 'warn');
             return;
         }
         if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
@@ -22599,6 +22596,7 @@ function buyTool(toolKey) {
         
         playCoinSound();
         game.money -= finalPrice;
+        if (!game.tools) game.tools = [];
         game.tools.push(toolKey);
         
         // 任务检查：购买第一把农具

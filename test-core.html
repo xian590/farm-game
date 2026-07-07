@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星愿花园 - 测试版</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#FAF5F7;color:#5D4E6D;min-height:100vh}
+.page{display:none;padding:20px;max-width:480px;margin:0 auto}
+.page.active{display:block}
+.btn{background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:#fff;border:none;padding:14px 32px;border-radius:20px;font-size:16px;cursor:pointer;width:100%;margin:10px 0}
+.btn-secondary{background:rgba(184,169,201,0.15);color:#5D4E6D}
+.option{background:rgba(255,255,255,0.7);border:1.5px solid rgba(212,181,199,0.3);border-radius:14px;padding:12px;margin:8px 0;cursor:pointer;text-align:left}
+.option:hover{background:rgba(255,255,255,0.9)}
+.option.selected{background:linear-gradient(135deg,rgba(212,181,199,0.3),rgba(184,169,201,0.25));border-color:#B8A9C9}
+.modal{position:fixed;inset:0;background:rgba(93,78,109,0.3);display:none;align-items:center;justify-content:center;padding:16px;z-index:1000}
+.modal.show{display:flex}
+.modal-box{background:#fff;border-radius:24px;padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto}
+.center{text-align:center}
+.mb-2{margin-bottom:12px}
+.mb-4{margin-bottom:24px}
+.text-sm{font-size:14px;color:#8B7E9C}
+.progress{height:8px;background:rgba(184,169,201,0.15);border-radius:999px;margin:12px 0}
+.progress-bar{height:100%;background:linear-gradient(90deg,#D4B5C7,#B8A9C9);border-radius:999px;transition:width 0.5s}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,0.9);display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid rgba(212,181,199,0.2)}
+.nav-item{padding:6px 16px;border-radius:12px;cursor:pointer;font-size:12px;color:#B8A9C9}
+.nav-item.active{background:rgba(212,181,199,0.15);color:#5D4E6D}
+.glass-card{background:rgba(255,255,255,0.7);border-radius:18px;padding:20px;margin:12px 0;border:1px solid rgba(255,255,255,0.6)}
+.welcome{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px 20px}
+.welcome.active{display:flex}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:none;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.tutorial-box{background:#fff;border-radius:20px;padding:24px;max-width:360px;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- 欢迎页 -->
+<section id="page-welcome" class="welcome active">
+  <div style="font-size:60px;margin-bottom:20px">🏝️</div>
+  <h1 style="font-size:28px;margin-bottom:10px">星愿花园</h1>
+  <p class="text-sm mb-4">用科学方法，温柔地显化你的人生 ✨</p>
+  <div class="glass-card" style="max-width:400px;width:100%;text-align:left">
+    <p style="font-size:13px;margin-bottom:8px">🌸 你将获得</p>
+    <ul style="font-size:13px;line-height:2;padding-left:20px;color:#8B7E9C">
+      <li>找到你的专属花公主人格</li>
+      <li>清理你的限制性信念卡点</li>
+      <li>用 BE-DO-HAVE 模型清晰许愿</li>
+    </ul>
+  </div>
+  <button onclick="startWelcomeTest()" class="btn" style="max-width:400px">✨ 开始测试</button>
+  <p class="text-sm">约3分钟 · 15题 · 解锁你的公主身份</p>
+</section>
+
+<!-- 测试弹窗 -->
+<div id="test-modal" class="modal" onclick="if(event.target===this)closeTest()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div id="test-content"></div>
+  </div>
+</div>
+
+<!-- 人格详情弹窗 -->
+<div id="persona-modal" class="modal" onclick="if(event.target===this)closePersona()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div id="persona-detail"></div>
+    <button onclick="closePersona()" class="btn btn-secondary">关闭</button>
+  </div>
+</div>
+
+<!-- 主页 -->
+<section id="page-island" class="page">
+  <div class="center mb-4">
+    <p class="text-sm" id="greeting-text">早上好呀～</p>
+    <h1 style="font-size:24px" id="greeting-name">小公主</h1>
+    <p class="text-sm">今天也是你显化的好日子 ✨</p>
+  </div>
+  <div class="glass-card center">
+    <p>🏝️ 你的许愿岛</p>
+    <p class="text-sm">点击底部导航探索更多功能</p>
+  </div>
+</section>
+
+<!-- 新手引导 -->
+<div id="tutorial-overlay" class="overlay">
+  <div class="tutorial-box">
+    <div style="font-size:40px;margin-bottom:12px" id="tutorial-emoji">👋</div>
+    <h3 id="tutorial-title">公主你好呀~</h3>
+    <p class="text-sm mb-4" id="tutorial-desc">欢迎来到你的专属星愿花园！</p>
+    <button onclick="nextTutorialStep()" class="btn" id="tutorial-next-btn">下一步 →</button>
+    <button onclick="skipTutorial()" class="btn btn-secondary" style="margin-top:8px">跳过引导</button>
+  </div>
+</div>
+
+<!-- 底部导航 -->
+<nav class="nav" id="bottom-nav">
+  <div class="nav-item active" onclick="showPage('island')" id="nav-home">🏝️<br>岛屿</div>
+  <div class="nav-item" onclick="showPage('island')" id="nav-wish">💫<br>显化</div>
+  <div class="nav-item" onclick="showPage('island')" id="nav-tool">🔮<br>工具</div>
+  <div class="nav-item" onclick="showPage('island')" id="nav-book">📚<br>书馆</div>
+  <div class="nav-item" onclick="showPage('island')" id="nav-me">👤<br>我的</div>
+</nav>
+
+<script>
+// ========== 数据 ==========
+const PERSONAS = [
+  { id:'rose', name:'玫瑰公主', flower:'🌹', color:'#D4A5B8', animal:'🦊 狐狸', trait:'行动型', second:'魅力型', 
+    advantage:'行动力超强，敢想敢做', topBelief:'我不够好，需要不断证明自己', rhythm:'快速行动+定期复盘',
+    flowerColor1:'#F5C5D5', flowerColor2:'#D4A5B8',
+    advice:['设定明确目标','立即行动','每天复盘','庆祝小胜利','持续迭代'],
+    affirmations:['我配得上所有美好','我的行动力是我的超能力'] },
+  { id:'lavender', name:'薰衣草公主', flower:'💜', color:'#B8A9C9', animal:'🦉 猫头鹰', trait:'创造型', second:'稳定型',
+    advantage:'创意无限，思维独特', topBelief:'我的想法不够好，没人会在乎', rhythm:'深度思考+小规模实验',
+    flowerColor1:'#D4C5E0', flowerColor2:'#B8A9C9',
+    advice:['记录灵感','小范围验证','接受不完美','寻找同伴','坚持输出'],
+    affirmations:['我的创意很有价值','我独特的视角是礼物'] },
+  { id:'lily', name:'百合公主', flower:'⚪', color:'#E8D5E0', animal:'🦌 小鹿', trait:'稳定型', second:'共情型',
+    advantage:'踏实可靠，给人安全感', topBelief:'改变是危险的，维持现状最安全', rhythm:'小步前进+建立系统',
+    flowerColor1:'#F0E0E8', flowerColor2:'#E8D5E0',
+    advice:['建立每日习惯','从小改变开始','庆祝坚持','允许休息','逐步扩展'],
+    affirmations:['我值得被温柔对待','稳扎稳打也能到达远方'] },
+  { id:'iris', name:'鸢尾公主', flower:'🔵', color:'#A5B8D4', animal:'🕊️ 鸽子', trait:'共情型', second:'创造型',
+    advantage:'善解人意，温暖治愈', topBelief:'我的需求不重要，别人优先', rhythm:'先照顾好自己+再帮助他人',
+    flowerColor1:'#C5D5E8', flowerColor2:'#A5B8D4',
+    advice:['每天问自己需要什么','学会说不','建立边界','寻找支持系统','练习自我关怀'],
+    affirmations:['我的需求同样重要','我值得被爱和被照顾'] },
+  { id:'camellia', name:'山茶花公主', flower:'🌺', color:'#D4A5A5', animal:'🦚 孔雀', trait:'魅力型', second:'行动型',
+    advantage:'魅力四射，自信闪耀', topBelief:'如果我不再优秀，就会被抛弃', rhythm:'展现真实自我+连接同频者',
+    flowerColor1:'#E8C5C5', flowerColor2:'#D4A5A5',
+    advice:['做真实的自己','分享你的故事','建立深度连接','展现脆弱','持续成长'],
+    affirmations:['我本身就有价值','真实的我是最有魅力的'] }
+];
+
+const PERSONALITY_TEST = [
+  { q:'周末你更想怎么度过？', options:[
+    { text:'约朋友出去玩，参加各种活动', scores:{action:3,create:1,empathy:1,stable:0,charm:2} },
+    { text:'在家看书追剧，做自己喜欢的事', scores:{action:0,create:3,empathy:1,stable:2,charm:0} },
+    { text:'安安静静待着，怎么舒服怎么来', scores:{action:0,create:1,empathy:1,stable:3,charm:0} },
+    { text:'和闺蜜聊天，陪伴帮助别人', scores:{action:1,create:0,empathy:3,stable:1,charm:1} },
+    { text:'打扮得美美的，去拍照打卡', scores:{action:2,create:2,empathy:0,stable:0,charm:3} }
+  ]},
+  { q:'遇到困难时你的第一反应？', options:[
+    { text:'立刻行动，边做边想办法', scores:{action:3,create:1,empathy:0,stable:0,charm:1} },
+    { text:'冷静分析，找出最优解', scores:{action:0,create:3,empathy:0,stable:2,charm:0} },
+    { text:'按部就班，慢慢处理', scores:{action:0,create:1,empathy:0,stable:3,charm:0} },
+    { text:'先安抚情绪，再想办法', scores:{action:0,create:0,empathy:3,stable:1,charm:0} },
+    { text:'找人帮忙，用魅力解决问题', scores:{action:1,create:1,empathy:2,stable:0,charm:3} }
+  ]},
+  { q:'你更欣赏什么样的女生？', options:[
+    { text:'敢闯敢拼、独立自信的大女主', scores:{action:3,create:0,empathy:0,stable:0,charm:2} },
+    { text:'聪明有才华、有想法的女生', scores:{action:0,create:3,empathy:0,stable:1,charm:0} },
+    { text:'温柔坚定、踏实可靠的女生', scores:{action:0,create:0,empathy:1,stable:3,charm:0} },
+    { text:'善解人意、温暖治愈的女生', scores:{action:0,create:0,empathy:3,stable:1,charm:1} },
+    { text:'魅力四射、自信闪耀的女生', scores:{action:1,create:1,empathy:1,stable:0,charm:3} }
+  ]},
+  { q:'做决定时你更依赖？', options:[
+    { text:'直觉和第一感觉，先做了再说', scores:{action:3,create:1,empathy:0,stable:0,charm:1} },
+    { text:'理性分析和各种数据', scores:{action:0,create:3,empathy:0,stable:2,charm:0} },
+    { text:'过往经验，稳妥为主', scores:{action:0,create:0,empathy:0,stable:3,charm:0} },
+    { text:'内心感受和对他人的影响', scores:{action:0,create:0,empathy:3,stable:1,charm:0} },
+    { text:'看哪种选择让我更有魅力', scores:{action:1,create:1,empathy:1,stable:0,charm:3} }
+  ]},
+  { q:'压力大的时候你会？', options:[
+    { text:'运动、逛街、发泄出来', scores:{action:3,create:0,empathy:0,stable:0,charm:2} },
+    { text:'一个人静静想清楚', scores:{action:0,create:2,empathy:1,stable:2,charm:0} },
+    { text:'按日常节奏来，慢慢就好了', scores:{action:0,create:0,empathy:0,stable:3,charm:0} },
+    { text:'找朋友聊天倾诉', scores:{action:0,create:0,empathy:3,stable:0,charm:1} },
+    { text:'买新衣服/化妆，让自己变美', scores:{action:1,create:1,empathy:0,stable:0,charm:3} }
+  ]},
+  { q:'你理想的恋爱状态是？', options:[
+    { text:'一起成长、并肩作战', scores:{action:3,create:1,empathy:0,stable:1,charm:1} },
+    { text:'精神共鸣、灵魂伴侣', scores:{action:0,create:3,empathy:1,stable:0,charm:1} },
+    { text:'细水长流、安稳踏实', scores:{action:0,create:0,empathy:1,stable:3,charm:0} },
+    { text:'被宠被爱、温暖治愈', scores:{action:0,create:0,empathy:3,stable:1,charm:1} },
+    { text:'势均力敌、互相吸引', scores:{action:1,create:1,empathy:1,stable:0,charm:3} }
+  ]},
+  { q:'在朋友中你通常是？', options:[
+    { text:'带头组织活动的大姐大', scores:{action:3,create:0,empathy:0,stable:0,charm:2} },
+    { text:'出谋划策的军师', scores:{action:0,create:3,empathy:0,stable:1,charm:0} },
+    { text:'默默做事的靠谱担当', scores:{action:0,create:0,empathy:1,stable:3,charm:0} },
+    { text:'认真倾听的知心姐姐', scores:{action:0,create:0,empathy:3,stable:1,charm:0} },
+    { text:'人群中的焦点，气氛担当', scores:{action:1,create:1,empathy:1,stable:0,charm:3} }
+  ]},
+  { q:'你对"成功"的定义更接近？', options:[
+    { text:'事业有成、经济独立', scores:{action:3,create:1,empathy:0,stable:1,charm:1} },
+    { text:'有才华、有自己的事业', scores:{action:0,create:3,empathy:0,stable:1,charm:1} },
+    { text:'家庭幸福、生活安稳', scores:{action:0,create:0,empathy:1,stable:3,charm:0} },
+    { text:'被爱包围、内心富足', scores:{action:0,create:0,empathy:3,stable:1,charm:0} },
+    { text:'光芒万丈、众人瞩目', scores:{action:1,create:1,empathy:0,stable:0,charm:3} }
+  ]},
+  { q:'你更喜欢哪种工作方式？', options:[
+    { text:'快节奏、多任务并行', scores:{action:3,create:1,empathy:0,stable:0,charm:2} },
+    { text:'独立创作、不受打扰', scores:{action:0,create:3,empathy:0,stable:2,charm:0} },
+    { text:'有明确流程、按部就班', scores:{action:0,create:0,empathy:0,stable:3,charm:0} },
+    { text:'团队合作、互相支持', scores:{action:0,create:0,empathy:3,stable:1,charm:1} },
+    { text:'成为核心、带领大家', scores:{action:2,create:1,empathy:1,stable:0,charm:3} }
+  ]},
+  { q:'你最害怕的是什么？', options:[
+    { text:'平庸无为、虚度光阴', scores:{action:3,create:1,empathy:0,stable:0,charm:2} },
+    { text:'思维僵化、失去创造力', scores:{action:0,create:3,empathy:0,stable:1,charm:1} },
+    { text:'生活失控、变化太多', scores:{action:0,create:0,empathy:0,stable:3,charm:0} },
+    { text:'被误解、关系破裂', scores:{action:0,create:0,empathy:3,stable:1,charm:1} },
+    { text:'失去魅力、无人问津', scores:{action:1,create:1,empathy:1,stable:0,charm:3} }
+  ]},
+  { q:'收到礼物时你的第一反应？', options:[
+    { text:'好奇是什么，迫不及待打开', scores:{action:3,create:1,empathy:0,stable:0,charm:2} },
+    { text:'猜测送礼人的用意', scores:{action:0,create:3,empathy:1,stable:1,charm:1} },
+    { text:'先道谢，慢慢欣赏', scores:{action:0,create:0,empathy:1,stable:3,charm:0} },
+    { text:'感动于对方的心意', scores:{action:0,create:0,empathy:3,stable:1,charm:1} },
+    { text:'开心并想拍照发朋友圈', scores:{action:1,create:1,empathy:0,stable:0,charm:3} }
+  ]},
+  { q:'你更容易被什么打动？', options:[
+    { text:'热血沸腾的励志故事', scores:{action:3,create:1,empathy:0,stable:0,charm:2} },
+    { text:'深刻独特的艺术表达', scores:{action:0,create:3,empathy:1,stable:1,charm:1} },
+    { text:'细水长流的陪伴守护', scores:{action:0,create:0,empathy:1,stable:3,charm:0} },
+    { text:'真诚走心的情感表达', scores:{action:0,create:0,empathy:3,stable:1,charm:1} },
+    { text:'闪耀夺目的高光时刻', scores:{action:1,create:1,empathy:0,stable:0,charm:3} }
+  ]}
+];
+
+const THEMES = {
+  pink: { primary:'#B8A9C9', secondary:'#D4B5C7', accent:'#E8D5E0', bg:'#FAF5F7', text:'#5D4E6D' }
+};
+
+// ========== 状态 ==========
+let state = { energy:0, mainPersona:null, unlockedPersonas:[], todayDone:{}, darkMode:false, theme:'pink' };
+let testState = null;
+let testLock = false;
+let testSelected = null;
+let tutorialStep = 0;
+
+// ========== 工具函数 ==========
+function $(id){ return document.getElementById(id); }
+function showPage(name){
+  document.querySelectorAll('.page,.welcome').forEach(p=>p.classList.remove('active'));
+  const el = $('page-'+name);
+  if(el) el.classList.add('active');
+}
+function showModal(id){ $(id).classList.add('show'); }
+function hideModal(id){ $(id).classList.remove('show'); }
+
+// ========== 测试系统 ==========
+function startWelcomeTest(){ startTest('personality'); }
+
+function startTest(type){
+  testState = { type, questions:PERSONALITY_TEST, scores:{action:0,create:0,empathy:0,stable:0,charm:0}, current:0, answers:[] };
+  testLock = false;
+  testSelected = null;
+  renderTestQ();
+  showModal('test-modal');
+}
+
+function renderTestQ(){
+  const c = $('test-content');
+  if(!testState || testState.current >= testState.questions.length){ finishTest(); return; }
+  const q = testState.questions[testState.current];
+  const total = testState.questions.length;
+  const cur = testState.current + 1;
+  
+  let opts = '';
+  q.options.forEach((o,i)=>{
+    opts += `<button onclick="selectTestOpt(${i})" class="option" id="opt-${i}"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#E8DEEF,#D4C5E0);color:#8B7E9C;text-align:center;line-height:24px;font-size:12px;margin-right:8px">${String.fromCharCode(65+i)}</span>${o.text}</button>`;
+  });
+  
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span class="text-sm">第 ${cur} / ${total} 题</span>
+      <button onclick="closeTest()" style="background:none;border:none;font-size:20px;color:#B8A9C9;cursor:pointer">×</button>
+    </div>
+    <div class="progress"><div class="progress-bar" style="width:${(cur/total)*100}%"></div></div>
+    <h3 style="margin:16px 0;font-size:16px;text-align:center">${q.q}</h3>
+    <div>${opts}</div>
+    <button id="test-next-btn" onclick="nextTestQ()" class="btn" disabled style="opacity:0.5">${cur===total?'✨ 查看结果':'下一题 →'}</button>
+  `;
+}
+
+function selectTestOpt(i){
+  if(testLock) return;
+  testSelected = i;
+  document.querySelectorAll('.option').forEach((b,idx)=>{
+    if(idx===i) b.classList.add('selected');
+    else b.classList.remove('selected');
+  });
+  const btn = $('test-next-btn');
+  if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+function nextTestQ(){
+  if(testSelected === null) return;
+  if(testLock) return;
+  testLock = true;
+  
+  const q = testState.questions[testState.current];
+  const opt = q.options[testSelected];
+  const s = opt.scores;
+  testState.scores.action += s.action;
+  testState.scores.create += s.create;
+  testState.scores.empathy += s.empathy;
+  testState.scores.stable += s.stable;
+  testState.scores.charm += s.charm;
+  
+  testState.answers.push({ q:q.q, a:opt.text });
+  testState.current++;
+  testSelected = null;
+  
+  if(testState.current >= testState.questions.length){
+    testLock = false;
+    finishTest();
+  } else {
+    renderTestQ();
+    testLock = false;
+  }
+}
+
+function calcPersona(scores){
+  const { action, create, empathy, stable, charm } = scores;
+  const sorted = [
+    {k:'action',v:action},{k:'create',v:create},{k:'empathy',v:empathy},{k:'stable',v:stable},{k:'charm',v:charm}
+  ].sort((a,b)=>b.v-a.v);
+  const top = sorted[0].k;
+  if(top==='action') return 'rose';
+  if(top==='create') return 'lavender';
+  if(top==='stable') return 'lily';
+  if(top==='empathy') return 'iris';
+  return 'camellia';
+}
+
+function finishTest(){
+  const pid = calcPersona(testState.scores);
+  const p = PERSONAS.find(x=>x.id===pid);
+  if(!p) return;
+  
+  if(!state.unlockedPersonas.includes(pid)) state.unlockedPersonas.push(pid);
+  state.mainPersona = pid;
+  
+  const { action, create, empathy, stable, charm } = testState.scores;
+  const total = action + create + empathy + stable + charm;
+  const aPct = Math.round(action/total*100);
+  const cPct = Math.round(create/total*100);
+  const ePct = Math.round(empathy/total*100);
+  const sPct = Math.round(stable/total*100);
+  const chPct = Math.round(charm/total*100);
+  
+  $('test-content').innerHTML = `
+    <div class="center">
+      <div style="font-size:48px;margin-bottom:12px">🎉</div>
+      <h3 style="margin-bottom:8px">人格测试完成！</h3>
+      <p class="text-sm mb-4">解锁了你的专属花公主身份！</p>
+      <div style="width:80px;height:80px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,${p.flowerColor1},${p.flowerColor2})">${p.flower}</div>
+      <h2 style="color:${p.color};margin-bottom:4px">${p.name}</h2>
+      <p class="text-sm">${p.flower} · ${p.animal} · ${p.trait}主导</p>
+      <div class="glass-card" style="margin:16px 0;text-align:left">
+        <p style="font-size:12px;margin-bottom:8px">五特质占比</p>
+        <div style="font-size:12px;line-height:2">
+          <div>🔥 行动 ${aPct}%</div><div style="height:6px;background:rgba(212,181,199,0.15);border-radius:999px"><div style="height:100%;background:#D4A5B8;border-radius:999px;width:${aPct}%"></div></div>
+          <div>🎨 创造 ${cPct}%</div><div style="height:6px;background:rgba(212,181,199,0.15);border-radius:999px"><div style="height:100%;background:#B8A9C9;border-radius:999px;width:${cPct}%"></div></div>
+          <div>💗 共情 ${ePct}%</div><div style="height:6px;background:rgba(212,181,199,0.15);border-radius:999px"><div style="height:100%;background:#F0D5E0;border-radius:999px;width:${ePct}%"></div></div>
+          <div>🌿 稳定 ${sPct}%</div><div style="height:6px;background:rgba(212,181,199,0.15);border-radius:999px"><div style="height:100%;background:#88C898;border-radius:999px;width:${sPct}%"></div></div>
+          <div>✨ 魅力 ${chPct}%</div><div style="height:6px;background:rgba(212,181,199,0.15);border-radius:999px"><div style="height:100%;background:#E8C87A;border-radius:999px;width:${chPct}%"></div></div>
+        </div>
+      </div>
+      <button onclick="enterIslandFromTest('${pid}')" class="btn">🏝️ 进入我的岛屿</button>
+      <button onclick="viewPersona('${pid}')" class="btn btn-secondary">查看人格详情</button>
+    </div>
+  `;
+}
+
+function closeTest(){
+  if(confirm('确定要退出测试吗？')){
+    hideModal('test-modal');
+    testState = null;
+    testLock = false;
+  }
+}
+
+function enterIslandFromTest(pid){
+  hideModal('test-modal');
+  testState = null;
+  showPage('island');
+  setTimeout(()=>startTutorial(), 500);
+}
+
+function viewPersona(id){
+  const p = PERSONAS.find(x=>x.id===id);
+  if(!p) return;
+  hideModal('test-modal');
+  testState = null;
+  $('persona-detail').innerHTML = `
+    <div class="center">
+      <div style="font-size:48px;margin-bottom:8px">${p.flower}</div>
+      <h2 style="color:${p.color}">${p.name}</h2>
+      <p class="text-sm">代表花：${p.flower} · 代表动物：${p.animal}</p>
+      <div style="display:flex;gap:8px;justify-content:center;margin:12px 0">
+        <span style="background:${p.color}20;color:${p.color};padding:4px 12px;border-radius:999px;font-size:12px">${p.trait}主导</span>
+        <span style="background:${p.color}20;color:${p.color};padding:4px 12px;border-radius:999px;font-size:12px">${p.second}辅助</span>
+      </div>
+      <div class="glass-card" style="text-align:left;margin:12px 0">
+        <p style="font-size:13px;margin-bottom:8px"><b>💖 核心显化优势</b></p>
+        <p class="text-sm">${p.advantage}</p>
+      </div>
+      <div class="glass-card" style="text-align:left;margin:12px 0">
+        <p style="font-size:13px;margin-bottom:8px"><b>⚠️ 核心卡点信念</b></p>
+        <p class="text-sm">${p.topBelief}</p>
+      </div>
+      <div class="glass-card" style="text-align:left;margin:12px 0">
+        <p style="font-size:13px;margin-bottom:8px"><b>🎯 专属显化节奏</b></p>
+        <p class="text-sm">${p.rhythm}</p>
+      </div>
+    </div>
+  `;
+  showModal('persona-modal');
+}
+
+function closePersona(){ hideModal('persona-modal'); }
+
+// ========== 新手引导 ==========
+const TUTORIAL_STEPS = [
+  { emoji:'👋', title:'公主你好呀~', desc:'欢迎来到你的专属星愿花园！让我带你逛逛这座神奇的小岛吧 ✨' },
+  { emoji:'🏝️', title:'这是你的许愿岛', desc:'岛上的每一座小房子都是一个显化功能哦～点一点试试它们都有什么魔法吧 🌸' },
+  { emoji:'🧭', title:'底部导航栏', desc:'底部可以切换不同页面：岛屿是主界面、显化是工具合集、书馆有书和电影、记录看你的成长～' }
+];
+
+function startTutorial(){
+  tutorialStep = 0;
+  showTutorialStep();
+}
+
+function showTutorialStep(){
+  const step = TUTORIAL_STEPS[tutorialStep];
+  if(!step){ finishTutorial(); return; }
+  $('tutorial-emoji').textContent = step.emoji;
+  $('tutorial-title').textContent = step.title;
+  $('tutorial-desc').textContent = step.desc;
+  $('tutorial-next-btn').textContent = tutorialStep === TUTORIAL_STEPS.length-1 ? '开始探索 ✨' : '下一步 →';
+  $('tutorial-overlay').classList.add('show');
+}
+
+function nextTutorialStep(){
+  tutorialStep++;
+  if(tutorialStep >= TUTORIAL_STEPS.length) finishTutorial();
+  else showTutorialStep();
+}
+
+function skipTutorial(){ finishTutorial(); }
+
+function finishTutorial(){
+  $('tutorial-overlay').classList.remove('show');
+}
+
+// ========== 初始化 ==========
+function init(){
+  showPage('welcome');
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1989,6 +1989,18 @@
                 padding: 20px;
                 max-width: 100%;
             }
+            .story-emoji {
+                font-size: 56px;
+                margin-bottom: 16px;
+            }
+            .story-title {
+                font-size: 22px;
+                margin-bottom: 12px;
+            }
+            .story-text {
+                font-size: 15px;
+                line-height: 1.7;
+            }
             #game-container {
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
@@ -2076,11 +2088,25 @@
             .modal {
                 width: 95%;
                 max-height: 85vh;
+                padding: 20px;
                 overflow-y: auto;
                 display: flex;
                 flex-direction: column;
                 overscroll-behavior: contain;
                 -webkit-overflow-scrolling: touch;
+            }
+            .modal-title {
+                font-size: 18px;
+                margin: -8px -12px 12px -12px;
+                padding: 8px 12px;
+            }
+            .modal-content {
+                font-size: 14px;
+                line-height: 1.6;
+            }
+            .modal-btn {
+                padding: 10px 18px;
+                font-size: 14px;
             }
             .modal-content {
                 flex: 1;
@@ -3104,7 +3130,7 @@
         <!-- 存档导入区域（默认隐藏） -->
         <div id="save-import-area" style="display: none; margin-top: 15px; padding: 15px; background: #f8f8f8; border-radius: 8px;">
             <div style="font-size: 13px; color: #333; margin-bottom: 8px;">📋 粘贴存档代码导入：</div>
-            <textarea id="save-import-text" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; resize: vertical;" placeholder="将存档代码粘贴到这里..."></textarea>
+            <textarea id="save-import-text" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; resize: vertical;" placeholder="将存档代码粘贴到这里..."></textarea>
             <div style="display: flex; gap: 8px; margin-top: 8px;">
                 <button class="modal-btn primary" onclick="doImportSave()" style="flex: 1;">📤 导入</button>
                 <button class="modal-btn secondary" onclick="cancelImportSave()" style="flex: 1;">取消</button>
@@ -9810,6 +9836,14 @@ function calculateOfflineReward() {
             game.lastSaveTimestamp = now;
             return null;
         }
+        if (!game.fields || !Array.isArray(game.fields)) {
+            game.fields = [{
+                id: 1, level: '新手档', type: 'paddy', crop: null, stage: 'idle',
+                step: 0, growProgress: 0, plantedDay: 0, lastWaterDay: 0, lastWeedDay: 0,
+                fertilized: false, fertilizerType: null, turnedVine1: false, turnedVine2: false,
+                prepared: false, yieldLoss: 0, yieldBonus: 0
+            }];
+        }
     const offlineMs = now - game.lastSaveTimestamp;
     const offlineSeconds = Math.max(0, offlineMs / 1000);
     
@@ -10757,7 +10791,7 @@ function showOfflineReward(reward) {
     // 季节变化
     if (reward.seasonChanged) {
         content += `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef;">`;
-        content += `<div style="color: #e67e22; font-weight: bold;">🍂 换季了！${SEASON_NAMES[game.season]}来了</div>`;
+        content += `<div style="color: #e67e22; font-weight: bold;">🍂 换季了！${SEASON_NAMES[game.season] || '未知季节'}来了</div>`;
         content += `</div>`;
     }
     
@@ -10926,7 +10960,7 @@ function saveGame() {
     try {
         // 自动备份：每5次存档轮转保存最近3个存档
         saveCount = (game._saveCount || 0) + 1;
-        if (saveCount % 5 === 0) {
+        if (saveCount % 20 === 0) {
             try {
                 const b2 = safeStorageGet(SAVE_KEY + '_backup_2');
                 if (b2) safeStorageSet(SAVE_KEY + '_backup_3', b2);
@@ -10950,6 +10984,7 @@ function saveGame() {
         delete game._loadGameSpeedTimeout;
         delete game._modalPauseStack;
         delete game._loadGameSpeedTimeout;
+        delete game._roundTickCounter; // 计数器不应跨会话保存
         delete game.currentEvent; // 事件弹窗状态不应跨会话保存
         // 清理加工任务中的瞬态标志（避免 _loggedFull 被序列化到存档）
         if (game.processingJobs) {
@@ -10992,11 +11027,16 @@ function saveGame() {
     }
     
     // 保存新的 saveCount
-    game._saveCount = saveCount % 1000;
-    
-    if (typeof checkMilestones === 'function' && game.day > 0) {
-        try { checkMilestones(); } catch(e) { console.error('checkMilestones失败', e); }
+    if (isFinite(saveCount)) {
+        game._saveCount = saveCount % 1000;
+    } else {
+        game._saveCount = 0;
     }
+    
+    // 里程碑检查已在 onNewDay 中调用，避免 saveGame 中重复检查
+    // if (typeof checkMilestones === 'function' && game.day > 0) {
+    //     try { checkMilestones(); } catch(e) { console.error('checkMilestones失败', e); }
+    // }
     
     if (typeof renderSidebarQuests === 'function') {
         try { renderSidebarQuests(); } catch(e) { console.error('renderSidebarQuests失败', e); }
@@ -11011,7 +11051,7 @@ function exportSaveFile() {
     }
     showToast('正在导出存档...', 'info');
     try {
-        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout', '_loggedFull', 'currentEvent'];
+        const transientKeys = ['_saveCount', 'needsRender', 'tickCount', '_lastSaveTime', '_lastUITick', '_healthDeathChecked', '_storageCacheTick', '_storageCacheValue', '_skipNextWorkerProcess', '_questRewardTimeout', '_loadGameSpeedTimeout', '_loggedFull', 'currentEvent', '_roundTickCounter'];
         const backups = {};
         transientKeys.forEach(k => { backups[k] = game[k]; delete game[k]; });
         // 清理 processingJobs 中的瞬态字段
@@ -11829,7 +11869,7 @@ function exportSave() {
                 // 最终降级：显示弹窗让用户手动复制
                 showModal(
                     '导出存档',
-                    '<div style="text-align:left;"><p>请长按复制以下存档代码，保存到备忘录或微信收藏：</p><textarea readonly style="width:100%;height:120px;margin-top:10px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:12px;resize:none;" onclick="this.select()">' + escapeHtml(saveData.substring(0, 500)) + '...</textarea><p style="font-size:11px;color:#999;margin-top:8px;">💡 提示：点击文本框即可全选，然后复制</p></div>',
+                    '<div style="text-align:left;"><p>请长按复制以下存档代码，保存到备忘录或微信收藏：</p><textarea readonly style="width:100%;height:120px;margin-top:10px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:16px;resize:none;" onclick="this.select()">' + escapeHtml(saveData.substring(0, 500)) + '...</textarea><p style="font-size:11px;color:#999;margin-top:8px;">💡 提示：点击文本框即可全选，然后复制</p></div>',
                     null
                 );
             }
@@ -12124,7 +12164,7 @@ function advanceSeason(silent = false) {
             setTimeout(() => {
                 if (!game) return;
                 if (game.currentEvent) return; // 如果事件弹窗正在显示，不显示季节弹窗
-                showModal('🍂 季节更替', `随着${SEASON_NAMES[game.season]}的到来，${removedCount}块田里的作物因不适应新季节而枯萎了。<br><br><span style="color: #999; font-size: 13px;">💡 提示：不同季节适合种植不同作物，春天适合水稻、红薯、大豆、小麦等。</span>`, function() {
+                showModal('🍂 季节更替', `随着${SEASON_NAMES[game.season] || '未知季节'}的到来，${removedCount}块田里的作物因不适应新季节而枯萎了。<br><br><span style="color: #999; font-size: 13px;">💡 提示：不同季节适合种植不同作物，春天适合水稻、红薯、大豆、小麦等。</span>`, function() {
                     // 季节弹窗关闭后再触发事件，延迟500ms确保modalClosing已复位
                     setTimeout(() => {
                         if (game && !game.currentEvent && Math.random() < 0.55) {
@@ -12180,7 +12220,7 @@ function advanceSeason(silent = false) {
     }
     game.weatherDuration = 0;
     changeWeather();
-    addLog(`${SEASON_ICONS[game.season]} ${SEASON_NAMES[game.season]}来了。${getRandomFlavor('season')}`, 'info');
+    addLog(`${SEASON_ICONS[game.season] || '🌱'} ${SEASON_NAMES[game.season] || '未知季节'}来了。${getRandomFlavor('season')}`, 'info');
 }
 
 function gameTick() {
@@ -12218,14 +12258,19 @@ function gameTick() {
     // 推进加工任务进度
     updateProcessingJobs();
     
-    // 防止浮点数累积
-    roundGameState();
+    // 防止浮点数累积（每10tick执行一次，避免每tick都全量扫描）
+    if (game._roundTickCounter === undefined) game._roundTickCounter = 0;
+    game._roundTickCounter++;
+    if (game._roundTickCounter >= 10) {
+        game._roundTickCounter = 0;
+        roundGameState();
+    }
     
     // 标记面板需要重新渲染（游戏状态已更新）
     if (game) game.needsRender = true;
     
     // tickCount 初始化（确保判断前存在）
-    if (!game.tickCount) game.tickCount = 0;
+    if (game.tickCount === undefined) game.tickCount = 0;
     game.tickCount++;
     if (game.tickCount > 1000000) game.tickCount = 0;
     
@@ -14755,9 +14800,6 @@ function handleEventChoice(optionIdx) {
     // 清除当前事件
     if (game) game.currentEvent = null;
     
-    // 防止浮点数累积
-    roundGameState();
-    
     // 关闭弹窗
     closeEventModal();
     
@@ -14996,8 +15038,8 @@ function updateUI() {
     safeSetText('stat-storage', Math.floor(currentStorage));
     safeSetText('stat-storage-cap', storageCap);
     safeSetText('stat-day', game.totalDay || game.day);
-    safeSetText('stat-season', SEASON_NAMES[game.season]);
-    safeSetText('season-icon', SEASON_ICONS[game.season]);
+    safeSetText('stat-season', SEASON_NAMES[game.season] || '未知季节');
+    safeSetText('season-icon', SEASON_ICONS[game.season] || '🌱');
     
     // 低体力/健康视觉警示
     const staminaEl = document.getElementById('stat-stamina');
@@ -15499,7 +15541,7 @@ const MILESTONE_DATA = {
             if (!game.npcs) return false;
             let count = 0;
             for (const key in game.npcs) {
-                if (game.npcs[key] && game.npcs[key].friendship >= 40) count++;
+                if ((game.npcs[key] || 0) >= 40) count++;
             }
             return count >= 3;
         }
@@ -15756,7 +15798,7 @@ function renderQuestBox() {
                 progressText = firstField && firstField.prepared ? '已完成' : '未开始';
             } else if (quest.id === 'q1') {
                 // 买种子任务
-                const hasSeeds = Object.values(game.seeds).some(s => s > 0);
+                const hasSeeds = Object.values(game.seeds || {}).some(s => s > 0);
                 progress = hasSeeds ? 100 : 0;
                 progressText = hasSeeds ? '已完成' : '未开始';
             } else if (quest.id === 'q6') {
@@ -16076,7 +16118,7 @@ function renderFieldCard(field, idx) {
             html += `<div class="field-progress"><div class="field-progress-bar" style="width: 0%"></div></div>`;
             html += '<div class="field-actions" style="justify-content: center; margin-top: 12px;">';
             let prepCost = 15;
-            if (game.tools.includes('hoe')) prepCost *= 0.9;
+            if ((game.tools || []).includes('hoe')) prepCost *= 0.9;
             if (game.neighborHelp && game.neighborHelp.toolShare) prepCost *= 0.85;
             const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
             if (toolMasteryLevel > 0) prepCost = Math.max(1, Math.floor(prepCost * (1 - toolMasteryLevel * 0.05)));
@@ -16182,14 +16224,14 @@ function renderFieldCard(field, idx) {
         
         if (isMature) {
             // 成熟了，可以收割
-            const harvestCost = Math.floor(20 * (game.tools.includes('sickle') ? 0.9 : 1) * (1 - ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) * 0.05));
+            const harvestCost = Math.floor(20 * ((game.tools || []).includes('sickle') ? 0.9 : 1) * (1 - ((game.skills.toolMastery && game.skills.toolMastery.level) || 0) * 0.05));
             html += `<button class="action-btn highlight" onclick="harvestCrop(${idx})" ${game.stamina < harvestCost ? 'disabled' : ''}>🌾 收割 (-${harvestCost}体力)</button>`;
         } else {
             // 育苗阶段
             if (field.stage === 'seedling') {
                 const daysLeft = Math.ceil((cropData.seedlingDays !== undefined ? cropData.seedlingDays : 5) - (game.day - field.plantedDay));
                 if (daysLeft <= 0) {
-                    const transplantCost = game.tools.includes('seedlingRider') ? 7 : 18;
+                    const transplantCost = (game.tools || []).includes('seedlingRider') ? 7 : 18;
                     html += `<button class="action-btn highlight" onclick="transplantCrop(${idx})" ${game.stamina < transplantCost ? 'disabled' : ''}>🌱 移栽 (-${transplantCost}体力)</button>`;
                 } else {
                     html += `<span style="font-size: 12px; color: #999;">育苗中，还需${daysLeft}天</span>`;
@@ -16222,7 +16264,7 @@ function renderFieldCard(field, idx) {
                 
                 // 施肥
                 if (!field.fertilized && field.step >= 2) {
-                    let fertCost = game.tools.includes('fertilizerCart') ? 6 : 10;
+                    let fertCost = (game.tools || []).includes('fertilizerCart') ? 6 : 10;
                     const toolMasteryLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
                     if (toolMasteryLevel > 0) {
                         fertCost = Math.max(1, Math.floor(fertCost * (1 - toolMasteryLevel * 0.05)));
@@ -16240,7 +16282,7 @@ function renderFieldCard(field, idx) {
                 if (cropData.type === 'sweet') {
                     const growDays = game.day - field.plantedDay;
                     let vineBaseCost = 13;
-                    if (game.tools.includes('hoe')) vineBaseCost = Math.floor(vineBaseCost * 0.9);
+                    if ((game.tools || []).includes('hoe')) vineBaseCost = Math.floor(vineBaseCost * 0.9);
                     const vineToolLevel = (game.skills && game.skills.toolMastery && game.skills.toolMastery.level) || 0;
                     if (vineToolLevel > 0) vineBaseCost = Math.max(1, Math.floor(vineBaseCost * (1 - vineToolLevel * 0.05)));
                     if (growDays >= 30 && !field.turnedVine1) {
@@ -16735,7 +16777,7 @@ function renderToolsPanel() {
         html += `<div class="shop-category">${typeInfo.name}</div>`;
         
         toolsOfType.forEach(([toolKey, tool]) => {
-            const owned = game.tools.includes(toolKey);
+            const owned = (game.tools || []).includes(toolKey);
             const canAfford = game.money >= tool.price;
             // 暂时所有农具都可以买，解锁条件后面再加
             const unlocked = true;
@@ -19058,7 +19100,7 @@ function buildProcessing(key) {
             finalBuildCost = Math.floor(finalBuildCost * (1 - buildCostReduce));
         }
         if (game.money < finalBuildCost) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -19074,7 +19116,7 @@ function buildProcessing(key) {
         if (key === 'ricePolishing' && !game.quests.q25) { game.quests.q25 = true; queueQuestReward('q25', 300, '✅ 任务完成：精米坊开业，奖励300元'); }
         if (key === 'fishDrying' && !game.quests.q26) { game.quests.q26 = true; queueQuestReward('q26', 200, '✅ 任务完成：鱼塘初钓，奖励200元'); }
         if (key === 'fishBallWorkshop' && !game.quests.q28) { game.quests.q28 = true; queueQuestReward('q28', 300, '✅ 任务完成：鱼丸师傅，奖励300元'); }
-        const builtCount = Object.values(game.builtProcessing).filter(v => v > 0).length;
+        const builtCount = Object.values(game.builtProcessing || {}).filter(v => v > 0).length;
         if (builtCount >= 3 && !game.quests.q49) { game.quests.q49 = true; queueQuestReward('q49', 400, '✅ 任务完成：农商一体，奖励400元'); }
         
         addLog(`🛠️ 置办好了${building.name}的家伙事儿！`, 'success');
@@ -19100,7 +19142,7 @@ function upgradeProcessing(buildingKey) {
         if (buildCostReduce > 0) {
             finalCost = Math.floor(finalCost * (1 - buildCostReduce));
         }
-        if (game.money < finalCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < finalCost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= finalCost;
         game.builtProcessing[buildingKey] = currentLevel + 1;
@@ -19582,7 +19624,7 @@ function buildBuilding(buildingId) {
         
         // 检查金钱
         if (game.money < building.cost) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -19622,7 +19664,7 @@ function upgradeBuilding(buildingId) {
         
         const upgradeCost = building.upgradeCost[currentLevel - 1];
         if (!upgradeCost || upgradeCost <= 0 || game.money < upgradeCost) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -20365,7 +20407,7 @@ function feedPet(petKey) {
     }
     
     if (game.money < pet.dailyFoodCost) {
-        showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+        showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
         playErrorSound();
         return;
     }
@@ -20544,7 +20586,7 @@ function buyAutomation(deviceId) {
         const device = AUTOMATION_DATA[deviceId];
         if (!device) return;
         if (game.automation && game.automation[deviceId] > 0) { showToast('已拥有该设备', 'bad'); return; }
-        if (game.money < device.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < device.cost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= device.cost;
         if (!game.automation) game.automation = {};
@@ -20565,7 +20607,7 @@ function upgradeAutomation(deviceId) {
         if (currentLevel >= device.maxLevel) return;
         
         const cost = device.levelUpCost[currentLevel];
-        if (game.money < cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < cost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= cost;
         game.automation[deviceId] = currentLevel + 1;
@@ -20602,7 +20644,7 @@ function renderBankPanel() {
                 <div class="shop-item-icon">💵</div>
                 <div>
                     <div class="shop-item-name">存入全部现金</div>
-                    <div class="shop-item-desc">当前现金：${game.money.toFixed(1)}元</div>
+                    <div class="shop-item-desc">当前现金：${(game.money || 0).toFixed(1)}元</div>
                 </div>
             </div>
             <div class="shop-item-price">
@@ -20801,7 +20843,7 @@ function buyMarketItem(itemId, price) {
     withClickLock('buyMarketItem_' + itemId, () => {
         const stock = game.marketStock && game.marketStock.specialItems && game.marketStock.specialItems[itemId] !== undefined ? game.marketStock.specialItems[itemId] : undefined;
         if (stock !== undefined && stock <= 0) { showToast('该商品已售罄', 'bad'); return; }
-        if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         game.money -= price;
         if (!game.items) game.items = {};
         game.items[itemId] = (game.items[itemId] || 0) + 1;
@@ -20817,7 +20859,7 @@ function buyMarketItem(itemId, price) {
 
 function buyCrop(cropId, price) {
     withClickLock('buyCrop_' + cropId, () => {
-        if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < price) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         if (getStorageUsed() + 1 > game.storageCapacity) {
             showToast('仓库满了，先腾点地方', 'bad');
             return;
@@ -20908,7 +20950,7 @@ function upgradeAgriTech() {
     withClickLock('upgradeAgriTech', () => {
         const nextLevel = AGRI_TECH_DATA.levels[game.agriTechLevel || 0];
         if (!nextLevel) return;
-        if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= nextLevel.cost;
         if (!game.agriTechLevel) game.agriTechLevel = 0;
@@ -21247,7 +21289,7 @@ function investVillageProject(projectKey) {
     withClickLock('investVillageProject_' + projectKey, () => {
         const project = VILLAGE_PROJECTS[projectKey];
         if (!project) return;
-        if (game.money < project.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < project.cost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         if (game.reputation < project.requireReputation) { showToast('声望不足', 'bad'); return; }
         
         game.money -= project.cost;
@@ -21306,7 +21348,7 @@ function upgradeFarmStay() {
         const currentLevel =(game.farmStay && game.farmStay.level) || 0;
         if (currentLevel >= FARM_STAY_DATA.level.length) return;
         const nextLevel = FARM_STAY_DATA.level[currentLevel];
-        if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < nextLevel.cost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= nextLevel.cost;
         if (!game.farmStay) game.farmStay = { level: 0, guests: 0, reputation: 0 };
@@ -21428,7 +21470,7 @@ function buyAnimal(animalKey) {
     withClickLock('buyAnimal_' + animalKey, () => {
         const data = ANIMAL_DATA[animalKey];
         if (!data) return;
-        if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= data.buyCost;
         if (!game.animals) game.animals = {};
@@ -21545,10 +21587,10 @@ function buyTree(treeKey) {
         const data = ORCHARD_DATA[treeKey];
         if (!data) return;
         if (data.season && data.season !== game.season) {
-            showToast('🌸 ' + data.name + '只能在' + SEASON_NAMES[data.season] + '种植，现在是' + SEASON_NAMES[game.season], 'warn');
+            showToast('🌸 ' + data.name + '只能在' + SEASON_NAMES[data.season] + '种植，现在是' + (SEASON_NAMES[game.season] || '未知季节') + '。', 'warn');
             return;
         }
-        if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad'); return; }
+        if (game.money < data.buyCost) { showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad'); return; }
         
         game.money -= data.buyCost;
         if (!game.orchard) game.orchard = [];
@@ -21721,7 +21763,7 @@ function prepareField(fieldIdx) {
         const field = game.fields[fieldIdx];
         
         let staminaCost = 15;
-        if (game.tools.includes('hoe')) {
+        if ((game.tools || []).includes('hoe')) {
             staminaCost *= 0.9; // 锄头：翻地体力-10%
         }
         if (game.neighborHelp && game.neighborHelp.toolShare) {
@@ -21870,7 +21912,7 @@ function transplantCrop(fieldIdx) {
         const cropData = CROP_DATA[field.crop];
         
         let staminaCost = 18;
-        if (game.tools.includes('seedlingRider')) {
+        if ((game.tools || []).includes('seedlingRider')) {
             staminaCost *= 0.4; // 秧马：移栽体力-60%
         }
         staminaCost = Math.floor(staminaCost);
@@ -22020,7 +22062,7 @@ function fertilizeField(fieldIdx, type = 'normal') {
         }
         
         let staminaCost = 10;
-        if (game.tools.includes('fertilizerCart')) {
+        if ((game.tools || []).includes('fertilizerCart')) {
             staminaCost *= 0.6; // 施肥车：施肥体力-40%
         }
         
@@ -22088,7 +22130,7 @@ function turnVine(fieldIdx, turnNum) {
         if (!game.fields || fieldIdx < 0 || fieldIdx >= game.fields.length) { showToast('操作失败', 'bad'); return; }
         const field = game.fields[fieldIdx];
         let vineCost = 13;
-        if (game.tools.includes('hoe')) {
+        if ((game.tools || []).includes('hoe')) {
             vineCost = Math.floor(vineCost * 0.9);
         }
         // toolMastery技能：所有农具体力消耗-5%/级
@@ -22129,7 +22171,7 @@ function harvestCrop(fieldIdx) {
         const cropData = CROP_DATA[field.crop];
         
         let staminaCost = 20;
-        if (game.tools.includes('sickle')) {
+        if ((game.tools || []).includes('sickle')) {
             staminaCost *= 0.9; // 镰刀：收割体力-10%
         }
         
@@ -22452,7 +22494,7 @@ function buySeed(seedKey) {
         }
         const actualSeedPrice = getSeedPrice(cropData.seedPrice);
         if (game.money < actualSeedPrice) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -22505,7 +22547,7 @@ function buyItem(itemKey) {
             finalPrice = Math.max(1, Math.floor(finalPrice * (1 - techDiscount)));
         }
         if (game.money < finalPrice) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -22530,7 +22572,7 @@ function buyTool(toolKey) {
         const tool = TOOL_DATA[toolKey];
         if (!tool) return;
         
-        if (game.tools.includes(toolKey)) {
+        if ((game.tools || []).includes(toolKey)) {
             showToast('已经拥有了！', 'bad');
             playErrorSound();
             return;
@@ -22547,13 +22589,14 @@ function buyTool(toolKey) {
         }
         
         if (game.money < finalPrice) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
         
         playCoinSound();
         game.money -= finalPrice;
+        if (!game.tools) game.tools = [];
         game.tools.push(toolKey);
         
         // 任务检查：购买第一把农具
@@ -22583,7 +22626,7 @@ function startCompost() {
         }
         
         if (game.money < 50) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -22764,7 +22807,7 @@ function toggleInventoryPreview() {
 // 只更新顶部状态栏，不重新渲染面板
 function updateTopBar() {
     if (!game) return;
-    safeSetText('stat-money', game.money.toFixed(1));
+    safeSetText('stat-money', (game.money || 0).toFixed(1));
     safeSetText('stat-stamina', Math.floor(game.stamina));
     safeSetText('stat-max-stamina', game.maxStamina);
     safeSetText('stat-health', Math.floor(game.health));
@@ -22777,8 +22820,8 @@ function updateTopBar() {
     safeSetText('stat-storage', Math.floor(currentStorage));
     safeSetText('stat-storage-cap', storageCap);
     safeSetText('stat-day', game.totalDay || game.day);
-    safeSetText('stat-season', SEASON_NAMES[game.season]);
-    safeSetText('season-icon', SEASON_ICONS[game.season]);
+    safeSetText('stat-season', SEASON_NAMES[game.season] || '未知季节');
+    safeSetText('season-icon', SEASON_ICONS[game.season] || '🌱');
     const wData = WEATHER_DATA[game.weather] || WEATHER_DATA.sunny;
     safeSetText('stat-weather', wData.name);
     safeSetText('weather-icon', wData.emoji);
@@ -22790,7 +22833,7 @@ function rentNewField() {
         if (!game) return;
         const rent = getNextFieldRent();
         if (game.money < rent) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -22937,7 +22980,7 @@ function upgradeHouse(targetHouse) {
         
         const houseData = HOUSE_DATA[targetHouse];
         if (game.money < houseData.upgradeCost) {
-            showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+            showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
             playErrorSound();
             return;
         }
@@ -23194,7 +23237,7 @@ function openFeedbackModal() {
             </div>
             <div style="margin-bottom:12px;">
                 <label style="display:block;font-size:12px;color:#888;margin-bottom:4px;text-align:left;">问题描述（必填）</label>
-                <textarea id="feedback-text" style="width:100%;height:80px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:13px;resize:none;box-sizing:border-box;" placeholder="请描述你遇到的问题..."></textarea>
+                <textarea id="feedback-text" style="width:100%;height:120px;padding:8px;border:1px solid #d4b896;border-radius:6px;font-size:16px;resize:vertical;box-sizing:border-box;" placeholder="请描述你遇到的问题..."></textarea>
             </div>
             <div style="margin-bottom:12px;">
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;cursor:pointer;">
@@ -25003,7 +25046,7 @@ function contributeToProject(projKey, type) {
                 return;
             }
             if (game.money < 10) {
-                showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
+                showToast('💰 金钱不足！当前拥有 ' + (game.money || 0).toFixed(1) + ' 元', 'bad');
                 return;
             }
             const remainingNeed = Math.ceil((proj.totalProgress - projData.progress) / Math.max(1, proj.totalProgress / needMoney));

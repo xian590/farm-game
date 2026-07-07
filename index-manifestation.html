@@ -182,6 +182,32 @@
       transition: background 1.5s ease;
     }
 
+    /* 基础工具类后备（Tailwind CDN 失败时） */
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .grid { display: grid; }
+    .block { display: block; }
+    .inline-block { display: inline-block; }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+    .w-full { width: 100%; }
+    .h-full { height: 100%; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .fixed { position: fixed; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .rounded-full { border-radius: 9999px; }
+    .overflow-hidden { overflow: hidden; }
+    .overflow-y-auto { overflow-y: auto; }
+    .cursor-pointer { cursor: pointer; }
+    .select-none { user-select: none; }
+    .pointer-events-none { pointer-events: none; }
+    .opacity-0 { opacity: 0; }
+    .opacity-50 { opacity: 0.5; }
+    .opacity-75 { opacity: 0.75; }
+    .opacity-100 { opacity: 1; }
+
     /* 主题色变量 */
     :root {
       --theme-primary: #B8A9C9;
@@ -4821,26 +4847,29 @@ function hideModal(id) { remCls(id, 'show'); }
     pushLog('error', ['[未处理Promise]', e.reason]);
   });
 
-  // 点击标题 5 次显示/隐藏日志
-  let titleTapCount = 0;
-  let titleTapTimer = null;
-  document.addEventListener('click', function(e) {
-    const title = e.target.closest('h1, .font-display');
-    if (title) {
-      titleTapCount++;
-      if (titleTapTimer) clearTimeout(titleTapTimer);
-      titleTapTimer = setTimeout(() => { titleTapCount = 0; }, 800);
-      if (titleTapCount >= 5) {
-        titleTapCount = 0;
-        toggleDevLog();
-      }
-    }
-  });
+  // 禁用点击标题触发日志面板（避免干扰用户操作）
+  // let titleTapCount = 0;
+  // let titleTapTimer = null;
+  // document.addEventListener('click', function(e) {
+  //   const title = e.target.closest('h1, .font-display');
+  //   if (title) {
+  //     titleTapCount++;
+  //     if (titleTapTimer) clearTimeout(titleTapTimer);
+  //     titleTapTimer = setTimeout(() => { titleTapCount = 0; }, 800);
+  //     if (titleTapCount >= 5) {
+  //       titleTapCount = 0;
+  //       toggleDevLog();
+  //     }
+  //   }
+  // });
 
   function toggleDevLog() {
     visible = !visible;
     const panel = document.getElementById('dev-log-panel');
-    if (panel) panel.classList.toggle('hidden', !visible);
+    if (panel) {
+      panel.classList.toggle('hidden', !visible);
+      panel.style.display = visible ? 'flex' : 'none';
+    }
     if (visible) {
       // 自动收集诊断信息
       try {
@@ -4877,7 +4906,7 @@ function hideModal(id) { remCls(id, 'show'); }
     const div = document.createElement('div');
     div.id = 'dev-log-panel';
     div.className = 'hidden';
-    div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:rgba(20,20,35,0.92);backdrop-filter:blur(6px);display:flex;flex-direction:column;font-family:monospace;';
+    div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:rgba(20,20,35,0.92);backdrop-filter:blur(6px);display:none;flex-direction:column;font-family:monospace;';
     div.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);flex-shrink:0;">
         <span style="color:#D4B5C7;font-size:13px;font-weight:bold;">🛠️ 开发者日志</span>
@@ -8681,7 +8710,9 @@ const TUTORIAL_STEPS = [
 ];
 
 function startTutorial() {
-  if (localStorage.getItem('cosmos_tutorial_done')) return;
+  try {
+    if (localStorage.getItem('cosmos_tutorial_done')) return;
+  } catch(e) { return; }
   tutorialStep = 0;
   showTutorialStep();
 }
@@ -15380,11 +15411,11 @@ function init() {
   if (__initDone) return;
   __initDone = true;
   
-  // 备用机制：无论初始化是否出错，300ms 后强制隐藏骨架屏
+  // 备用机制：无论初始化是否出错，300ms后强制隐藏骨架屏
   setTimeout(() => {
     try {
       const sk = document.getElementById('skeleton-screen');
-      if (sk) { sk.classList.add('hidden'); setTimeout(() => sk.remove(), 500); }
+      if (sk) { sk.style.display = 'none'; sk.classList.add('hidden'); setTimeout(() => sk.remove(), 500); }
     } catch(e) {}
   }, 300);
   
@@ -17964,12 +17995,14 @@ function showInstallPrompt() {
 function maybeShowInstallBanner() {
   // 已安装或已拒绝则不显示
   if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return;
-  if (localStorage.getItem('cosmos_pwa_installed') === 'true') return;
-  if (localStorage.getItem('cosmos_pwa_dismissed') === 'true') return;
-  // 第二次访问才显示
-  const visits = parseInt(localStorage.getItem('cosmos_pwa_visit_count') || '0');
-  try { localStorage.setItem('cosmos_pwa_visit_count', String(visits + 1)); } catch(e) {}
-  if (visits < 1) return;
+  try {
+    if (localStorage.getItem('cosmos_pwa_installed') === 'true') return;
+    if (localStorage.getItem('cosmos_pwa_dismissed') === 'true') return;
+    // 第二次访问才显示
+    const visits = parseInt(localStorage.getItem('cosmos_pwa_visit_count') || '0');
+    try { localStorage.setItem('cosmos_pwa_visit_count', String(visits + 1)); } catch(e) {}
+    if (visits < 1) return;
+  } catch(e) { return; }
   if (!pwaInstallPrompt) return;
   // 延迟显示
   setTimeout(() => {
@@ -19010,12 +19043,13 @@ function importFromQRText() {
     // 预览导入内容
     const previewEl = document.getElementById('import-preview');
     if (previewEl) {
-      const items = Object.entries(data).filter(([k]) => k.startsWith('cosmos_')).map(([k, v]) => {
+      const entries = Object.entries(data).filter(([k]) => k.startsWith('cosmos_'));
+      const items = entries.map(([k, v]) => {
         const short = k.replace('cosmos_', '');
         const size = v.length > 100 ? v.slice(0, 100) + '...' : v;
         return `<div style="padding:4px 0;font-size:12px;color:var(--text-soft)"><strong>${short}</strong>: ${size}</div>`;
       }).join('');
-      previewEl.innerHTML = `<div class="text-sm mb-2" style="color:var(--theme-text)">发现 ${items.length} 项数据：</div>${items}`;
+      previewEl.innerHTML = `<div class="text-sm mb-2" style="color:var(--theme-text)">发现 ${entries.length} 项数据：</div>${items}`;
       previewEl.classList.remove('hidden');
     }
     
