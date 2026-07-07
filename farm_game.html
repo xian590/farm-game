@@ -4223,6 +4223,7 @@ function toggleSettings() {
         closeSettings();
     } else {
         // 打开设置面板时暂停游戏
+        if (!game) return;
         if (game && !game._modalPauseStack) game._modalPauseStack = [];
         if (!gamePaused) {
             game._modalPauseStack.push(false);
@@ -9772,6 +9773,7 @@ function initGame(mode) {
     addLog('4️⃣ 完成任务可以获得奖励，解锁更多内容', 'info');
     addLog('', 'info');
     addLog('💡 小提示：左边的任务追踪器会告诉你下一步该做什么', 'info');
+    return game;
 }
 
 
@@ -9790,6 +9792,10 @@ function calculateOfflineReward() {
     
     try {
         const now = Date.now();
+        if (!isFinite(game.lastSaveTimestamp)) {
+            game.lastSaveTimestamp = now;
+            return null;
+        }
     const offlineMs = now - game.lastSaveTimestamp;
     const offlineSeconds = Math.max(0, offlineMs / 1000);
     
@@ -10943,6 +10949,7 @@ function saveGame() {
         console.error('存档保存失败', e);
         // 专门处理容量溢出
         if (e.name === 'QuotaExceededError' || e.name === 'QuotaExceeded') {
+            if (!saveData) return;
             try {
                 for (let i = 1; i <= 3; i++) {
                     safeStorageRemove(SAVE_KEY + '_backup_' + i);
@@ -11181,18 +11188,18 @@ function fixSaveData() {
     
     // 补全核心游戏状态（极旧存档可能缺少这些基础字段）
     if (game.mode === undefined) game.mode = 'normal';
-    if (game.money === undefined) game.money = 1500;
-    if (game.maxHealth === undefined) game.maxHealth = 200;
-    if (game.health === undefined) game.health = Math.floor(game.maxHealth * 0.6);
-    if (game.maxStamina === undefined) game.maxStamina = 200;
-    if (game.stamina === undefined) game.stamina = Math.floor(game.maxStamina * 0.5);
-    if (game.day === undefined || game.day < 1) game.day = 1;
-    if (game.totalDay === undefined || game.totalDay < 1) game.totalDay = game.day || 1;
+    if (!isFinite(game.money) || game.money === undefined) game.money = 1500;
+    if (!isFinite(game.maxHealth) || game.maxHealth === undefined) game.maxHealth = 200;
+    if (!isFinite(game.health) || game.health === undefined) game.health = Math.floor(game.maxHealth * 0.6);
+    if (!isFinite(game.maxStamina) || game.maxStamina === undefined) game.maxStamina = 200;
+    if (!isFinite(game.stamina) || game.stamina === undefined) game.stamina = Math.floor(game.maxStamina * 0.5);
+    if (!isFinite(game.day) || game.day === undefined || game.day < 1) game.day = 1;
+    if (!isFinite(game.totalDay) || game.totalDay === undefined || game.totalDay < 1) game.totalDay = game.day || 1;
     if (game.season === undefined) game.season = 'spring';
     const validSeasons = ['spring', 'summer', 'autumn', 'winter'];
     if (!validSeasons.includes(game.season)) game.season = 'spring';
-    if (game.time === undefined || game.time < 0 || game.time > 23) game.time = 6;
-    if (game.disasterRate === undefined) game.disasterRate = 1.0;
+    if (!isFinite(game.time) || game.time === undefined || game.time < 0 || game.time > 23) game.time = 6;
+    if (!isFinite(game.disasterRate) || game.disasterRate === undefined) game.disasterRate = 1.0;
     if (game.needsRender === undefined) game.needsRender = true;
     
     // 升级旧存档：将旧版100上限升级到200
@@ -11455,6 +11462,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
         }];
     }
     if (game.fields) {
+        game.fields = game.fields.filter(Boolean);
         game.fields.forEach(field => {
             if (field.id === undefined) field.id = 1;
             if (field.level === undefined) field.level = '新手档';
@@ -11690,6 +11698,7 @@ if (!game.crops || typeof game.crops !== 'object' || Array.isArray(game.crops)) 
         game.stats.daysPlayed = sanitizeNumber(game.stats.daysPlayed, 0);
     }
     if (game.fields) {
+        game.fields = game.fields.filter(Boolean);
         game.fields.forEach(field => {
             field.growProgress = sanitizeNumber(field.growProgress, 0);
             field.yieldLoss = sanitizeNumber(field.yieldLoss, 0);
