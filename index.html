@@ -12509,7 +12509,7 @@ function onNewDay() {
                             }
                             if (canFeed) {
                                 for (const [crop, amount] of Object.entries(data.dailyFeed || {})) {
-                                    const actualAmount = Math.max(0, amount * (1 - feedReduction));
+                                    const actualAmount = Math.max(0, Math.ceil(amount * (1 - feedReduction)));
                                     game.crops[crop] -= actualAmount;
                                 }
                                 animal.weight = Math.min(100, (animal.weight || 50) + 1);
@@ -12643,10 +12643,9 @@ function onNewDay() {
         game.money = 0;
         addLog('🍚 钱不够，将就着吃了一顿，勉强填饱肚子', 'warn');
     } else {
-        // 低保机制：完全没钱时，村里给基本生活费，不扣健康体力
-        const welfare = 15;
-        game.money += welfare;
-        addLog('🏘️ 村里看你实在揭不开锅，送来了救济粮。领取了基本生活费+' + welfare + '元', 'good');
+        // 完全没钱时：吃野菜充饥，不扣钱也不发钱，但健康-1
+        game.health = Math.max(1, game.health - 1);
+        addLog('🍚 没钱吃饭了，只能吃野菜充饥，健康-1', 'bad');
     }
     
     // 宠物每日饲料消耗
@@ -14586,7 +14585,18 @@ function handleEventChoice(optionIdx) {
     const option = event.options[optionIdx];
     
     // 检查物品消耗（如农药、化肥等）
-    const checkEffect = option.branches && option.branches.length > 0 ? option.branches[0].effect : option.effect;
+    // 对于分支事件，使用所有分支中消耗最大的做预检
+    let checkEffect = option.effect || {};
+    if (option.branches && option.branches.length > 0) {
+        checkEffect = option.branches[0].effect || {};
+        for (let i = 1; i < option.branches.length; i++) {
+            const b = option.branches[i];
+            if (b.effect && b.effect.money && (!checkEffect.money || b.effect.money < checkEffect.money)) {
+                // 找到金钱消耗最大的分支（负数绝对值最大）
+                checkEffect = b.effect;
+            }
+        }
+    }
     if (checkEffect.item_pesticide !== undefined && checkEffect.item_pesticide < 0) {
         const hasPesticide = (game.items.pesticide || 0) >= Math.abs(checkEffect.item_pesticide);
         if (!hasPesticide) {
@@ -15415,7 +15425,7 @@ function renderFieldsPanel() {
             const card = panel.querySelector(`.field-card[data-idx="${idx}"]`);
             if (card) {
                 const progressBar = card.querySelector('.field-progress-bar');
-                if (progressBar) progressBar.style.width = field.growProgress + '%';
+                if (progressBar) progressBar.style.width = (isFinite(field.growProgress) ? field.growProgress : 0) + '%';
                 const statusText = card.querySelector('.field-status');
                 if (statusText) statusText.textContent = getStageDesc(field.stage, cropData ? cropData.type : undefined);
             }
@@ -16883,7 +16893,7 @@ function renderCompostPanel() {
                     <div class="shop-item-name">有机肥</div>
                     <div class="shop-item-desc">用有机材料堆肥制作，比普通化肥效果更好，产量+8%</div>
                     <div class="shop-item-desc" style="color: #4a7c59; margin-top: 4px;">
-                        制作成本：100元 &nbsp;|&nbsp; 制作时间：3天 &nbsp;|&nbsp; 产量：3份
+                        制作成本：50元 &nbsp;|&nbsp; 制作时间：3天（技能可缩短）&nbsp;|&nbsp; 产量：3份
                     </div>
                 </div>
             </div>
@@ -19293,13 +19303,13 @@ function manualProcess(buildingKey) {
             return;
         }
         
-        // 检查仓库容量
-        const used = getStorageUsed();
-        const storageCap = game.storageCapacity || 2000;
-        if (used + building.outputAmount > storageCap) {
-            showToast('仓库满了，先腾点地方', 'bad');
+        // 检查体力
+        if (game.stamina < staminaCost) {
+            showToast(`累得不行了，需要${staminaCost}点体力...先回家睡一觉或吃点东西再来吧`, 'bad');
             return;
         }
+        
+        // 加工产物存入processedItems，不占用作物仓库，无需检查仓库容量
         
         // 消耗体力
         game.stamina -= staminaCost;
@@ -21568,7 +21578,7 @@ function sellAnimal(animalKey, idx) {
         }
         game.money += sellPrice;
         game.stats.totalEarned = (game.stats.totalEarned || 0) + sellPrice;
-        game.stats.totalSell = (game.stats.totalSell || 0) + 1;
+        game.stats.totalSell = (game.stats.totalSell || 0) + sellPrice;
         game.animals[animalKey].splice(idx, 1);
         
         addLog(`💰 卖掉${data.emoji}${animal.name}，获得${sellPrice}元`, 'good');
@@ -21997,10 +22007,7 @@ function transplantCrop(fieldIdx) {
             game.quests.q3 = true;
             queueQuestReward('q3', 50, '✅ 任务完成：移栽插秧，奖励50元');
         }
-        if (!game.quests.q5) {
-            game.quests.q5 = true;
-            queueQuestReward('q5', 50, '✅ 任务完成：移栽插秧，奖励50元');
-        }
+        // q5是"收获第一茬"，不是移栽，移除重复任务完成
         
         game.needsRender = true;
         saveGame();
@@ -22447,7 +22454,8 @@ function sellCrop(cropKey, amount) {
         
         // "全部出售"添加确认
         if (amount === 'all') {
-            const money = Math.floor(sellAmount * price);
+            const multiplier = (typeof getSellPriceMultiplier === 'function') ? getSellPriceMultiplier() : 1;
+    const money = Math.floor(sellAmount * price * multiplier * (1 + (game.sellBonus || 0)));
             showModal('确认出售', `确定要卖出所有${sellAmount}斤 ${names[cropKey]}吗？预计收入${money}元。`, () => {
                 _doSellCrop(cropKey, sellAmount, price);
             });
@@ -22697,12 +22705,6 @@ function startCompost() {
         // 堆肥需要花时间准备材料（1小时）
         game.time += 1;
         
-        // 任务检查：制作第一份堆肥
-        if (!game.quests.q51) {
-            game.quests.q51 = true;
-            queueQuestReward('q51', 150, '✅ 任务完成：第一份堆肥，奖励150元');
-        }
-        
         addLog('🌱 忙活了一个钟头，把堆肥的材料都备好了，等3天后来收。', 'info');
         checkAchievements();
         saveGame();
@@ -22741,6 +22743,12 @@ function harvestCompost() {
         
         // 增加堆肥经验
         addSkillExp('composting', 10);
+        
+        // 任务检查：制作第一份堆肥
+        if (!game.quests.q51) {
+            game.quests.q51 = true;
+            queueQuestReward('q51', 150, '✅ 任务完成：第一份堆肥，奖励150元');
+        }
         
         addLog('💩 堆肥做好了！收获了3份有机肥。', 'good');
         saveGame();
@@ -23188,6 +23196,7 @@ function checkQuests() {
 
 // 简单的 HTML 转义，防止文本中包含的 HTML 标签被解析
 function escapeHtml(str) {
+    if (str == null) return '';
     if (typeof str !== 'string') return String(str);
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
@@ -24608,15 +24617,15 @@ function mineLayer(layerKey) {
         const layer = MINE_DATA[layerKey];
         if (!layer) return;
         
-        if (game.stamina < layer.staminaCost) {
-            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
-            return;
-        }
-        
         // 工具精通减免体力消耗
         const toolMasteryLevel = game.skills && game.skills.toolMastery && game.skills.toolMastery.level || 0;
         const staminaDiscount = Math.max(0.1, 1 - (toolMasteryLevel * 0.05)); // 每级减5%
         const staminaCost = Math.max(1, Math.floor(layer.staminaCost * staminaDiscount));
+        
+        if (game.stamina < staminaCost) {
+            showToast('累得不行了...先回家睡一觉或吃点东西恢复体力再来吧', 'bad');
+            return;
+        }
         
         game.stamina -= staminaCost;
         
@@ -25519,7 +25528,7 @@ function batchWaterAll() {
         game.fields.forEach((field, idx) => {
             if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
                 const daysSinceWater = game.day - field.lastWaterDay;
-                if (daysSinceWater >= 2) {
+                if (daysSinceWater >= 1) {
                     waterField(idx);
                     watered++;
                 }
@@ -25536,7 +25545,7 @@ function batchWeedAll() {
         game.fields.forEach((field, idx) => {
             if (field.crop && field.stage !== 'idle' && field.stage !== 'mature') {
                 const daysSinceWeed = game.day - field.lastWeedDay;
-                if (daysSinceWeed >= 7) {
+                if (daysSinceWeed >= 3) {
                     weedField(idx);
                     weeded++;
                 }

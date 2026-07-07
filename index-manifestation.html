@@ -8921,22 +8921,15 @@ let whiteNoiseNode = null;
 let typingSoundTimeout = null;
 
 // ==================== v6.4 全局错误处理与加载状态 ====================
-const __errEsc = (t) => String(t).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-window.onerror = function(msg, url, line, col, error) {
-  console.error('Global error:', msg, 'at', url + ':' + line);
-  const errHtml = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,0.85);color:#ff6b6b;padding:20px;font-family:monospace;font-size:13px;overflow:auto;"><h2 style="color:#fff;margin-top:0">🚨 JS Error</h2><pre>' + __errEsc(msg) + '\n@ ' + __errEsc(url) + ':' + line + ':' + col + '\n\nStack: ' + (error && error.stack ? __errEsc(error.stack) : 'N/A') + '</pre><p style="color:#aaa">请截图此错误信息发给开发者</p></div>';
-  const d = document.createElement('div');
-  d.innerHTML = errHtml;
-  document.body.appendChild(d);
-  return false;
-};
+// 使用 addEventListener 追加（避免覆盖开发者日志系统的 window.onerror）
+window.addEventListener('error', function(event) {
+  console.error('Global error:', event.message, 'at', event.filename + ':' + event.lineno);
+  // 仅记录到控制台，不显示全屏覆盖（开发者日志面板已捕获）
+});
 
 window.addEventListener('unhandledrejection', function(event) {
   console.error('Unhandled promise rejection:', event.reason);
-  const errHtml = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,0.85);color:#ff6b6b;padding:20px;font-family:monospace;font-size:13px;overflow:auto;"><h2 style="color:#fff;margin-top:0">🚨 Unhandled Promise Rejection</h2><pre>' + __errEsc(event.reason) + '</pre><p style="color:#aaa">请截图此错误信息发给开发者</p></div>';
-  const d = document.createElement('div');
-  d.innerHTML = errHtml;
-  document.body.appendChild(d);
+  // 仅记录到控制台，不显示全屏覆盖（开发者日志面板已捕获）
 });
 
 // 网络状态监听
