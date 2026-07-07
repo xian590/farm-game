@@ -1,0 +1,117 @@
+{
+  "inlineScriptsFound": 3,
+  "errors": [
+    {
+      "msg": "Block 1 runtime error: m.addEventListener is not a function",
+      "stack": "block_1.js:10584\n  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });\n    ^\n\nTypeError: m.addEventListener is not a function\n    at block_1.js:10584:5\n    at Array.forEach (<anonymous>)\n    at block_1.js:10583:46\n    at Script.runInContext (node:vm:149:12)\n    at Object.runInContext (node:vm:301:6)\n    at Object.<anonymous> (C:\\Users\\Administrator\\Documents\\kimi\\workspace\\test_browser.js:284:8)\n    at Module._compile (node:internal/modules/cjs/loader:1830:14)\n    at Object..js (node:internal/modules/cjs/loader:1961:10)\n    at Module.load (node:internal/modules/cjs/loader:1553:32)\n    at Module._load (node:internal/modules/cjs/loader:1355:12)"
+    },
+    {
+      "msg": "Block 2 runtime error: navigator.serviceWorker.register is not a function",
+      "stack": "block_2.js:1655\n    navigator.serviceWorker.register('sw.js')\n                            ^\n\nTypeError: navigator.serviceWorker.register is not a function\n    at block_2.js:1655:29\n    at block_2.js:1696:3\n    at Script.runInContext (node:vm:149:12)\n    at Object.runInContext (node:vm:301:6)\n    at Object.<anonymous> (C:\\Users\\Administrator\\Documents\\kimi\\workspace\\test_browser.js:284:8)\n    at Module._compile (node:internal/modules/cjs/loader:1830:14)\n    at Object..js (node:internal/modules/cjs/loader:1961:10)\n    at Module.load (node:internal/modules/cjs/loader:1553:32)\n    at Module._load (node:internal/modules/cjs/loader:1355:12)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)"
+    }
+  ],
+  "logs": [],
+  "functionCalls": [
+    {
+      "fn": "getElementById",
+      "args": "[\"dev-log-panel\"]"
+    },
+    {
+      "fn": "getElementById",
+      "args": "[\"dev-log-list\"]"
+    },
+    {
+      "fn": "querySelectorAll",
+      "args": "[\".modal-backdrop\"]"
+    },
+    {
+      "fn": "getElementById",
+      "args": "[\"test-modal\"]"
+    },
+    {
+      "fn": "getElementById",
+      "args": "[\"persona-modal\"]"
+    },
+    {
+      "fn": "getElementById",
+      "args": "[\"alert-modal\"]"
+    }
+  ],
+  "flowResult": [
+    {
+      "step": "INIT_EXISTS",
+      "status": "OK"
+    },
+    {
+      "step": "INIT_CALL",
+      "status": "FAIL",
+      "detail": "Cannot access '__initDone' before initialization",
+      "stack": "ReferenceError: Cannot access '__initDone' before initialization\n    at Object.init (block_1.js:10614:3)\n    at simulateFlow (C:\\Users\\Administrator\\Documents\\kimi\\workspace\\test_browser.js:305:13)\n    at Object.<anonymous> (C:\\Users\\Administrator\\Documents\\kimi\\workspace\\test_browser.js:404:20)\n    at Module._compile (node:internal/modules/cjs/loader:1830:14)\n    at Object..js (node:internal/modules/cjs/loader:1961:10)\n    at Module.load (node:internal/modules/cjs/loader:1553:32)\n    at Module._load (node:internal/modules/cjs/loader:1355:12)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47"
+    }
+  ],
+  "mockElementsCreated": 5,
+  "sandboxFunctions": [
+    "alert",
+    "confirm",
+    "prompt",
+    "fetch",
+    "URL",
+    "Blob",
+    "FileReader",
+    "atob",
+    "btoa",
+    "Date",
+    "Array",
+    "Object",
+    "String",
+    "Number",
+    "Boolean",
+    "RegExp",
+    "Error",
+    "Map",
+    "Set",
+    "Promise",
+    "setTimeout",
+    "setInterval",
+    "clearTimeout",
+    "clearInterval",
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+    "scrollTo",
+    "addEventListener",
+    "removeEventListener",
+    "$el"
+  ],
+  "sandboxVariables": [
+    "window",
+    "document",
+    "console",
+    "localStorage",
+    "sessionStorage",
+    "navigator",
+    "location",
+    "Math",
+    "JSON",
+    "AudioContext",
+    "webkitAudioContext",
+    "speechSynthesis",
+    "Notification",
+    "speechSynthesisUtterance",
+    "IntersectionObserver",
+    "MutationObserver",
+    "__initDone",
+    "__pageHistory",
+    "__initInterval",
+    "__voiceReady",
+    "__synth",
+    "audioCtx",
+    "tutorialStep",
+    "testState",
+    "testLock",
+    "testSelected",
+    "moodTagSelected",
+    "affirmLoopInterval",
+    "affirmLoopIndex",
+    "habitDetailDate"
+  ]
+}
