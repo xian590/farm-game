@@ -4194,8 +4194,8 @@
 </nav>
 
 <!-- ========== Modal：测试 ========== -->
-<div id="test-modal" class="modal-backdrop">
-  <div class="modal-content p-5">
+<div id="test-modal" class="modal-backdrop" onclick="if(event.target===this)closeTestResult()">
+  <div class="modal-content p-5" onclick="event.stopPropagation()">
     <div id="test-content"></div>
   </div>
 </div>
@@ -5070,6 +5070,7 @@ const PERSONAS = [
 
 // 生成12种形态各异的3D花图标SVG
 function getFlowerSVG(p, size = 60) {
+  if (!p || !p.id) return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${size/3}" fill="#D4B5C7"/></svg>`;
   const id = p.id;
   const s = size;
   const cx = 30, cy = 30;
@@ -10753,7 +10754,7 @@ function finishTest() {
 
   if (testState.type === 'personality' || testState.type === 'personality_deep') {
     const pid = calcPersona(testState.scores);
-    const p = PERSONAS ? (PERSONAS.find(x => x.id === pid) || PERSONAS[0]) : null;
+    const p = PERSONAS && PERSONAS.length > 0 ? (PERSONAS.find(x => x.id === pid) || PERSONAS[0]) : null;;
     const isNew = !state.unlockedPersonas.includes(pid);
     if (isNew) state.unlockedPersonas.push(pid);
     if (!state.mainPersona) state.mainPersona = pid;
@@ -10919,6 +10920,8 @@ function viewPersona(id) {
   const p = PERSONAS.find(x => x.id === id);
   if (!p) return;
   hideModal('test-modal');
+  testState = null;
+  showModal('persona-modal');
   setHTML('persona-detail', `
     <div class="relative">
       <div class="h-32 rounded-t-[28px] relative overflow-hidden" style="background:linear-gradient(135deg, ${p.flowerColor1}, ${p.flowerColor2})">

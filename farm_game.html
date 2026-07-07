@@ -1912,37 +1912,35 @@
             }
             .sidebar-tab {
                 flex-shrink: 0;
-                font-size: 12px;
-                padding: 12px 16px;
-                min-height: 44px;
+                font-size: 11px;
+                padding: 8px 10px;
+                min-height: 36px;
                 border-left: none;
                 border-bottom: 3px solid transparent;
                 scroll-snap-align: center;
                 white-space: nowrap;
                 text-align: center;
-                min-width: 70px;
+                min-width: 56px;
+                line-height: 1.2;
+            }
+            .sidebar-tab .tab-emoji {
+                font-size: 14px;
+                display: block;
+                margin-bottom: 2px;
+            }
+            .sidebar-tab .tab-text {
+                font-size: 10px;
             }
             .sidebar-tab.active {
                 border-left-color: transparent;
                 border-bottom-color: #f39c12;
+                background: rgba(255,255,255,0.08);
             }
             .sidebar-quests {
-                display: block;
-                max-height: 70px;
-                padding: 6px 8px;
-                font-size: 11px;
-                border-top: 1px solid #f39c12;
-            }
-            .sidebar-quests-title {
-                font-size: 11px;
-                margin-bottom: 4px;
-            }
-            .sidebar-quests-list .quest-item {
-                padding: 2px 4px;
-                font-size: 10px;
+                display: none;
             }
             .content-panel {
-                padding: 10px 10px 180px 10px;
+                padding: 10px 10px 100px 10px;
                 order: 1;
             }
             .mode-cards {
@@ -2127,12 +2125,46 @@
             }
             .float-countdown-btn {
                 box-shadow: 0 2px 6px rgba(230,126,34,0.3);
+                bottom: 70px;
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
             }
             .float-countdown-btn:hover {
                 box-shadow: 0 2px 6px rgba(230,126,34,0.3);
             }
             .event-log {
                 box-shadow: inset 0 0 8px rgba(139, 115, 85, 0.08);
+            }
+        }
+        
+        /* 超小屏幕手机优化 */
+        @media (max-width: 400px) {
+            .sidebar-tab {
+                font-size: 10px;
+                padding: 6px 8px;
+                min-width: 48px;
+                min-height: 32px;
+            }
+            .sidebar-tab .tab-emoji {
+                font-size: 12px;
+            }
+            .sidebar-tab .tab-text {
+                font-size: 9px;
+            }
+            .sidebar-tabs {
+                gap: 2px;
+                padding: 4px 0;
+            }
+            .content-panel {
+                padding: 8px 8px 80px 8px;
+            }
+            .top-bar {
+                padding: 6px 8px;
+            }
+            .stat-item {
+                font-size: 11px;
+                padding: 4px 8px;
             }
         }
         
