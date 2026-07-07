@@ -1,0 +1,912 @@
+{
+  "null_pointer": [
+    {
+      "line": 11546,
+      "id": "cbt-event",
+      "match": "document.getElementById('cbt-event').value",
+      "context": "const event = document.getElementById('cbt-event').value.trim();"
+    },
+    {
+      "line": 11551,
+      "id": "cbt-thought",
+      "match": "document.getElementById('cbt-thought').value",
+      "context": "const thought = document.getElementById('cbt-thought').value.trim();"
+    },
+    {
+      "line": 11560,
+      "id": "cbt-evidence-input",
+      "match": "document.getElementById('cbt-evidence-input').value",
+      "context": "const evidence = document.getElementById('cbt-evidence-input').value.trim();"
+    },
+    {
+      "line": 12633,
+      "id": "custom-affirm-text",
+      "match": "document.getElementById('custom-affirm-text').value",
+      "context": "const text = document.getElementById('custom-affirm-text').value.trim();"
+    },
+    {
+      "line": 12634,
+      "id": "custom-affirm-cat",
+      "match": "document.getElementById('custom-affirm-cat').value",
+      "context": "const cat = document.getElementById('custom-affirm-cat').value;"
+    },
+    {
+      "line": 12661,
+      "id": "action-text",
+      "match": "document.getElementById('action-text').value",
+      "context": "const text = document.getElementById('action-text').value.trim();"
+    },
+    {
+      "line": 12662,
+      "id": "action-type",
+      "match": "document.getElementById('action-type').value",
+      "context": "const type = document.getElementById('action-type').value;"
+    },
+    {
+      "line": 12852,
+      "id": "diary-date",
+      "match": "document.getElementById('diary-date').value",
+      "context": "const date = document.getElementById('diary-date').value.trim();"
+    },
+    {
+      "line": 12853,
+      "id": "diary-content",
+      "match": "document.getElementById('diary-content').value",
+      "context": "const content = document.getElementById('diary-content').value.trim();"
+    },
+    {
+      "line": 18443,
+      "id": "pwa-install-banner",
+      "match": "document.getElementById('pwa-install-banner').remove",
+      "context": "<button onclick=\"showInstallPrompt(); document.getElementById('pwa-install-banner').remove();\" style=\"background:white;c"
+    },
+    {
+      "line": 18444,
+      "id": "pwa-install-banner",
+      "match": "document.getElementById('pwa-install-banner').remove",
+      "context": "<button onclick=\"try{localStorage.setItem('cosmos_pwa_dismissed','true');}catch(e){} document.getElementById('pwa-instal"
+    },
+    {
+      "line": 20120,
+      "id": "sign-category",
+      "match": "document.getElementById('sign-category').value",
+      "context": "const category = document.getElementById('sign-category').value;"
+    },
+    {
+      "line": 20121,
+      "id": "sign-text",
+      "match": "document.getElementById('sign-text').value",
+      "context": "const text = document.getElementById('sign-text').value.trim();"
+    },
+    {
+      "line": 20847,
+      "id": "rampage-before-val",
+      "match": "document.getElementById('rampage-before-val').textContent",
+      "context": "<input type=\"range\" id=\"rampage-before\" min=\"1\" max=\"10\" value=\"5\" class=\"w-full mb-3\" oninput=\"document.getElementById("
+    }
+  ],
+  "array_bounds": [
+    {
+      "line": 5226,
+      "match": "el.style[prop]",
+      "base": "el.style",
+      "index": "prop",
+      "context": "function setStyle(id, prop, val) { const el = $el(id); if (el) el.style[prop] = val; }"
+    },
+    {
+      "line": 9042,
+      "match": "result[prop]",
+      "base": "result",
+      "index": "prop",
+      "context": "if (!Array.isArray(result[prop])) result[prop] = [];"
+    },
+    {
+      "line": 9145,
+      "match": "TUTORIAL_STEPS[tutorialStep]",
+      "base": "TUTORIAL_STEPS",
+      "index": "tutorialStep",
+      "context": "const step = TUTORIAL_STEPS[tutorialStep];"
+    },
+    {
+      "line": 9660,
+      "match": "WEATHER_EMOJIS[weather]",
+      "base": "WEATHER_EMOJIS",
+      "index": "weather",
+      "context": "if (emojiEl) emojiEl.textContent = isNight ? (weather === 'rainy' ? '🌧️' : weather === 'cloudy' ? '☁️' : '🌙') : (WEATHER"
+    },
+    {
+      "line": 9661,
+      "match": "WEATHER_NAMES[weather]",
+      "base": "WEATHER_NAMES",
+      "index": "weather",
+      "context": "if (textEl) textEl.textContent = isNight ? '夜晚' : (WEATHER_NAMES[weather] || '晴天');"
+    },
+    {
+      "line": 9959,
+      "match": "pageMap[tab]",
+      "base": "pageMap",
+      "index": "tab",
+      "context": "const page = pageMap[tab] || 'island';"
+    },
+    {
+      "line": 10029,
+      "match": "tips[day]",
+      "base": "tips",
+      "index": "day",
+      "context": "const tip = tips[day];"
+    },
+    {
+      "line": 10146,
+      "match": "AFFIRMATIONS[cat]",
+      "base": "AFFIRMATIONS",
+      "index": "cat",
+      "context": "const catData = AFFIRMATIONS[cat];"
+    },
+    {
+      "line": 10187,
+      "match": "AFFIRMATIONS[cat]",
+      "base": "AFFIRMATIONS",
+      "index": "cat",
+      "context": "const catData = AFFIRMATIONS[cat];"
+    },
+    {
+      "line": 10188,
+      "match": "catData.subs[sub]",
+      "base": "catData.subs",
+      "index": "sub",
+      "context": "const subData = catData && catData.subs[sub];"
+    },
+    {
+      "line": 10232,
+      "match": "dietLog[today]",
+      "base": "dietLog",
+      "index": "today",
+      "context": "const todayLog = dietLog[today] || { negative: 0, caught: 0, replaced: 0 };"
+    },
+    {
+      "line": 10803,
+      "match": "MOOD_NAMES[mood]",
+      "base": "MOOD_NAMES",
+      "index": "mood",
+      "context": "logActivity('mood', '情绪花园: ' + MOOD_NAMES[mood]);"
+    },
+    {
+      "line": 10808,
+      "match": "MOOD_NAMES[mood]",
+      "base": "MOOD_NAMES",
+      "index": "mood",
+      "context": "showToast(`记录了今天的${MOOD_NAMES[mood]}心情 💖`);"
+    },
+    {
+      "line": 11015,
+      "match": "testMap[type]",
+      "base": "testMap",
+      "index": "type",
+      "context": "const cfg = testMap[type];"
+    },
+    {
+      "line": 11131,
+      "match": "testState.scores[type]",
+      "base": "testState.scores",
+      "index": "type",
+      "context": "testState.scores[type] = (testState.scores[type] || 0) + opt.score;"
+    },
+    {
+      "line": 11810,
+      "match": "REVISION_GUIDES[type]",
+      "base": "REVISION_GUIDES",
+      "index": "type",
+      "context": "setHTML('revision-text', REVISION_GUIDES[type] || REVISION_GUIDES['原生家庭']);"
+    },
+    {
+      "line": 12212,
+      "match": "SATS_GUIDES[type]",
+      "base": "SATS_GUIDES",
+      "index": "type",
+      "context": "const guides = SATS_GUIDES[type] || SATS_GUIDES['情绪疗愈'];"
+    },
+    {
+      "line": 12260,
+      "match": "stepTexts[step]",
+      "base": "stepTexts",
+      "index": "step",
+      "context": "setHTML('sats-text', stepTexts[step] || guides);"
+    },
+    {
+      "line": 12428,
+      "match": "MD_REPLACEMENTS[neg]",
+      "base": "MD_REPLACEMENTS",
+      "index": "neg",
+      "context": "if (MD_REPLACEMENTS[neg]) return MD_REPLACEMENTS[neg];"
+    },
+    {
+      "line": 12534,
+      "match": "practices[type]",
+      "base": "practices",
+      "index": "type",
+      "context": "showAlert('🧘', type, practices[type] || '开始练习吧～');"
+    },
+    {
+      "line": 12545,
+      "match": "AFFIRMATIONS[cat]",
+      "base": "AFFIRMATIONS",
+      "index": "cat",
+      "context": "currentAffirmSub = Object.keys(AFFIRMATIONS[cat].subs)[0];"
+    },
+    {
+      "line": 12588,
+      "match": "AFFIRMATIONS[cat]",
+      "base": "AFFIRMATIONS",
+      "index": "cat",
+      "context": "const catData = AFFIRMATIONS[cat];"
+    },
+    {
+      "line": 12636,
+      "match": "state.affirmations.custom[cat]",
+      "base": "state.affirmations.custom",
+      "index": "cat",
+      "context": "if (!state.affirmations.custom[cat]) state.affirmations.custom[cat] = [];"
+    },
+    {
+      "line": 12637,
+      "match": "state.affirmations.custom[cat]",
+      "base": "state.affirmations.custom",
+      "index": "cat",
+      "context": "if (!state.affirmations.custom[cat].includes(text)) state.affirmations.custom[cat].push(text);"
+    },
+    {
+      "line": 12823,
+      "match": "labels[tpl]",
+      "base": "labels",
+      "index": "tpl",
+      "context": "setText('diary-template-label', labels[tpl] || '日记');"
+    },
+    {
+      "line": 12825,
+      "match": "placeholders[tpl]",
+      "base": "placeholders",
+      "index": "tpl",
+      "context": "if (ta && !ta.value) ta.placeholder = placeholders[tpl] || '写点什么吧...';"
+    },
+    {
+      "line": 12846,
+      "match": "colors[skin]",
+      "base": "colors",
+      "index": "skin",
+      "context": "paper.style.background = colors[skin] || colors.sakura;"
+    },
+    {
+      "line": 13050,
+      "match": "BOOKS[i]",
+      "base": "BOOKS",
+      "index": "i",
+      "context": "let book = BOOKS[i];"
+    },
+    {
+      "line": 13101,
+      "match": "BOOKS[index]",
+      "base": "BOOKS",
+      "index": "index",
+      "context": "const book = BOOKS[index];"
+    },
+    {
+      "line": 13140,
+      "match": "BOOKS[currentBookIndex]",
+      "base": "BOOKS",
+      "index": "currentBookIndex",
+      "context": "const book = BOOKS[currentBookIndex];"
+    },
+    {
+      "line": 13307,
+      "match": "bookPages[currentPage]",
+      "base": "bookPages",
+      "index": "currentPage",
+      "context": "const page = bookPages[currentPage];"
+    },
+    {
+      "line": 13308,
+      "match": "bookPages[currentPage + 1]",
+      "base": "bookPages",
+      "index": "currentPage + 1",
+      "context": "const nextPage = bookPages[currentPage + 1];"
+    },
+    {
+      "line": 13365,
+      "match": "BOOKS[currentBookIndex]",
+      "base": "BOOKS",
+      "index": "currentBookIndex",
+      "context": "const book = BOOKS[currentBookIndex];"
+    },
+    {
+      "line": 13426,
+      "match": "BOOKS[currentBookIndex]",
+      "base": "BOOKS",
+      "index": "currentBookIndex",
+      "context": "const book = BOOKS[currentBookIndex];"
+    },
+    {
+      "line": 13446,
+      "match": "BOOKS[currentBookIndex]",
+      "base": "BOOKS",
+      "index": "currentBookIndex",
+      "context": "const book = BOOKS[currentBookIndex];"
+    },
+    {
+      "line": 13478,
+      "match": "BOOKS[currentBookIndex]",
+      "base": "BOOKS",
+      "index": "currentBookIndex",
+      "context": "const book = BOOKS[currentBookIndex];"
+    },
+    {
+      "line": 13482,
+      "match": "notes[currentPage]",
+      "base": "notes",
+      "index": "currentPage",
+      "context": "textarea.value = notes[currentPage] || '';"
+    },
+    {
+      "line": 13487,
+      "match": "BOOKS[currentBookIndex]",
+      "base": "BOOKS",
+      "index": "currentBookIndex",
+      "context": "const book = BOOKS[currentBookIndex];"
+    },
+    {
+      "line": 13491,
+      "match": "notes[currentPage]",
+      "base": "notes",
+      "index": "currentPage",
+      "context": "notes[currentPage] = textarea.value;"
+    },
+    {
+      "line": 13498,
+      "match": "BOOKS[currentBookIndex]",
+      "base": "BOOKS",
+      "index": "currentBookIndex",
+      "context": "const book = BOOKS[currentBookIndex];"
+    }
+  ],
+  "timer_leaks": [
+    {
+      "line": 9317,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 4500,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => c.remove(), 4500);"
+    },
+    {
+      "line": 9395,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 3500,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "b._t = setTimeout(() => b.classList.add('hidden'), 3500);"
+    },
+    {
+      "line": 9604,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "musicInterval = setInterval(() => {"
+    },
+    {
+      "line": 10223,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "affirmPlayer.timer = setInterval(() => {"
+    },
+    {
+      "line": 10457,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 1500,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 10865,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 2000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);"
+    },
+    {
+      "line": 11368,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 1200,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => startTutorial(), 1200);"
+    },
+    {
+      "line": 11672,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 100,
+      "in_loop": true,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 11774,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 0,
+      "in_loop": true,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 11827,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "revisionInterval = setInterval(() => {"
+    },
+    {
+      "line": 11881,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 2000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 12131,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 0,
+      "in_loop": true,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => r.remove(), 1500 + i * 200);"
+    },
+    {
+      "line": 12272,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "satsInterval = setInterval(() => {"
+    },
+    {
+      "line": 12331,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 2000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);"
+    },
+    {
+      "line": 12372,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 100,
+      "in_loop": true,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 12793,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 4500,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => p.remove(), 4500);"
+    },
+    {
+      "line": 15407,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 2000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);"
+    },
+    {
+      "line": 15531,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "timerInterval = setInterval(() => {"
+    },
+    {
+      "line": 15857,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 0,
+      "in_loop": true,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 15919,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 3000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 15926,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "__initInterval = setInterval(() => {"
+    },
+    {
+      "line": 16927,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 2000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => { el.style.background = 'rgba(255,255,255,0.5)'; }, 2000);"
+    },
+    {
+      "line": 17298,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "satsTimerInterval = setInterval(() => {"
+    },
+    {
+      "line": 17398,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 1500,
+      "in_loop": true,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => location.reload(), 1500);"
+    },
+    {
+      "line": 17668,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 1500,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => { goHome(); }, 1500);"
+    },
+    {
+      "line": 17704,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 3000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => showLimitedOffer(), 3000);"
+    },
+    {
+      "line": 17813,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 2000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 17909,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "audioGuideInterval = setInterval(() => {"
+    },
+    {
+      "line": 17922,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "audioGuideInterval = setInterval(() => {"
+    },
+    {
+      "line": 18452,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 2000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(maybeShowInstallBanner, 4000);"
+    },
+    {
+      "line": 18732,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "voiceRecordInterval = setInterval(() => {"
+    },
+    {
+      "line": 18885,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "sleepStoryState.interval = setInterval(() => {"
+    },
+    {
+      "line": 19130,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 500,
+      "in_loop": true,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => showToast(`🏆 解锁成就：${b.name} ${b.emoji}`), 500);"
+    },
+    {
+      "line": 19397,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 1500,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => { showPage('sats'); initSats(); }, 1500);"
+    },
+    {
+      "line": 19508,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 2000,
+      "in_loop": false,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => location.reload(), 2000);"
+    },
+    {
+      "line": 19873,
+      "type": "setTimeout",
+      "var": null,
+      "duration": 1500,
+      "in_loop": true,
+      "reason": "long or repeated timeout without clear reference",
+      "context": "setTimeout(() => location.reload(), 1500);"
+    },
+    {
+      "line": 20328,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "_68secInterval = setInterval(() => {"
+    },
+    {
+      "line": 21524,
+      "type": "setInterval",
+      "var": null,
+      "reason": "no clearInterval found",
+      "context": "affirmLoopInterval = setInterval(() => {"
+    }
+  ],
+  "event_listener_leaks": [
+    {
+      "line": 15804,
+      "event": "click",
+      "in_loop": true,
+      "dynamic_target": true,
+      "has_remove": false,
+      "context": "m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });"
+    },
+    {
+      "line": 16903,
+      "event": "click",
+      "in_loop": true,
+      "dynamic_target": true,
+      "has_remove": false,
+      "context": "item.addEventListener('click', function() { speakSpAffirmation(this.dataset.text); });"
+    },
+    {
+      "line": 16976,
+      "event": "click",
+      "in_loop": true,
+      "dynamic_target": true,
+      "has_remove": false,
+      "context": "item.addEventListener('click', function() { speakWealthAffirmation(this.dataset.text); });"
+    },
+    {
+      "line": 17064,
+      "event": "click",
+      "in_loop": true,
+      "dynamic_target": true,
+      "has_remove": false,
+      "context": "item.addEventListener('click', function() {"
+    },
+    {
+      "line": 17180,
+      "event": "click",
+      "in_loop": true,
+      "dynamic_target": true,
+      "has_remove": false,
+      "context": "item.addEventListener('click', function() {"
+    },
+    {
+      "line": 18241,
+      "event": "click",
+      "in_loop": true,
+      "dynamic_target": true,
+      "has_remove": false,
+      "context": "card.addEventListener('click', function() {"
+    }
+  ],
+  "innerhtml_eval_risks": [
+    {
+      "line": 10050,
+      "rhs_preview": "state.habits.slice(0, 5).map(h => {",
+      "has_escape": false,
+      "context": "list.innerHTML = state.habits.slice(0, 5).map(h => {"
+    },
+    {
+      "line": 11965,
+      "rhs_preview": "state.wishes.map(w => `",
+      "has_escape": false,
+      "context": "sky.innerHTML = state.wishes.map(w => `"
+    },
+    {
+      "line": 11988,
+      "rhs_preview": "state.wishes.slice(0, 10).map(w => `",
+      "has_escape": false,
+      "context": "el.innerHTML = state.wishes.slice(0, 10).map(w => `"
+    },
+    {
+      "line": 12904,
+      "rhs_preview": "state.diaries.map((d, i) => `",
+      "has_escape": false,
+      "context": "el.innerHTML = state.diaries.map((d, i) => `"
+    },
+    {
+      "line": 15740,
+      "rhs_preview": "state.affirmations.saved.slice(0, 10).map((a, i) => `",
+      "has_escape": false,
+      "context": "el.innerHTML = state.affirmations.saved.slice(0, 10).map((a, i) => `"
+    }
+  ],
+  "closure_memory_leaks": [
+    {
+      "line": 4341,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "<div class=\"card-hover cursor-pointer p-3 rounded-2xl flex items-center gap-3\" style=\"background:rgba(240,213,224,0.15)\""
+    },
+    {
+      "line": 4349,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "<div class=\"card-hover cursor-pointer p-3 rounded-2xl flex items-center gap-3\" style=\"background:rgba(184,169,201,0.12)\""
+    },
+    {
+      "line": 4357,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "<div class=\"card-hover cursor-pointer p-3 rounded-2xl flex items-center gap-3\" style=\"background:rgba(245,230,200,0.25)\""
+    },
+    {
+      "line": 5281,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "//     titleTapTimer = setTimeout(() => { titleTapCount = 0; }, 800);"
+    },
+    {
+      "line": 9097,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "t._t = setTimeout(() => t.classList.remove('show'), dur);"
+    },
+    {
+      "line": 9270,
+      "type": "setTimeout",
+      "captures_dom": false,
+      "captures_state_mutation": true,
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 9483,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "typingSoundTimeout = setTimeout(() => { clearTimeout(typingSoundTimeout); typingSoundTimeout = null; }, 60);"
+    },
+    {
+      "line": 10223,
+      "type": "setInterval",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "affirmPlayer.timer = setInterval(() => {"
+    },
+    {
+      "line": 10457,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 10812,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 10854,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "moodNoteTimer = setTimeout(() => {"
+    },
+    {
+      "line": 10865,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);"
+    },
+    {
+      "line": 11073,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "setTimeout(() => speak(q.q, { rate: 0.95 }), 300);"
+    },
+    {
+      "line": 11591,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 11598,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 11672,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": true,
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 11774,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 11866,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": true,
+      "context": "revisionNoteTimer = setTimeout(() => {"
+    },
+    {
+      "line": 11881,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "setTimeout(() => {"
+    },
+    {
+      "line": 12314,
+      "type": "setTimeout",
+      "captures_dom": true,
+      "captures_state_mutation": false,
+      "context": "satsSaveTimer = setTimeout(() => {"
+    }
+  ]
+}

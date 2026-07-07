@@ -302,7 +302,9 @@
         }
         
         .speed-btn {
-            padding: 4px 10px;
+            padding: 8px 14px;
+            min-height: 44px;
+            min-width: 44px;
             border: 1px solid #d4c9a8;
             border-radius: 6px;
             background: #f8f4e8;
@@ -971,7 +973,8 @@
             background: #e8dcc8;
             border: 1px solid #d4c4a8;
             color: #8b7355;
-            padding: 4px 12px;
+            padding: 8px 16px;
+            min-height: 44px;
             border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
@@ -1084,6 +1087,7 @@
         }
 
         .modal {
+            max-height: 90vh;
             background: white;
             border-radius: 16px;
             padding: 30px;
@@ -1187,8 +1191,8 @@
         }
         
         .quick-btn {
-            width: 36px;
-            height: 36px;
+            width: 44px;
+            height: 44px;
             border: none;
             border-radius: 8px;
             background: rgba(255,255,255,0.9);
@@ -1560,7 +1564,7 @@
         }
 
         .bgm-btn {
-            padding: 8px 4px;
+            padding: 10px 8px;
             border: 2px solid #e8dcc8;
             border-radius: 8px;
             background: white;
@@ -1964,8 +1968,9 @@
                 font-size: 12px;
             }
             .pause-btn-top {
-                padding: 3px 6px;
-                font-size: 11px;
+                padding: 8px 12px;
+                font-size: 13px;
+                min-height: 44px;
                 margin-left: 4px;
             }
             .speed-btn-top {
@@ -2045,7 +2050,8 @@
             }
             .backpack-item-use-btn {
                 margin-top: 4px;
-                padding: 3px 6px;
+                padding: 8px 12px;
+                min-height: 36px;
                 font-size: 10px;
             }
             /* 移动端内容面板适配 */
@@ -2072,11 +2078,11 @@
             }
             .event-log {
                 position: fixed;
-                bottom: 180px;
+                bottom: 120px;
                 left: 0;
                 right: 0;
                 z-index: 1001;
-                max-height: 100px;
+                max-height: 80px;
                 min-height: 80px;
                 border-radius: 12px 12px 0 0;
                 transition: height 0.3s ease, max-height 0.3s ease;
@@ -2084,7 +2090,7 @@
                 padding-bottom: max(env(safe-area-inset-bottom, 0), 20px);
             }
             .event-log.expanded {
-                max-height: calc(50vh - 180px);
+                max-height: calc(50vh - 120px);
                 min-height: 120px;
             }
             .modal {
@@ -2965,7 +2971,7 @@
             <button class="pause-btn-top" id="pause-btn" onclick="togglePause()" title="暂停/继续游戏时间">⏸️ 暂停</button>
             <!-- 睡觉按钮 -->
             <div class="stat-item" style="margin-left: 8px;">
-                <button onclick="confirmSleep()" title="跳过当天，恢复体力和健康" style="padding: 4px 12px; border: none; border-radius: 6px; background: #4a6fa5; color: white; font-size: 13px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.2s;">
+                <button onclick="confirmSleep()" title="跳过当天，恢复体力和健康" style="padding: 8px 16px; min-height: 44px; border: none; border-radius: 6px; background: #4a6fa5; color: white; font-size: 13px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.2s;">
                     💤 睡觉
                 </button>
             </div>
@@ -3326,7 +3332,7 @@ function saveGameToSession() {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.5.17';
+const GAME_VERSION = '1.5.18';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -3369,6 +3375,8 @@ window.addEventListener('error', function(e) {
 
 window.addEventListener('unhandledrejection', function(e) {
     console.error('Unhandled Promise rejection:', e.reason);
+    if (window._lastErrorTime && (Date.now() - window._lastErrorTime < 5000)) return;
+    window._lastErrorTime = Date.now();
     const errorLog = { time: new Date().toISOString(), message: String(e.reason), stack: e.reason && e.reason.stack ? e.reason.stack : '', url: location.href };
     const ERROR_LOG_KEY = 'farm_game_error_log';
     try {
@@ -12103,7 +12111,7 @@ function loadGameSpeed() {
     const saved = safeStorageGet('farm_game_speed');
     if (saved) {
         const parsedSpeed = parseInt(saved, 10);
-    gameSpeed = isNaN(parsedSpeed) ? 1 : parsedSpeed;
+    gameSpeed = isNaN(parsedSpeed) ? 1 : Math.max(1, Math.min(50, parsedSpeed));
     }
     // 清除之前的timeout，避免堆积
     if (_loadGameSpeedTimeout) clearTimeout(_loadGameSpeedTimeout);
@@ -14831,7 +14839,9 @@ function handleEventChoice(optionIdx) {
         if (game.time >= 24) {
             const daysToAdd = Math.floor(game.time / 24);
             game.time = game.time % 24;
-            for (let i = 0; i < daysToAdd; i++) {
+            const MAX_DAYS_TO_ADD = 30;
+            const safeDaysToAdd = Math.min(MAX_DAYS_TO_ADD, daysToAdd);
+            for (let i = 0; i < safeDaysToAdd; i++) {
                 game.day += 1;
                 const baseDay = (game.totalDay || game.day || 1);
                 game.totalDay = baseDay + 1;
@@ -14900,6 +14910,7 @@ function handleEventChoice(optionIdx) {
 }
 
 function updateProcessingJobs() {
+    if (!game) return;
     if (!game.processingJobs || game.processingJobs.length === 0) return;
     
     const currentTotalTime = (game.totalDay || game.day) * 24 + game.time;
@@ -18933,9 +18944,10 @@ function fireWorker(npcKey) {
     
     saveGame();
     updateUI();
+    });
 }
-
 function processWorkerDaily() {
+    if (!game) return;
     if (!game.hiredWorker) return;
     
     const npc = NPC_DATA[game.hiredWorker];
@@ -25005,6 +25017,7 @@ function cookFood(foodKey) {
 
 function eatFood(foodKey) {
     withClickLock('eatFood_' + foodKey, () => {
+        if (!game) return;
         const food = COOKING_DATA[foodKey];
         if (!food) return;
         if (!game.cookedFoods) game.cookedFoods = {};
