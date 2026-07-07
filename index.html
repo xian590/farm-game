@@ -15822,9 +15822,10 @@ function renderQuestBox() {
 
 // 渲染左侧任务追踪器
 function renderSidebarQuests() {
+    if (!game) return;
     if (!game.fields) game.fields = [];
     const listEl = document.getElementById('sidebar-quests-list');
-    if (!listEl || !game) return;
+    if (!listEl) return;
     
     const q = game.quests;
     const pendingQuests = [];
@@ -16682,6 +16683,7 @@ function goSleep() {
 }
 
 function confirmSleep() {
+    if (!game) return;
     const hoursRemaining = 24 - game.time;
     if (hoursRemaining <= 2) {
         // 快到晚上了，直接睡
@@ -16835,6 +16837,7 @@ function renderCompostPanel() {
 // ===== 采集面板 =====
 function goForaging() {
     withClickLock('goForaging', () => {
+        if (!game) return;
         // 检查是否是白天（6:00-20:00）
         if (game.time < 6 || game.time >= 20) {
             showToast('天黑了，山路不好走，等明天天亮再去吧', 'warn');
@@ -17063,6 +17066,7 @@ function renderFishingPanel() {
 
 function sellAllFish() {
     withClickLock('sellAllFish', () => {
+        if (!game) return;
         if (!game.fishInventory) {
             showToast('鱼塘里空空如也', 'bad');
             return;
@@ -17129,6 +17133,7 @@ function sellAllFish() {
 
 function sellForagingItem(itemId, amount) {
     withClickLock('sellForagingItem_' + itemId + '_' + amount, () => {
+        if (!game) return;
         if (!game.foragingItems || !game.foragingItems[itemId] || game.foragingItems[itemId] < amount) {
             showToast('库存不足', 'bad');
             return;
@@ -17454,7 +17459,7 @@ function renderPlayerPanel() {
                 <div class="shop-item-icon">❤️</div>
                 <div>
                     <div class="shop-item-name">健康值</div>
-                    <div class="shop-item-desc">${game.health.toFixed(1)} / ${game.maxHealth}</div>
+                    <div class="shop-item-desc">${(game.health || 0).toFixed(1)} / ${game.maxHealth || 0}</div>
                     <div class="field-progress" style="margin-top: 6px;">
                         <div class="field-progress-bar" style="width: ${game.maxHealth > 0 ? (game.health / game.maxHealth) * 100 : 0}%; background: #e74c3c;"></div>
                     </div>
@@ -17512,7 +17517,7 @@ function renderPlayerPanel() {
                 <div class="shop-item-icon">📅</div>
                 <div>
                     <div class="shop-item-name">游戏时间</div>
-                    <div class="shop-item-desc">第${game.totalDay || game.day}天 ${seasonNames[game.season]} ${game.time}:00</div>
+                    <div class="shop-item-desc">第${game.totalDay || game.day}天 ${seasonNames[game.season] || '未知'} ${game.time || 6}:00</div>
                 </div>
             </div>
         </div>
@@ -17833,6 +17838,7 @@ function feedThePet(petId) {
 // 锻炼
 function exercise() {
     withClickLock('exercise', () => {
+        if (!game) return;
         if (!game.exerciseToday) game.exerciseToday = { day: 0, count: 0 };
         if (game.exerciseToday.day !== game.day) {
             game.exerciseToday = { day: game.day, count: 0 };
@@ -17885,6 +17891,7 @@ function exercise() {
 // 串门聊天
 function visitNeighbor() {
     withClickLock('visitNeighbor', () => {
+        if (!game) return;
         if (!game.visitToday) game.visitToday = { day: 0, count: 0 };
         if (game.visitToday.day !== game.day) {
             game.visitToday = { day: game.day, count: 0 };
@@ -17947,6 +17954,7 @@ function visitNeighbor() {
 // 河边钓鱼
 function goFishing() {
     withClickLock('goFishing', () => {
+        if (!game) return;
         if (!game.fishToday) game.fishToday = { day: 0, count: 0 };
         if (game.fishToday.day !== game.day) {
             game.fishToday = { day: game.day, count: 0 };
@@ -18091,6 +18099,7 @@ function goFishing() {
 // 看书学习
 function studySkill() {
     withClickLock('studySkill', () => {
+        if (!game) return;
         if (!game.studyToday) game.studyToday = { day: 0, count: 0 };
         if (game.studyToday.day !== game.day) {
             game.studyToday = { day: game.day, count: 0 };
@@ -19274,6 +19283,7 @@ function calculateCropValue() {
 // 售卖加工产品
 function sellProcessedItem(itemKey, amount) {
     withClickLock('sellProcessedItem_' + itemKey + '_' + amount, () => {
+        if (!game) return;
         const item = PROCESSED_ITEMS[itemKey];
         if (!item) return;
         
@@ -19402,6 +19412,7 @@ function getTechBonus(effectType) {
 
 // 增加NPC好感度
 function addNpcFavor(npcId, val) {
+    if (!game) return;
     if (!game.npcs) game.npcs = {};
     if (!game.friendship) game.friendship = {};
     const oldFavor = game.npcs[npcId] || 0;
@@ -19454,6 +19465,7 @@ function getNpcBonus(effectType) {
 
 // 检查NPC里程碑
 function checkNpcMilestones(npcKey) {
+    if (!game) return;
     const npcData = NPC_MILESTONES[npcKey];
     if (!npcData) return;
     
@@ -22539,6 +22551,7 @@ function buyTool(toolKey) {
 // 开始堆肥
 function startCompost() {
     withClickLock('startCompost', () => {
+        if (!game) return;
         if (game.composting) {
             showToast('已经有堆肥在制作了！', 'bad');
             playErrorSound();
@@ -22580,6 +22593,7 @@ function startCompost() {
 // 收获堆肥
 function harvestCompost() {
     withClickLock('harvestCompost', () => {
+        if (!game) return;
         if (!game.composting) {
             showToast('没有堆肥可以收获！', 'bad');
             playErrorSound();
@@ -22717,6 +22731,7 @@ function showFloatingText(text, fieldIdx) {
 }
 
 function toggleInventoryPreview() {
+    if (!game) return;
     const used = getStorageUsed();
     const cap = game.storageCapacity || 50;
     showToast(`库存：${used}/${cap}斤\n点击"仓库"查看详情`, 'info');
@@ -22748,6 +22763,7 @@ function updateTopBar() {
 // 租用新田地
 function rentNewField() {
     withClickLock('rentNewField', () => {
+        if (!game) return;
         const rent = getNextFieldRent();
         if (game.money < rent) {
             showToast('💰 金钱不足！当前拥有 ' + game.money.toFixed(1) + ' 元', 'bad');
@@ -22811,6 +22827,7 @@ function getNextFieldRent() {
 // 扩建仓库（独立功能）
 function expandStorage() {
     withClickLock('expandStorage', () => {
+        if (!game) return;
         const cost = 500;
         if (game.money < cost) {
             showToast('💰 金钱不足，需要 500 元', 'bad');
