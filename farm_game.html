@@ -21,6 +21,7 @@
             touch-action: manipulation;
             -webkit-text-size-adjust: 100%;
             -webkit-touch-callout: none;
+            overscroll-behavior: none;
         }
         body.select-open {
             overflow: auto;
@@ -3325,24 +3326,24 @@ function saveGameToSession() {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.5.6';
+const GAME_VERSION = '1.5.15';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
 let lastErrorLogTime = 0;
 window.addEventListener('beforeunload', function() {
     if (game && typeof saveGame === 'function') {
-        try { saveGame(); } catch(e) { console.error('beforeunload存档失败', e); }
+        try { saveGame(true); } catch(e) { console.error('beforeunload存档失败', e); }
     }
 });
 window.addEventListener('pagehide', function(e) {
     if (game && typeof saveGame === 'function') {
-        try { saveGame(); } catch(e) { console.error('pagehide存档失败', e); }
+        try { saveGame(true); } catch(e) { console.error('pagehide存档失败', e); }
     }
 });
 document.addEventListener('freeze', function() {
     if (game && typeof saveGame === 'function') {
-        try { saveGame(); } catch(e) { console.error('freeze存档失败', e); }
+        try { saveGame(true); } catch(e) { console.error('freeze存档失败', e); }
     }
 });
 window.addEventListener('error', function(e) {
@@ -4133,7 +4134,7 @@ document.addEventListener('visibilitychange', function() {
         }
         // 页面进入后台：立即保存存档，防止微信后台回收导致进度丢失
         if (typeof saveGame === 'function' && game) {
-            try { saveGame(); } catch(e) { console.error('后台存档失败', e); }
+            try { saveGame(true); } catch(e) { console.error('后台存档失败', e); }
         }
     } else {
         // 页面回到前台：恢复BGM
@@ -4913,7 +4914,7 @@ const PROCESSING_DATA = {
         inputCrop: 'rice',
         inputAmount: 10,
         outputItem: 'riceGrain',
-        outputAmount: 8,
+        outputAmount: 10,
         dailyCapacity: 12,
         staminaCost: 12,
         upgradeCost: [300, 800],
@@ -4931,7 +4932,7 @@ const PROCESSING_DATA = {
         inputCrop: 'sweet',
         inputAmount: 10,
         outputItem: 'driedSweetPotato',
-        outputAmount: 4,
+        outputAmount: 5,
         dailyCapacity: 15,
         staminaCost: 10,
         upgradeCost: [100, 300],
@@ -4943,7 +4944,7 @@ const PROCESSING_DATA = {
         id: 'fishDrying', name: '腌鱼晒场', emoji: '🌊',
         desc: '把鲜鱼腌制后晒干，保存时间长，赶集能卖好价钱。',
         buildCost: 120, unlockCondition: '钓鱼熟练度Lv2或攒够2000块钱',
-        inputType: 'fish', inputAmount: 3, outputItem: 'driedFish', outputAmount: 5,
+        inputType: 'fish', inputAmount: 2, outputItem: 'driedFish', outputAmount: 5,
         dailyCapacity: 10, staminaCost: 12,
         upgradeCost: [200, 500],
         levelCapacity: [15, 30, 60],
@@ -5236,7 +5237,7 @@ const AUTOMATION_DATA = {
 
 // 银行利息系统
 const BANK_DATA = {
-    interestRate: 0.0002, // 日利率 0.02%（年化约7.5%）
+    interestRate: 0.001, // 日利率 0.1%（年化约44.5%，但在游戏尺度下合理）
     maxDeposit: 1000000, // 最大存款 100万
     depositUnlock: 5000 // 总资产5000元解锁
 };
@@ -5428,28 +5429,28 @@ const PROCESSED_ITEMS = {
     riceGrain: {
         id: 'riceGrain', name: '糙米', emoji: '🍚',
         desc: '石磨碾的糙米，带着米糠香，城里人爱买这个。',
-        basePrice: 3, type: 'processed'
+        basePrice: 4, type: 'processed'
     },
     driedSweetPotato: {
         id: 'driedSweetPotato', name: '红薯干', emoji: '🍠',
         desc: '晒了三天的红薯干，甜得很，赶集的时候抢手得很。',
-        basePrice: 3, type: 'processed'
+        basePrice: 4, type: 'processed'
     },
     // === 鱼塘加工品 ===
     driedFish: {
         id: 'driedFish', name: '鱼干', emoji: '🐟',
         desc: '腌制后晒干的鱼，保存时间长，嚼劲十足。',
-        basePrice: 6, type: 'processed'
+        basePrice: 10, type: 'processed'
     },
     fishBall: {
         id: 'fishBall', name: '鱼丸', emoji: '🍡',
         desc: '手工打制的鱼丸，Q弹鲜嫩，逢年过节抢手。',
-        basePrice: 11, type: 'processed'
+        basePrice: 15, type: 'processed'
     },
     fishSoup: {
         id: 'fishSoup', name: '鲜鱼汤', emoji: '🍲',
         desc: '现熬的鲜鱼汤，汤白味浓，城里餐馆抢着收。',
-        basePrice: 15, type: 'processed'
+        basePrice: 20, type: 'processed'
     },
     // === 稻米深加工 ===
     polishedRice: {
@@ -9323,11 +9324,11 @@ function withClickLock(key, fn) {
 }
 
 function formatMoney(value) {
-    if (!isFinite(value)) return '¥0.0';
+    if (value == null || !isFinite(value)) return '¥0.0';
     return '¥' + value.toLocaleString('zh-CN', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 function formatNumber(value, decimals = 0) {
-    if (!isFinite(value)) return '0';
+    if (value == null || !isFinite(value)) return '0';
     return value.toFixed(decimals);
 }
 function formatPercent(value) {
@@ -9928,9 +9929,9 @@ function calculateOfflineReward() {
     // 计算游戏内过去了多少小时 (1秒=2游戏小时，与在线一致)
     const gameHours = offlineSeconds * 2 * speed;
     
-    // 最多离线1天游戏时间（24小时）
-    // 避免玩家离线太久导致游戏内时间跳跃过大
-    const MAX_OFFLINE_DAYS = 1; // 最多1天（24小时）
+    // 最多离线7天游戏时间（168小时）
+    // 让离线回归放置类游戏应有的"睡一觉能收一茬"的体验
+    const MAX_OFFLINE_DAYS = 7; // 最多7天（168小时）
     const maxGameHours = MAX_OFFLINE_DAYS * 24; // 168游戏小时
     const actualGameHours = Math.min(gameHours, maxGameHours);
     
@@ -11010,9 +11011,9 @@ function useItem(itemId) {
     updateUI();
 }
 
-function saveGame() {
+function saveGame(force = false) {
     if (!game) return;
-    if (game._savePending) return;
+    if (!force && game._savePending) return;
     game._savePending = true;
     setTimeout(() => { if (game) game._savePending = false; }, 2000);
     // 保存前备份瞬态字段（必须在 try 最外层声明，避免 finally 引用 TDZ 变量）
@@ -11917,11 +11918,13 @@ function exportSave() {
     }
     
     function fallbackCopy(text) {
-        // 方式2: document.execCommand('copy')
+        // 方式2: document.execCommand('copy') — 在视口内使用 opacity 隐藏，iOS 微信更可靠
         const textarea = document.createElement('textarea');
         textarea.value = text;
         textarea.style.position = 'fixed';
-        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        textarea.style.left = '0';
+        textarea.style.opacity = '0';
         document.body.appendChild(textarea);
         textarea.select();
         try {
@@ -11929,7 +11932,7 @@ function exportSave() {
             document.body.removeChild(textarea);
             return success;
         } catch (e) {
-            document.body.removeChild(textarea);
+            if (textarea.parentNode) document.body.removeChild(textarea);
             return false;
         }
     }
@@ -17333,6 +17336,7 @@ function sellForagingItem(itemId, amount) {
 // ===== 农家副业面板 =====
 // 获取加工产品售价（与sellProcessedItem统一逻辑）
 function getProcessedItemPrice(itemKey) {
+    if (!game) return 0;
     const item = PROCESSED_ITEMS[itemKey];
     if (!item) return 0;
     
@@ -18129,7 +18133,7 @@ function goFishing() {
         game.fishToday.count++;
         
         // 增加钓鱼熟练度经验
-        addSkillExp('fishingMastery', 5);
+        addSkillExp('fishingMastery', 10);
         
         // 随机钓鱼结果（收益随熟练度提升）
         const fishingLevel = (game.skills && game.skills.fishingMastery && game.skills.fishingMastery.level) || 0;
@@ -19425,6 +19429,7 @@ function isProcessingUnlocked(key) {
 
 // 计算粮食总价值
 function calculateCropValue() {
+    if (!game) return 0;
     let total = 0;
     for (const [key, amount] of Object.entries(game.crops || {})) {
         total += amount * getSeasonPrice(key);
@@ -21946,7 +21951,7 @@ function plantCrop(fieldIdx, cropKey) {
         if (npcCropExpBonus > 0) {
             addSkillExp('cropFamiliarity', 3 * (1 + npcCropExpBonus));
         } else {
-            addSkillExp('cropFamiliarity', 3);  // 从5减到3，保持比例
+            addSkillExp('cropFamiliarity', 6);  // 收获经验翻倍，加快技能成长
         }
         field.fertilized = false;
         field.turnedVine1 = false;
@@ -22085,7 +22090,7 @@ function waterField(fieldIdx) {
         field.yieldBonus = Math.min(0.5, (field.yieldBonus || 0) + waterBaseBonus + waterTechBonus);
         
         // 增加田间管理经验
-        addSkillExp('fieldManagement', 2);
+        addSkillExp('fieldManagement', 5);
         
         addLog(`💧 给第${field.id}块田浇了水。禾苗喝饱了水，看起来更精神了。`, 'info');
         game.needsRender = true;
@@ -22123,7 +22128,7 @@ function weedField(fieldIdx) {
         field.lastWeedDay = game.day;
         
         // 增加田间管理经验
-        addSkillExp('fieldManagement', 3);
+        addSkillExp('fieldManagement', 8);
         
         addLog(`🌿 给第${field.id}块田除了草。${getRandomFlavor('weed')}`, 'info');
         game.needsRender = true;
@@ -23013,6 +23018,7 @@ function expandStorage() {
 // ==================== 辅助函数 ====================
 
 function getSeasonPrice(cropKey) {
+    if (!game) return 0;
     // 基础价格
     const basePrices = { rice: 3.0, sweet: 1.5, fish: 3.5, wheat: 2.5, corn: 2.0, soybean: 2.8, potato: 2.0, peanut: 3.0, pepper: 2.0, cabbage: 1.0, radish: 1.0, eggplant: 2.0, garlic: 2.0 };
     let price = basePrices[cropKey] || 1;
@@ -23042,6 +23048,7 @@ function getSeasonPrice(cropKey) {
 }
 
 function getHouseStaminaRegen() {
+    if (!game) return 15;
     const house = HOUSE_DATA[game.house];
     return house ? house.staminaRegen : 15;
 }
@@ -23316,6 +23323,8 @@ function fallbackCopyQQ(qq) {
     const textarea = document.createElement('textarea');
     textarea.value = qq;
     textarea.style.position = 'fixed';
+    textarea.style.top = '0';
+    textarea.style.left = '0';
     textarea.style.opacity = '0';
     document.body.appendChild(textarea);
     textarea.focus();
@@ -24449,14 +24458,27 @@ function copyErrorLogs() {
             showToast('复制失败', 'bad');
         });
     } else {
-        // 降级方案
+        // 降级方案：execCommand 在 iOS 微信中可能失败，需加异常保护
         const textarea = document.createElement('textarea');
         textarea.value = text || '暂无错误日志';
+        textarea.style.position = 'fixed';
+        textarea.style.top = '0';
+        textarea.style.left = '0';
+        textarea.style.opacity = '0';
         document.body.appendChild(textarea);
         textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showToast('已复制到剪贴板', 'good');
+        try {
+            const success = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            if (success) {
+                showToast('已复制到剪贴板', 'good');
+            } else {
+                showToast('复制失败，请手动复制', 'bad');
+            }
+        } catch (e) {
+            if (textarea.parentNode) document.body.removeChild(textarea);
+            showToast('复制失败，请手动复制', 'bad');
+        }
     }
 }
 

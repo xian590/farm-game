@@ -8593,6 +8593,7 @@ const DEFAULT_STATE = {
   planNotes: [],
   completedChallenges: [],
   plans: {},
+  completedChallenges: [],
 };
 
 let state = loadState();
@@ -10757,17 +10758,17 @@ function calcPersona(scores) {
       'create+charm': 'lavender',
       'empathy+stable': 'iris',
       'empathy+charm': 'sakura',
-      'charm+stable': 'camellia',
+      'charm+stable': 'tulip',
     };
     if (map[pair]) return map[pair];
   }
 
-  if (top === 'charm') return second === 'action' ? 'rose' : 'camellia';
+  if (top === 'charm') return second === 'action' ? 'rose' : 'tulip';
   if (top === 'action') return second === 'charm' ? 'rose' : 'sunflower';
   if (top === 'create') return 'lavender';
   if (top === 'stable') return 'lily';
   if (top === 'empathy') return second === 'stable' ? 'iris' : 'blue';
-  return 'sakura';
+  return 'rose';
 }
 
 function finishTest() {
@@ -10787,11 +10788,12 @@ function finishTest() {
 
     const { action, create, empathy, stable, charm } = testState.scores;
     const total = action + create + empathy + stable + charm;
-    const aPct = Math.round(action/total*100);
-    const cPct = Math.round(create/total*100);
-    const ePct = Math.round(empathy/total*100);
-    const sPct = Math.round(stable/total*100);
-    const chPct = Math.round(charm/total*100);
+    const safeTotal = total > 0 ? total : 1;
+    const aPct = total > 0 ? Math.round(action/safeTotal*100) : 0;
+    const cPct = total > 0 ? Math.round(create/safeTotal*100) : 0;
+    const ePct = total > 0 ? Math.round(empathy/safeTotal*100) : 0;
+    const sPct = total > 0 ? Math.round(stable/safeTotal*100) : 0;
+    const chPct = total > 0 ? Math.round(charm/safeTotal*100) : 0;
 
     resultHtml = `
       <div class="text-center py-2 animate-soft-pop">
