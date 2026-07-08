@@ -3331,7 +3331,7 @@ function saveGameToSession() {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.5.19';
+const GAME_VERSION = '1.5.20';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';
@@ -10960,6 +10960,7 @@ function updateDailyButtons() {
 }
 
 function renderBackpack() {
+        if (!game) return;
     const list = document.getElementById('backpack-list');
     if (!list) return;
     list.innerHTML = '';
@@ -15328,6 +15329,7 @@ function showGame() {
 
 // ==================== 面板渲染 ====================
 function renderPanel(tab) {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -15432,6 +15434,7 @@ function renderPanel(tab) {
 
 // ===== 田地管理面板 =====
 function renderFieldsPanel() {
+        if (!game) return;
     if (!game || !game.fields) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
@@ -15765,6 +15768,7 @@ function getProgressClass(progress) {
 
 // 渲染任务追踪器
 function renderQuestBox() {
+        if (!game) return;
     if (!game.fields) game.fields = [];
     const q = game.quests;
     
@@ -16203,6 +16207,7 @@ function toggleQuestList() {
 }
 
 function renderFieldCard(field, idx) {
+        if (!game) return;
     let html = `<div class="field-card" data-idx="${idx}">`;
     html += `<div class="field-header">
                 <span class="field-name">第${escapeHtml(field.id)}块田</span>
@@ -16454,6 +16459,7 @@ function getStageFlavorText(stage, type) {
 
 // ===== 商店面板 =====
 function renderShopPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -16514,6 +16520,7 @@ function refreshShopContent() {
 }
 
 function renderSellTab() {
+        if (!game) return;
     let html = '';
     
     const cropTypes = ['rice', 'sweet', 'wheat', 'corn', 'soybean', 'potato', 'peanut', 'pepper', 'cabbage', 'radish', 'eggplant', 'garlic'];
@@ -16548,6 +16555,7 @@ function renderSellTab() {
 }
 
 function renderProcessedSellTab() {
+        if (!game) return;
     let html = '';
     
     const processedItems = [
@@ -16612,6 +16620,7 @@ function renderProcessedSellTab() {
 }
 
 function renderSeedsTab() {
+        if (!game) return;
     let html = '';
     
     // 当前季节提示
@@ -16672,6 +16681,7 @@ function renderSeedsTab() {
 }
 
 function renderItemsTab() {
+        if (!game) return;
     const items = [
         { key: 'fertilizer', name: '化肥', emoji: '🧪', price: 50, desc: '作物产量+5%' },
         { key: 'pesticide', name: '农药', emoji: '💊', price: ITEM_DATA.pesticide ? ITEM_DATA.pesticide.price : 50, desc: '治疗病虫害' },
@@ -16701,6 +16711,7 @@ function renderItemsTab() {
 }
 
 function renderGiftsTab() {
+        if (!game) return;
     const gifts = [
         { key: 'snack', name: '粗点心', emoji: '🍬', price: 10, desc: '便宜的小零食，小孩喜欢' },
         { key: 'liquor', name: '散装白酒', emoji: '🍶', price: 50, desc: '村里常见的酒，老头喜欢' },
@@ -16732,6 +16743,7 @@ function renderGiftsTab() {
 
 // ===== 其他面板（占位） =====
 function renderHousePanel() {
+    if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🏠 房屋租赁</div>';
@@ -16862,6 +16874,7 @@ function confirmSleep() {
 }
 
 function renderToolsPanel() {
+    if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🔧 农具商店</div>';
@@ -16915,6 +16928,7 @@ function renderToolsPanel() {
 }
 
 function renderCompostPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🌱 堆肥工坊</div>';
@@ -17079,6 +17093,7 @@ function goForaging() {
 }
 
 function renderForagingPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -17160,6 +17175,7 @@ function renderForagingPanel() {
 
 // ===== 钓鱼面板 =====
 function renderFishingPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -17455,6 +17471,7 @@ function getInputDesc(item) {
 }
 
 function renderProcessingPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -17617,6 +17634,7 @@ function rerenderProcessing() {
 }
 
 function renderPlayerPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">👤 角色属性</div>';
@@ -18322,6 +18340,7 @@ function studySkill() {
 }
 
 function renderSkillsPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">📚 技能树</div>';
@@ -18404,6 +18423,7 @@ function renderSkillsPanel() {
 
 // ===== 农技研究面板 =====
 function renderTechPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -18465,6 +18485,7 @@ function renderTechPanel() {
 
 // 重新渲染科技面板
 function rerenderTech() {
+    if (!game) return;
     if (currentMainTab === 'tech') {
         renderTechPanel();
     }
@@ -18473,6 +18494,7 @@ function rerenderTech() {
 
 // ===== 农家建筑面板 =====
 function renderBuildingPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -18750,6 +18772,7 @@ function isNpcKnown(npcKey) {
 }
 
 function renderNpcsPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">👥 村民</div>';
@@ -20319,6 +20342,7 @@ function getPetEffectText(petKey) {
 }
 
 function renderPetsPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🐱 宠物</div>';
@@ -20638,6 +20662,7 @@ function collectPoop() {
 }
 
 function renderAutomationPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🤖 自动化</div>';
@@ -20735,6 +20760,7 @@ function upgradeAutomation(deviceId) {
 }
 
 function renderBankPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -20804,6 +20830,7 @@ function bankWithdrawAll() {
     withClickLock('bankWithdrawAll', () => {
         if (!game.bankDeposit || game.bankDeposit <= 0) { showToast('没有存款可取出', 'bad'); return; }
         game.money += game.bankDeposit;
+        game.money = Math.max(0, Math.min(game.money, 100000000));
         addLog(`🏦 从银行取出${game.bankDeposit}元`, 'good');
         game.bankDeposit = 0;
         saveGame();
@@ -20813,6 +20840,7 @@ function bankWithdrawAll() {
 }
 
 function renderNeighborPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🤝 邻里</div>';
@@ -20885,6 +20913,7 @@ function unlockNeighborHelp(helpId) {
 }
 
 function renderMarketPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     const isMarketDay = MARKET_DATA.openDay.includes(game.day);
@@ -21018,6 +21047,7 @@ function sellMarketCrop(cropId, price) {
 }
 
 function renderAgriTechPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🔬 农业科技</div>';
@@ -21091,6 +21121,7 @@ function upgradeAgriTech() {
 }
 
 function renderAnimalsPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🐷 畜牧</div>';
@@ -21175,6 +21206,7 @@ function renderAnimalsPanel() {
 }
 
 function renderOrchardPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🌳 果园</div>';
@@ -21255,6 +21287,7 @@ function renderOrchardPanel() {
 }
 
 function renderVillagePanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🤝 村长合作</div>';
@@ -21316,6 +21349,7 @@ function renderVillagePanel() {
 }
 
 function renderFarmStayPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🏡 农家乐</div>';
@@ -21795,6 +21829,7 @@ function removeTree(treeIdx) {
 }
 
 function renderLogPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     panel.innerHTML = `
@@ -21850,6 +21885,7 @@ function generateLeaderboard(type) {
 
 // 渲染排行榜面板
 function renderLeaderboardPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     let html = '<div class="panel-title">🏆 排行榜</div>';
@@ -24040,6 +24076,7 @@ function closeCountdownModal() {
 }
 
 function renderCountdownContent() {
+        if (!game) return;
     const container = document.getElementById('countdown-content');
     if (!container || !game) return;
     
@@ -24249,6 +24286,7 @@ function closeBackpackModal() {
 }
 
 function renderBackpackModal() {
+        if (!game) return;
     const container = document.getElementById('backpack-content');
     if (!container || !game) return;
     
@@ -24623,6 +24661,7 @@ function claimQuestReward() {
 
 // ==================== 探索/矿洞系统 ====================
 function renderExplorePanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -24819,6 +24858,7 @@ function sellOres() {
 
 // ==================== 烹饪系统 ====================
 function renderCookingPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -25086,6 +25126,7 @@ function sellFood(foodKey) {
 
 // ==================== 社区建设系统 ====================
 function renderCommunityPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -25325,6 +25366,7 @@ function unlockCollectionItem(category, itemId) {
 }
 
 function renderCollectionPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     
@@ -25550,6 +25592,7 @@ function unlockAchievement(achKey) {
 }
 
 function renderAchievementsPanel() {
+        if (!game) return;
     const panel = document.getElementById('content-panel');
     if (!panel) return;
     if (!game.achievements) game.achievements = {};

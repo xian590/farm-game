@@ -8703,10 +8703,12 @@ function finishTest() {
     saveState();
 
     if (!p) {
-      document.getElementById('test-content').innerHTML = '<div class="text-center py-8"><div class="text-4xl mb-2">🌸</div><h3 class="font-display text-lg mb-1" style="color:var(--theme-text)">测试完成</h3><p class="text-xs" style="color:var(--theme-text); opacity:0.5">数据加载异常，请刷新后重试</p><button onclick="closeTest()" class="soft-btn btn-primary w-full py-3 mt-4">好的</button></div>';
+      const tc = document.getElementById('test-content');
+      if (tc) {
+        tc.innerHTML = '<div class="text-center py-8"><div class="text-4xl mb-2">🌸</div><h3 class="font-display text-lg mb-1" style="color:var(--theme-text)">测试完成</h3><p class="text-xs" style="color:var(--theme-text); opacity:0.5">数据加载异常，请刷新后重试</p><button onclick="closeTest()" class="soft-btn btn-primary w-full py-3 mt-4">好的</button></div>';
+      }
       return;
     }
-
     const { action, create, empathy, stable, charm } = testState.scores;
     const total = action + create + empathy + stable + charm;
     const safeTotal = total > 0 ? total : 1;
