@@ -312,8 +312,6 @@
             cursor: pointer;
             font-size: 12px;
             transition: all 0.2s ease;
-            min-height: 28px;
-            min-width: 36px;
         }
         .speed-btn:hover { background: #e8dfcc; }
         .speed-btn.active { 
@@ -1564,7 +1562,8 @@
         }
 
         .bgm-btn {
-            padding: 10px 8px;
+            padding: 10px 8px;;
+            min-height: 44px;
             border: 2px solid #e8dcc8;
             border-radius: 8px;
             background: white;
@@ -3332,7 +3331,7 @@ function saveGameToSession() {
 }
 
 // 游戏版本号
-const GAME_VERSION = '1.5.18';
+const GAME_VERSION = '1.5.19';
 
 // 全局错误日志捕获
 const ERROR_LOG_KEY = 'farm_game_error_log';

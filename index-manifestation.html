@@ -8693,14 +8693,19 @@ function finishTest() {
 
   if (testState.type === 'personality' || testState.type === 'personality_deep') {
     const pid = calcPersona(testState.scores);
-    const p = PERSONAS && PERSONAS.length > 0 ? (PERSONAS.find(x => x.id === pid) || PERSONAS[0]) : null;;
-    const isNew = !state.unlockedPersonas.includes(pid);
-    if (isNew) state.unlockedPersonas.push(pid);
-    if (!state.mainPersona) state.mainPersona = pid;
+    const p = PERSONAS && PERSONAS.length > 0 ? (PERSONAS.find(x => x.id === pid) || PERSONAS[0]) : null;
+    const isNew = p && Array.isArray(state.unlockedPersonas) ? !state.unlockedPersonas.includes(pid) : false;
+    if (isNew && Array.isArray(state.unlockedPersonas)) state.unlockedPersonas.push(pid);
+    if (p && !state.mainPersona) state.mainPersona = pid;
     reward = testState.reward || 50;
 
     state.testHistory.push({ type: 'personality', date: new Date().toISOString(), personaId: pid, scores: testState.scores, deep: testState.type === 'personality_deep' });
     saveState();
+
+    if (!p) {
+      document.getElementById('test-content').innerHTML = '<div class="text-center py-8"><div class="text-4xl mb-2">🌸</div><h3 class="font-display text-lg mb-1" style="color:var(--theme-text)">测试完成</h3><p class="text-xs" style="color:var(--theme-text); opacity:0.5">数据加载异常，请刷新后重试</p><button onclick="closeTest()" class="soft-btn btn-primary w-full py-3 mt-4">好的</button></div>';
+      return;
+    }
 
     const { action, create, empathy, stable, charm } = testState.scores;
     const total = action + create + empathy + stable + charm;
