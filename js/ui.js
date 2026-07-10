@@ -392,14 +392,6 @@ const UI = {
         return npc.avatar;
     },
     
-    getNPCAvatar(npcId, mood) {
-        const npc = CONSTANTS.NPCS[npcId];
-        if (!npc) return npc ? npc.avatar : 'doctor_smile.png';
-        if (mood && npc.moods && npc.moods[mood]) {
-            return npc.moods[mood];
-        }
-        return npc.avatar;
-    },
 
     // ==================== 全屏压力效果 ====================
     

@@ -356,6 +356,23 @@
         </div>
       </div>
 
+      <!-- 星座运势 -->
+      <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="openZodiacFortune()" id="zodiac-card" tabindex="0">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl shrink-0 animate-breath" id="zodiac-emoji">♈</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] mb-1" style="color:var(--theme-text); opacity:0.5">星座运势 · 点击查看详情</div>
+            <div class="text-sm font-title leading-relaxed" style="color:var(--theme-text)" id="zodiac-summary">
+              还没有设置生日哦 🎂
+            </div>
+            <div class="text-[10px] mt-1" style="color:var(--theme-text); opacity:0.6" id="zodiac-sub">
+              点击设置生日，查看专属运势
+            </div>
+          </div>
+          <div class="text-lg opacity-40 shrink-0">→</div>
+        </div>
+      </div>
+
       <!-- 每日肯定语 -->
       <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="refreshDailyAffirm()" tabindex="0">
         <div class="flex items-start gap-3">
@@ -5273,6 +5290,47 @@
   </div>
   <div class="max-w-lg mx-auto px-5 py-6" id="affirm-loop-content"></div>
 </section>
+
+<!-- ========== 星座生日设置弹窗 ========== -->
+<div id="zodiac-birthday-modal" role="dialog" aria-modal="true" class="modal-backdrop" onclick="if(event.target===this)hideModal('zodiac-birthday-modal')">
+  <div role="dialog" aria-modal="true" class="modal-content p-5 max-w-sm" onclick="event.stopPropagation()">
+    <div class="text-center mb-4">
+      <div class="text-4xl mb-2">🎂</div>
+      <h3 class="font-display text-lg" style="color:var(--theme-text)">设置你的生日</h3>
+      <p class="text-xs mt-1" style="color:var(--theme-text); opacity:0.5">我们会为你生成专属星座运势和生日祝福</p>
+    </div>
+    <div class="mb-4">
+      <label class="text-xs block mb-2" style="color:var(--theme-text); opacity:0.6">选择生日</label>
+      <input type="date" id="birthday-input" class="w-full p-3 rounded-xl text-sm outline-none" style="background:rgba(255,255,255,0.5); backdrop-filter:blur(10px); color:var(--theme-text); border:1px solid rgba(184,169,201,0.15)">
+    </div>
+    <div class="flex gap-2">
+      <button type="button" onclick="hideModal('zodiac-birthday-modal')" class="soft-btn btn-soft flex-1 py-2.5 text-sm" aria-label="取消">取消</button>
+      <button type="button" onclick="saveBirthday()" class="soft-btn btn-primary flex-1 py-2.5 text-sm font-title" aria-label="保存">✨ 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 星座运势详情弹窗 ========== -->
+<div id="zodiac-fortune-modal" role="dialog" aria-modal="true" class="modal-backdrop" onclick="if(event.target===this)hideModal('zodiac-fortune-modal')">
+  <div role="dialog" aria-modal="true" class="modal-content p-5 max-w-md" onclick="event.stopPropagation()">
+    <div id="zodiac-fortune-content"></div>
+  </div>
+</div>
+
+<!-- ========== 生日祝福弹窗 ========== -->
+<div id="birthday-blessing-modal" role="dialog" aria-modal="true" class="modal-backdrop">
+  <div role="dialog" aria-modal="true" class="modal-content p-6 text-center max-w-sm">
+    <div class="text-5xl mb-3 animate-breath">🎂</div>
+    <h3 class="font-display text-lg mb-2" style="color:var(--theme-text)" id="birthday-title">生日快乐！</h3>
+    <p class="text-sm leading-relaxed mb-4" style="color:var(--theme-text); opacity:0.8" id="birthday-message">今天是你的生日，宇宙为你准备了特别的祝福～</p>
+    <div class="p-3 rounded-xl mb-4" style="background:rgba(240,213,224,0.2)">
+      <div class="text-xs font-medium mb-1" style="color:var(--theme-text)">✨ 今日显化指数</div>
+      <div class="text-2xl">⭐⭐⭐⭐⭐</div>
+      <div class="text-[10px] mt-1" style="color:var(--theme-text); opacity:0.6">生日当天能量翻倍，许下的愿望更容易实现！</div>
+    </div>
+    <button type="button" onclick="hideModal('birthday-blessing-modal')" class="soft-btn btn-primary w-full py-2.5 text-sm font-title" aria-label="接收祝福">✨ 接收祝福</button>
+  </div>
+</div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js" onerror="console.warn('QRCode.js 加载失败')"></script>
   <script type="module" src="app.js"></script>

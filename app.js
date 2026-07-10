@@ -4220,6 +4220,157 @@ function openFortune() {
   showModal('book-modal');
   playSound('sparkle');
 }
+
+/* ===== 星座运势 & 生日祝福 ===== */
+const ZODIAC_SIGNS = [
+  { name: '白羊座', emoji: '♈', dates: [[3,21],[4,19]] },
+  { name: '金牛座', emoji: '♉', dates: [[4,20],[5,20]] },
+  { name: '双子座', emoji: '♊', dates: [[5,21],[6,21]] },
+  { name: '巨蟹座', emoji: '♋', dates: [[6,22],[7,22]] },
+  { name: '狮子座', emoji: '♌', dates: [[7,23],[8,22]] },
+  { name: '处女座', emoji: '♍', dates: [[8,23],[9,22]] },
+  { name: '天秤座', emoji: '♎', dates: [[9,23],[10,23]] },
+  { name: '天蝎座', emoji: '♏', dates: [[10,24],[11,22]] },
+  { name: '射手座', emoji: '♐', dates: [[11,23],[12,21]] },
+  { name: '摩羯座', emoji: '♑', dates: [[12,22],[1,19]] },
+  { name: '水瓶座', emoji: '♒', dates: [[1,20],[2,18]] },
+  { name: '双鱼座', emoji: '♓', dates: [[2,19],[3,20]] },
+];
+const ZODIAC_FORTUNE_TEMPLATES = {
+  love: ['桃花运旺盛，适合主动表达心意', '感情平稳，适合 deepen 连接', '可能会遇到心动的人，保持开放', '旧人可能回头，听从内心', '适合独处整理感情，不急于行动', '伴侣关系和谐，适合一起规划未来', '暗恋可能浮出水面，勇敢一点', '网络缘分增加，多留意社交动态'],
+  career: ['工作效率高，适合推进重要项目', '贵人运强，多和同事交流', '创意灵感爆发，抓住好点子', '适合学习新技能，为将来铺垫', '注意细节，避免粗心出错', '领导可能注意到你的努力', '适合谈判和合作，表达清晰', '财务决策谨慎，不宜冲动投资'],
+  health: ['精力充沛，适合运动健身', '注意睡眠质量，早点休息', '情绪起伏较大，多做冥想', '注意饮食健康，少吃油腻', '适合户外散步，吸收自然能量', '身体需要放松，泡个热水澡', '眼睛容易疲劳，多看看远处', '免疫力强，适合挑战新事物'],
+  luck: ['直觉敏锐，相信第一感觉', '幸运在东方，出门朝东走', '适合穿亮色系衣服，提升气场', '今天的小幸运会接二连三', '保持微笑，好运自然来', '适合清理旧物，腾出空间迎接新能量', '收到意外好消息的概率很高', '数字7和3是你的幸运数字'],
+};
+function getZodiacSign(month, day) {
+  for (const sign of ZODIAC_SIGNS) {
+    const [start, end] = sign.dates;
+    if (start[0] === end[0]) {
+      if (month === start[0] && day >= start[1] && day <= end[1]) return sign;
+    } else {
+      if ((month === start[0] && day >= start[1]) || (month === end[0] && day <= end[1])) return sign;
+    }
+  }
+  return ZODIAC_SIGNS[0];
+}
+function generateZodiacFortune(sign) {
+  const today = getTodayStr();
+  let seed = 0;
+  for (let i = 0; i < today.length; i++) seed += today.charCodeAt(i) + sign.name.charCodeAt(0);
+  const love = ZODIAC_FORTUNE_TEMPLATES.love[seed % ZODIAC_FORTUNE_TEMPLATES.love.length];
+  const career = ZODIAC_FORTUNE_TEMPLATES.career[(seed * 3) % ZODIAC_FORTUNE_TEMPLATES.career.length];
+  const health = ZODIAC_FORTUNE_TEMPLATES.health[(seed * 5) % ZODIAC_FORTUNE_TEMPLATES.health.length];
+  const luck = ZODIAC_FORTUNE_TEMPLATES.luck[(seed * 7) % ZODIAC_FORTUNE_TEMPLATES.luck.length];
+  const stars = 3 + (seed % 3);
+  return { love, career, health, luck, stars, sign };
+}
+function saveBirthday() {
+  const input = document.getElementById('birthday-input');
+  if (!input || !input.value) { showToast('请选择生日日期'); return; }
+  const date = new Date(input.value);
+  if (isNaN(date.getTime())) { showToast('日期格式不正确'); return; }
+  const birthday = { month: date.getMonth() + 1, day: date.getDate(), year: date.getFullYear() };
+  StorageUtil.set('user_birthday', birthday);
+  hideModal('zodiac-birthday-modal');
+  renderZodiacCard();
+  showToast('✨ 生日已保存！');
+  playSound('ding');
+}
+function loadBirthday() {
+  return StorageUtil.get('user_birthday', null);
+}
+function renderZodiacCard() {
+  const birthday = loadBirthday();
+  const summaryEl = document.getElementById('zodiac-summary');
+  const subEl = document.getElementById('zodiac-sub');
+  const emojiEl = document.getElementById('zodiac-emoji');
+  if (!summaryEl || !subEl || !emojiEl) return;
+  if (!birthday) {
+    summaryEl.textContent = '还没有设置生日哦 🎂';
+    subEl.textContent = '点击设置生日，查看专属运势';
+    emojiEl.textContent = '♈';
+    return;
+  }
+  const sign = getZodiacSign(birthday.month, birthday.day);
+  const fortune = generateZodiacFortune(sign);
+  const starsStr = '⭐'.repeat(fortune.stars) + '☆'.repeat(5 - fortune.stars);
+  summaryEl.textContent = `${sign.emoji} ${sign.name} 今日运势 ${starsStr}`;
+  subEl.textContent = `爱情·${fortune.love.slice(0,12)}…`;
+  emojiEl.textContent = sign.emoji;
+}
+function openZodiacFortune() {
+  const birthday = loadBirthday();
+  if (!birthday) { showModal('zodiac-birthday-modal'); return; }
+  const sign = getZodiacSign(birthday.month, birthday.day);
+  const fortune = generateZodiacFortune(sign);
+  const starsStr = '⭐'.repeat(fortune.stars);
+  const contentEl = document.getElementById('zodiac-fortune-content');
+  if (!contentEl) return;
+  contentEl.innerHTML = `
+    <div class="text-center mb-4">
+      <div class="text-5xl mb-2 animate-breath">${sign.emoji}</div>
+      <h3 class="font-display text-lg" style="color:var(--theme-text)">${sign.name} 今日运势</h3>
+      <p class="text-xs mt-1" style="color:var(--theme-text); opacity:0.5">${getTodayStr()} · 生日 ${birthday.month}月${birthday.day}日</p>
+    </div>
+    <div class="space-y-3" style="color:var(--theme-text)">
+      <div class="p-3 rounded-xl text-center" style="background:rgba(245,230,200,0.25)">
+        <div class="text-xs font-medium mb-1">✨ 今日综合指数</div>
+        <div class="text-2xl">${starsStr}</div>
+        <div class="text-[10px] mt-1" style="opacity:0.6">${fortune.stars} / 5 星</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:rgba(240,213,224,0.15)">
+        <div class="text-xs font-medium mb-1">💖 爱情运势</div>
+        <div class="text-sm">${fortune.love}</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:rgba(221,235,224,0.25)">
+        <div class="text-xs font-medium mb-1">💼 事业运势</div>
+        <div class="text-sm">${fortune.career}</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:rgba(201,216,232,0.2)">
+        <div class="text-xs font-medium mb-1">🧘 健康运势</div>
+        <div class="text-sm">${fortune.health}</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:linear-gradient(135deg, rgba(212,181,199,0.15), rgba(184,169,201,0.1))">
+        <div class="text-xs font-medium mb-1">🍀 幸运提示</div>
+        <div class="text-sm">${fortune.luck}</div>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="showModal('zodiac-birthday-modal')" class="soft-btn btn-soft flex-1 py-2.5 text-sm">修改生日</button>
+      <button onclick="hideModal('zodiac-fortune-modal')" class="soft-btn btn-primary flex-1 py-2.5 text-sm font-title">✨ 收下运势</button>
+    </div>
+  `;
+  showModal('zodiac-fortune-modal');
+  playSound('sparkle');
+}
+function checkBirthday() {
+  const birthday = loadBirthday();
+  if (!birthday) return;
+  const now = new Date();
+  const todayMonth = now.getMonth() + 1;
+  const todayDay = now.getDate();
+  const todayYear = now.getFullYear();
+  if (birthday.month === todayMonth && birthday.day === todayDay) {
+    const age = todayYear - (birthday.year || todayYear);
+    const titleEl = document.getElementById('birthday-title');
+    const msgEl = document.getElementById('birthday-message');
+    if (titleEl) titleEl.textContent = age > 0 ? `🎂 ${age} 岁生日快乐！` : '生日快乐！';
+    if (msgEl) msgEl.textContent = '今天是你的生日，宇宙为你准备了特别的祝福～愿你显化的愿望都加速实现！';
+    const shownKey = 'birthday_shown_' + todayYear + '_' + todayMonth + '_' + todayDay;
+    if (!StorageUtil.get(shownKey, false)) {
+      setTimeout(() => {
+        showModal('birthday-blessing-modal');
+        playSound('sparkle');
+        StorageUtil.set(shownKey, true);
+      }, 3000);
+    }
+  }
+}
+function initZodiacAndBirthday() {
+  renderZodiacCard();
+  checkBirthday();
+}
+
 let currentPlan = null;
 function selectPlan(type) {
   currentPlan = type;
@@ -5726,6 +5877,7 @@ document.addEventListener('DOMContentLoaded', function() {
     checkAutoPromotions();
     loadDarkMode();
     autoDarkMode();
+    initZodiacAndBirthday();
   }, 2000);
 });
 let currentAudioCtx = null;
@@ -8430,3 +8582,6 @@ window.toggleVoiceRecord = toggleVoiceRecord;
 window.toggleWhiteNoise = toggleWhiteNoise;
 window.unlockWithCrystals = unlockWithCrystals;
 window.updateNickname = updateNickname;
+window.saveBirthday = saveBirthday;
+window.openZodiacFortune = openZodiacFortune;
+window.initZodiacAndBirthday = initZodiacAndBirthday;

@@ -885,6 +885,21 @@ setInterval(() => {
 <script src="js/main.js"></script>
 
 
+<!-- 全局图片加载错误处理 — 缺失素材时显示emoji占位，不显示broken image -->
+<script>
+document.addEventListener('error', function(e) {
+    if (e.target.tagName === 'IMG') {
+        e.target.style.display = 'none';
+        const placeholder = document.createElement('span');
+        placeholder.textContent = '👤';
+        placeholder.style.cssText = 'font-size:28px; display:inline-flex; align-items:center; justify-content:center; width:100%; height:100%;';
+        if (e.target.parentElement) {
+            e.target.parentElement.appendChild(placeholder);
+        }
+    }
+}, true);
+</script>
+
 <!-- 数值调试面板 (按D键切换) -->
 <div class="debug-hint">按 D 键打开调试面板</div>
 <div class="debug-panel" id="debug-panel">
