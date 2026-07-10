@@ -51,6 +51,258 @@
   }
   </script>
   <title>星愿花园 · 温柔显化陪伴</title>
+    <style id="critical-css">
+/* 星愿花园 - 全局样式 */
+/* Generated from index-manifestation.html */
+
+  
+    *, *::before, *::after { box-sizing: border-box; }
+    img, video { max-width: 100%; height: auto; display: block; }
+    body { overflow-wrap: break-word; margin: 0; font-family: 'Noto Sans SC', sans-serif; }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-color, #FAF5F7);
+      min-height: 100vh;
+      color: #5D4E6D;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      overflow-x: hidden;
+      transition: background 1.5s ease;
+    }
+
+    /* 基础工具类后备（Tailwind CDN 失败时） */
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .grid { display: grid; }
+    .block { display: block; }
+    .inline-block { display: inline-block; }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+    .w-full { width: 100%; }
+    .h-full { height: 100%; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .fixed { position: fixed; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .rounded-full { border-radius: 9999px; }
+    .overflow-hidden { overflow: hidden; }
+    .overflow-y-auto { overflow-y: auto; }
+    .cursor-pointer { cursor: pointer; }
+    .select-none { user-select: none; }
+    .pointer-events-none { pointer-events: none; }
+    .opacity-0 { opacity: 0; }
+    .opacity-50 { opacity: 0.5; }
+    .opacity-75 { opacity: 0.75; }
+    .opacity-100 { opacity: 1; }
+
+    /* 主内容容器响应式 */
+    .main-container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    @media (min-width: 1024px) {
+      .main-container {
+        max-width: 900px;
+      }
+    }
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .main-container {
+        max-width: 720px;
+      }
+    }
+
+    /* 卡片响应式 */
+    @media (min-width: 1024px) {
+      .glass-card {
+        padding: 24px;
+      }
+      .stat-card {
+        padding: 20px 16px;
+      }
+    }
+
+    /* 字体响应式 */
+    @media (min-width: 1024px) {
+      .font-display { font-size: clamp(1.5rem, 2.5vw, 2.5rem); }
+    }
+
+    /* 模态框动画优化 */
+    .modal-backdrop {
+      transition: opacity 0.3s ease;
+    }
+    .modal-backdrop:not(.show) {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .modal-backdrop.show {
+      opacity: 1;
+    }
+    :root {
+      --theme-primary: #B8A9C9;
+      --theme-secondary: #D4B5C7;
+      --theme-accent: #E8D5E0;
+      --theme-bg: #FAF5F7;
+      --theme-text: #5D4E6D;
+      --text-soft: #8B7E9C;
+      --text-mute: #B8A9C9;
+    }
+
+    /* 深色模式 */
+    body.dark {
+      --bg-color: #1A1625;
+      --theme-bg: #1A1625;
+      --theme-text: #E8E0F0;
+      color: #E8E0F0;
+      background: #1A1625;
+    }
+    body.dark .glass-card {
+      background: linear-gradient(145deg, rgba(45, 38, 62, 0.85), rgba(35, 28, 50, 0.8));
+      border-color: rgba(184, 169, 201, 0.15);
+    }
+    body.dark .dream-input {
+      background: rgba(45, 38, 62, 0.7);
+      border-color: rgba(184, 169, 201, 0.2);
+      color: #E8E0F0;
+    }
+    body.dark .dream-input:focus {
+      background: rgba(55, 48, 72, 0.8);
+    }
+    body.dark .glass-header {
+      background: rgba(26, 22, 37, 0.75);
+      border-color: rgba(184, 169, 201, 0.1);
+    }
+
+    /* 玻璃态卡片 */
+    .glass-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.85), rgba(250, 245, 247, 0.75));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      box-shadow:
+        0 8px 32px rgba(184, 169, 201, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    /* 页面切换 */
+    .page { display: none; }
+    .page.active { display: block; }
+    .page.slide-in-right { animation: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+    .page.slide-in-left { animation: slideInLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+    .page.fade-in { animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+    .welcome-page { min-height: calc(100vh - 140px); display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; }
+    .welcome-page.active { display: flex; }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 3D 梦想画册卡片 */
+    .vision-card-container:hover .vision-card-inner {
+      transform: rotateY(180deg) !important;
+    }
+    .vision-card-container.flipped .vision-card-inner {
+      transform: rotateY(180deg) !important;
+    }
+
+    /* 全局按钮可点击性保障 */
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.2s ease; }
+    button:active { transform: scale(0.96); }
+    .soft-btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+    .option-card { min-height: 52px; position: relative; overflow: hidden; }
+    .option-card:active { transform: scale(0.98); background: rgba(212,181,199,0.25) !important; }
+    .option-card.selected { background: linear-gradient(135deg, rgba(212,181,199,0.3), rgba(184,169,201,0.25)) !important; border-color: #B8A9C9 !important; box-shadow: 0 4px 14px rgba(184,169,201,0.25); }
+    .chip-soft { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 7px 16px; border-radius: 999px; font-size: 12px; background: rgba(184,169,201,0.1); color: var(--theme-text); border: none; cursor: pointer; transition: all 0.25s ease; }
+    .chip-soft:hover { background: rgba(184,169,201,0.2); transform: translateY(-1px); }
+    .chip-soft:active { transform: translateY(0) scale(0.96); }
+    .chip-soft.active { background: linear-gradient(135deg, #E8B5C8, #C8A5D8); color: white; box-shadow: 0 4px 14px rgba(200, 165, 216, 0.35); }
+    .card-hover { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease; cursor: pointer; }
+    .card-hover:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 12px 32px rgba(184,169,201,0.2); }
+    .card-hover:active { transform: translateY(-1px) scale(0.99); }
+
+    /* 触摸设备最小点击区域 44px */
+    @media (pointer: coarse) {
+      button, a, [onclick], [role="button"] { min-height: 44px; min-width: 44px; }
+    }
+
+    /* 渐变文字 */
+    .gradient-text {
+      background: linear-gradient(135deg, #B8A9C9 0%, #D4B5C7 50%, #E8D5E0 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* 柔化按钮 */
+    .soft-btn {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .soft-btn:hover { transform: translateY(-2px) scale(1.03); }
+    .soft-btn:active { transform: translateY(0) scale(0.96); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #E8B5C8, #C8A5D8);
+      color: white;
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(200, 165, 216, 0.4);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary:hover {
+      box-shadow: 0 12px 36px rgba(200, 165, 216, 0.5);
+      filter: brightness(1.08);
+    }
+    .btn-primary-lg {
+      min-height: 52px !important;
+      padding: 14px 32px !important;
+      font-size: 16px !important;
+      border-radius: 20px !important;
+    }
+
+    .btn-soft {
+      background: rgba(255, 255, 255, 0.75);
+      color: #5D4E6D;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(184, 169, 201, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-soft:hover {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 6px 20px rgba(184, 169, 201, 0.18);
+    }
+
+    /* 玻璃顶栏 */
+    .glass-header {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    </style>
   <script src="https://cdn.tailwindcss.com" onerror="console.warn('Tailwind CDN 加载失败'); window.__tailwindFailed = true;"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -230,7 +482,6 @@
 
 <!-- Toast -->
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true">提示</div>
-<div id="toast" class="toast">提示</div>
 
 <!-- 星星Loading -->
 <div id="star-loading" class="hidden fixed inset-0 flex items-center justify-center z-[9998]" style="background:rgba(253,242,248,0.6); backdrop-filter:blur(8px)">
@@ -3193,6 +3444,15 @@
         <button type="button" onclick="closeSettings()" class="w-9 h-9 flex items-center justify-center rounded-full" style="background:rgba(184,169,201,0.1); color:var(--theme-text); opacity:0.6" aria-label="×">×</button>
       </div>
 
+      <!-- 语言设置 -->
+      <div class="settings-group">
+        <div class="settings-group-title">🌐 语言</div>
+        <div class="flex gap-2">
+          <button type="button" class="chip-soft active" id="lang-zh-btn" onclick="setLang('zh')" aria-label="中文">🇨🇳 中文</button>
+          <button type="button" class="chip-soft" id="lang-en-btn" onclick="setLang('en')" aria-label="English">🇺🇸 English</button>
+        </div>
+      </div>
+
       <!-- 声音设置 -->
       <div class="settings-group">
         <div class="settings-group-title">🔊 声音设置</div>
@@ -3270,6 +3530,23 @@
             <span>进入页面气泡提示</span>
           </div>
           <div class="toggle-switch on" id="toggle-autoplay" onclick="toggleSetting('autoplay', this)"></div>
+        </div>
+      </div>
+
+      <!-- 通知设置 -->
+      <div class="settings-group">
+        <div class="settings-group-title">🔔 通知提醒</div>
+
+        <div class="settings-item" onclick="toggleNotificationPermission(this.querySelector('.toggle-switch'))" tabindex="0">
+          <div class="settings-item-label">
+            <div class="settings-item-icon">🔔</div>
+            <span>每日提醒</span>
+          </div>
+          <div class="toggle-switch" id="toggle-notification"></div>
+        </div>
+
+        <div class="text-[10px] mt-1 px-2" style="color:var(--theme-text); opacity:0.4">
+          开启后，每天早晨会收到肯定语提醒，晚上会收到日记提醒
         </div>
       </div>
 
@@ -3383,6 +3660,14 @@
           <div class="settings-item-label">
             <div class="settings-item-icon">📤</div>
             <span>导出所有数据</span>
+          </div>
+          <span style="color:var(--theme-text); opacity:0.3">→</span>
+        </div>
+
+        <div class="settings-item" onclick="exportPDFReport()" tabindex="0">
+          <div class="settings-item-label">
+            <div class="settings-item-icon">📄</div>
+            <span>导出 PDF 报告</span>
           </div>
           <span style="color:var(--theme-text); opacity:0.3">→</span>
         </div>
@@ -5001,7 +5286,7 @@
       </div>
       <input type="file" id="vision-image-input" accept="image/*" class="hidden" onchange="handleVisionImage(this)">
       <div id="vision-image-preview" class="hidden relative inline-block w-fit">
-        <img id="vision-preview-img" class="h-24 rounded-xl object-cover border border-white/30" src="">
+        <img id="vision-preview-img" class="h-24 rounded-xl object-cover border border-white/30" src="" loading="lazy" alt="愿景板预览">
         <button type="button" onclick="clearVisionImage()" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center shadow" aria-label="清除图片">×</button>
       </div>
     </div>
@@ -5329,6 +5614,34 @@
       <div class="text-[10px] mt-1" style="color:var(--theme-text); opacity:0.6">生日当天能量翻倍，许下的愿望更容易实现！</div>
     </div>
     <button type="button" onclick="hideModal('birthday-blessing-modal')" class="soft-btn btn-primary w-full py-2.5 text-sm font-title" aria-label="接收祝福">✨ 接收祝福</button>
+  </div>
+</div>
+
+<!-- ========== Chunk 加载错误弹窗 ========== -->
+<div id="chunk-error-modal" role="dialog" aria-modal="true" class="modal-backdrop">
+  <div role="dialog" aria-modal="true" class="modal-content p-6 text-center max-w-sm">
+    <div class="text-5xl mb-3">🌌</div>
+    <h3 class="font-display text-lg mb-2" style="color:var(--theme-text)">模块加载失败</h3>
+    <p class="text-sm leading-relaxed mb-4" style="color:var(--theme-text); opacity:0.7">
+      <span id="chunk-error-name">未知</span> 模块加载时遇到了网络问题，可能是临时故障。
+    </p>
+    <div class="flex gap-2">
+      <button type="button" onclick="hideModal('chunk-error-modal')" class="soft-btn btn-soft flex-1 py-2.5 text-sm">稍后再试</button>
+      <button type="button" id="chunk-retry-btn" class="soft-btn btn-primary flex-1 py-2.5 text-sm font-title">🔄 立即重试</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 徽章解锁弹窗 ========== -->
+<div id="badge-unlock-modal" role="dialog" aria-modal="true" class="modal-backdrop">
+  <div role="dialog" aria-modal="true" class="modal-content p-6 text-center max-w-sm">
+    <div class="badge-unlock-bg w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-4xl animate-breath" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">
+      <span id="badge-unlock-icon">🏆</span>
+    </div>
+    <h3 class="font-display text-lg mb-1" style="color:var(--theme-text)">获得新徽章！</h3>
+    <div class="text-base font-title mb-1" style="color:var(--theme-text)" id="badge-unlock-name">徽章名称</div>
+    <p class="text-xs mb-4" style="color:var(--theme-text); opacity:0.6" id="badge-unlock-desc">徽章描述</p>
+    <button type="button" onclick="hideModal('badge-unlock-modal')" class="soft-btn btn-primary w-full py-2.5 text-sm font-title" aria-label="太棒了">✨ 太棒了</button>
   </div>
 </div>
 

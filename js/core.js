@@ -412,14 +412,6 @@ const Core = {
         if (state.streakCured > (state._maxStreakCured || 0)) {
             state._maxStreakCured = state.streakCured;
         }
-        if (state.gold < 0) {
-            state._bankruptDays = (state._bankruptDays || 0) + 1;
-            if (state._bankruptDays >= E.BANKRUPTCY_DAYS) {
-                return 'BANKRUPT';
-            }
-        } else {
-            state._bankruptDays = 0;
-        }
         
         // 重置今日数据
         state.day++;

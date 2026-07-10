@@ -1,4 +1,133 @@
 'use strict';
+
+/* ===== D13: 全局错误监控 ===== */
+window.__errorLog = [];
+window.__errorCount = 0;
+window.addEventListener('error', function(e) {
+  window.__errorCount++;
+  const entry = { t: Date.now(), msg: e.message, file: e.filename, line: e.lineno, type: 'error' };
+  window.__errorLog.push(entry);
+  try { sessionStorage.setItem('__error_log', JSON.stringify(window.__errorLog.slice(-20))); } catch(_) {}
+  console.warn('[ErrorMonitor]', e.message, 'at', e.filename + ':' + e.lineno);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  window.__errorCount++;
+  const entry = { t: Date.now(), msg: String(e.reason), type: 'promise' };
+  window.__errorLog.push(entry);
+  try { sessionStorage.setItem('__error_log', JSON.stringify(window.__errorLog.slice(-20))); } catch(_) {}
+  console.warn('[ErrorMonitor] Unhandled rejection:', e.reason);
+});
+
+/* ===== C10: 多语言支持 ===== */
+const TRANSLATIONS = {
+  zh: {
+    nav_island: '岛屿', nav_tools: '显化', nav_library: '书馆', nav_journal: '记录', nav_me: '我的',
+    app_name: '星愿花园', settings_title: '设置', settings_sound: '声音设置', settings_notification: '通知提醒',
+    settings_personalization: '个性化', settings_privacy: '隐私', settings_reminder: '提醒', settings_data: '数据',
+    sound_music: '背景音乐', sound_sfx: '操作音效', bubble_tips: '气泡提示', enter_page_bubble: '进入页面气泡提示',
+    white_noise: '白噪音', theme_color: '主题色', island_weather: '岛屿天气', animation: '动效', dark_mode: '深色模式',
+    password_lock: '密码锁', local_only: '仅本地保存', daily_reminder: '每日打卡提醒', meditation_reminder: '冥想提醒',
+    affirm_push: '肯定语推送', export_data: '导出所有数据', clear_cache: '清除缓存', about_app: '关于星愿花园',
+    energy_checkup: '能量体检', manifest_journey: '显化旅程', energy_cleanup: '能量清理', export_pdf_report: '导出 PDF 报告',
+    language: '语言', lang_zh: '中文', lang_en: 'English', welcome_subtitle: '用科学方法，温柔地显化你的人生 ✨',
+    welcome_desc: '7步走下来，遇见更闪耀的自己 💫', welcome_benefits_title: '你将获得',
+    benefit_persona: '找到你的专属花公主人格', benefit_purify: '清理你的限制性信念卡点',
+    benefit_wish: '用BE-DO-HAVE模型清晰许愿', benefit_meditation: 'SATS冥想+情绪调频对齐状态',
+    benefit_action: '灵感行动花田，一步步落地', start_test: '开始测试', test_info: '约3分钟 · 15题 · 解锁你的公主身份',
+    home_good_day: '今天也是你显化的好日子 ✨', fortune_title: '今日显化运势 · 点击查看详情',
+    zodiac_title: '星座运势 · 点击查看详情', affirm_title: '今日肯定语 · 点击换一句', mood_question: '今天心情怎么样？',
+    mood_not_recorded: '还没记录', mood_happy: '开心', mood_calm: '平静', mood_meh: '有点down', mood_anxious: '焦虑',
+    mood_sad: '难过', mood_angry: '生气', lang_switched: '语言已切换', data_exported: '数据已导出',
+    data_export_failed: '数据导出失败', yes: '是', no: '否', save: '保存', cancel: '取消', confirm: '确定', close: '关闭',
+    wish: '许愿', diary: '日记', energy: '能量', level: '等级', badge: '徽章', streak_days: '连续打卡', days: '天',
+    count: '数量', refresh_complete: '刷新完成', loading: '加载中', error: '错误', success: '成功', tip: '提示',
+    detail: '详情', search: '搜索', add: '添加', edit: '编辑', delete: '删除', share: '分享', download: '下载',
+    upload: '上传', profile: '个人资料', nickname: '昵称', birthday: '生日', zodiac: '星座', manifest_method: '显化方法',
+    meditation: '冥想', affirmation: '肯定语', visualization: '视觉化', revision: '修正法', gratitude: '感恩',
+    garden: '花园', flower: '花', tool: '工具', library: '图书馆', record: '记录', challenge: '挑战', sleep: '睡眠',
+    breathe: '呼吸', timer: '计时器', tarot: '塔罗', emotion: '情绪', habit: '习惯', mood: '心情', stats: '统计',
+    report: '报告', progress: '进度', completed: '已完成', uncompleted: '未完成', today: '今天', yesterday: '昨天',
+    tomorrow: '明天', week: '周', month: '月', year: '年', all: '全部', none: '无', back: '返回', next: '下一页',
+    prev: '上一页', submit: '提交', done: '完成', skip: '跳过', continue: '继续', retry: '重试',
+    loading_error: '加载出错，请重试', no_data: '暂无数据', coming_soon: '即将上线', enjoy_journey: '享受你的显化旅程',
+    daily_checkin: '每日打卡', checkin_success: '打卡成功', checkin_streak: '连续打卡', checkin_record: '打卡记录',
+    affirmation_loop: '肯定语循环', focus_wheel: '心念转轮', one_minute_magic: '一分钟魔法', universe_wallet: '宇宙钱包',
+    mood_compass: '心情罗盘', pillow_talk: '枕边蜜语', let_go_ritual: '放手仪式', old_story_rewrite: '旧故事翻篇',
+    wish_box: '心愿宝盒', gratitude_storm: '感恩风暴', treasure_box: '显化百宝箱', wish_time_machine: '愿望时光机',
+    manifest_report: '显化报告', pdf_report_title: '显化数据报告', pdf_report_generated: '报告生成时间', pdf_nickname: '昵称',
+    pdf_energy: '能量', pdf_level: '等级', pdf_badges: '徽章', pdf_wishes: '愿望', pdf_diaries: '日记',
+    pdf_streak: '连续打卡', pdf_start_date: '开始日期', pdf_total_days: '总天数', pdf_persona: '人格',
+    pdf_mood_history: '心情记录', pdf_habits: '习惯', pdf_affirmations: '肯定语', pdf_no_data: '暂无数据',
+    print_tip: '请在打印对话框中选择"保存为 PDF"', refresh_fortune: '正在刷新运势...'
+  },
+  en: {
+    nav_island: 'Island', nav_tools: 'Manifest', nav_library: 'Library', nav_journal: 'Journal', nav_me: 'Me',
+    app_name: 'Star Garden', settings_title: 'Settings', settings_sound: 'Sound Settings', settings_notification: 'Notifications',
+    settings_personalization: 'Personalization', settings_privacy: 'Privacy', settings_reminder: 'Reminders', settings_data: 'Data',
+    sound_music: 'Background Music', sound_sfx: 'Sound Effects', bubble_tips: 'Bubble Tips', enter_page_bubble: 'Enter Page Bubbles',
+    white_noise: 'White Noise', theme_color: 'Theme Color', island_weather: 'Island Weather', animation: 'Animation', dark_mode: 'Dark Mode',
+    password_lock: 'Password Lock', local_only: 'Local Only', daily_reminder: 'Daily Check-in', meditation_reminder: 'Meditation Reminder',
+    affirm_push: 'Affirmation Push', export_data: 'Export All Data', clear_cache: 'Clear Cache', about_app: 'About Star Garden',
+    energy_checkup: 'Energy Checkup', manifest_journey: 'Manifest Journey', energy_cleanup: 'Energy Cleanup', export_pdf_report: 'Export PDF Report',
+    language: 'Language', lang_zh: '中文', lang_en: 'English', welcome_subtitle: 'Manifest your life gently with science ✨',
+    welcome_desc: '7 steps to meet a more shining self 💫', welcome_benefits_title: 'You will get',
+    benefit_persona: 'Find your exclusive flower princess persona', benefit_purify: 'Clear your limiting belief blocks',
+    benefit_wish: 'Make clear wishes with BE-DO-HAVE model', benefit_meditation: 'SATS meditation + emotional alignment',
+    benefit_action: 'Inspiration action garden, step by step', start_test: 'Start Test', test_info: 'About 3 min · 15 questions · Unlock your princess identity',
+    home_good_day: 'Today is a good day to manifest ✨', fortune_title: 'Today\'s Manifest Fortune · Click for details',
+    zodiac_title: 'Zodiac Fortune · Click for details', affirm_title: 'Daily Affirmation · Click to refresh', mood_question: 'How are you feeling today?',
+    mood_not_recorded: 'Not recorded', mood_happy: 'Happy', mood_calm: 'Calm', mood_meh: 'Meh', mood_anxious: 'Anxious',
+    mood_sad: 'Sad', mood_angry: 'Angry', lang_switched: 'Language switched', data_exported: 'Data exported',
+    data_export_failed: 'Data export failed', yes: 'Yes', no: 'No', save: 'Save', cancel: 'Cancel', confirm: 'Confirm', close: 'Close',
+    wish: 'Wish', diary: 'Diary', energy: 'Energy', level: 'Level', badge: 'Badge', streak_days: 'Streak', days: 'Days',
+    count: 'Count', refresh_complete: 'Refresh complete', loading: 'Loading', error: 'Error', success: 'Success', tip: 'Tip',
+    detail: 'Detail', search: 'Search', add: 'Add', edit: 'Edit', delete: 'Delete', share: 'Share', download: 'Download',
+    upload: 'Upload', profile: 'Profile', nickname: 'Nickname', birthday: 'Birthday', zodiac: 'Zodiac', manifest_method: 'Manifest Method',
+    meditation: 'Meditation', affirmation: 'Affirmation', visualization: 'Visualization', revision: 'Revision', gratitude: 'Gratitude',
+    garden: 'Garden', flower: 'Flower', tool: 'Tools', library: 'Library', record: 'Records', challenge: 'Challenge', sleep: 'Sleep',
+    breathe: 'Breathe', timer: 'Timer', tarot: 'Tarot', emotion: 'Emotion', habit: 'Habit', mood: 'Mood', stats: 'Stats',
+    report: 'Report', progress: 'Progress', completed: 'Completed', uncompleted: 'Uncompleted', today: 'Today', yesterday: 'Yesterday',
+    tomorrow: 'Tomorrow', week: 'Week', month: 'Month', year: 'Year', all: 'All', none: 'None', back: 'Back', next: 'Next',
+    prev: 'Prev', submit: 'Submit', done: 'Done', skip: 'Skip', continue: 'Continue', retry: 'Retry',
+    loading_error: 'Loading error, please retry', no_data: 'No data yet', coming_soon: 'Coming soon', enjoy_journey: 'Enjoy your manifest journey',
+    daily_checkin: 'Daily Check-in', checkin_success: 'Check-in success', checkin_streak: 'Check-in streak', checkin_record: 'Check-in records',
+    affirmation_loop: 'Affirmation Loop', focus_wheel: 'Focus Wheel', one_minute_magic: 'One Minute Magic', universe_wallet: 'Universe Wallet',
+    mood_compass: 'Mood Compass', pillow_talk: 'Pillow Talk', let_go_ritual: 'Let Go Ritual', old_story_rewrite: 'Old Story Rewrite',
+    wish_box: 'Wish Box', gratitude_storm: 'Gratitude Storm', treasure_box: 'Treasure Box', wish_time_machine: 'Wish Time Machine',
+    manifest_report: 'Manifest Report', pdf_report_title: 'Manifestation Data Report', pdf_report_generated: 'Report generated at',
+    pdf_nickname: 'Nickname', pdf_energy: 'Energy', pdf_level: 'Level', pdf_badges: 'Badges', pdf_wishes: 'Wishes', pdf_diaries: 'Diaries',
+    pdf_streak: 'Streak', pdf_start_date: 'Start Date', pdf_total_days: 'Total Days', pdf_persona: 'Persona',
+    pdf_mood_history: 'Mood History', pdf_habits: 'Habits', pdf_affirmations: 'Affirmations', pdf_no_data: 'No data',
+    print_tip: 'Please select "Save as PDF" in the print dialog', refresh_fortune: 'Refreshing fortune...'
+  }
+};
+let currentLang = 'zh';
+try {
+  const savedLang = localStorage.getItem('cosmos_lang');
+  if (savedLang && TRANSLATIONS[savedLang]) currentLang = savedLang;
+} catch(_) {}
+function t(key) {
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS['zh'];
+  return dict[key] !== undefined ? dict[key] : (TRANSLATIONS['zh'][key] !== undefined ? TRANSLATIONS['zh'][key] : key);
+}
+function setLang(lang) {
+  if (!TRANSLATIONS[lang]) return;
+  currentLang = lang;
+  try { localStorage.setItem('cosmos_lang', lang); } catch(_) {}
+  applyTranslations();
+  showToast(t('lang_switched'));
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (key) el.innerHTML = t(key);
+  });
+}
+
 function $el(id) { return document.getElementById(id); }
 function setText(id, text) { const el = $el(id); if (el) el.textContent = text; }
 function setHTML(id, html) { const el = $el(id); if (el) el.innerHTML = html; }
@@ -1089,22 +1218,42 @@ const MEDIA = {
   ],
 };
 const BADGES = [
-  { id: 'first_test', name: '初入仙境', icon: '✨', desc: '完成第一次测试' },
-  { id: 'first_wish', name: '许愿少女', icon: '🌠', desc: '许下第一个愿望' },
-  { id: 'first_manifest', name: '显化新手', icon: '💫', desc: '显化第一个愿望' },
-  { id: 'flower_10', name: '小花仙', icon: '🌸', desc: '种出10朵花' },
-  { id: 'flower_50', name: '花仙子', icon: '🌺', desc: '种出50朵花' },
-  { id: 'purify_21', name: '信念净化师', icon: '🔮', desc: '信念净化21天' },
-  { id: 'energy_100', name: '见习公主', icon: '👑', desc: '累计100能量' },
-  { id: 'energy_500', name: '正式公主', icon: '👸', desc: '累计500能量' },
-  { id: 'energy_1000', name: '魔法公主', icon: '💎', desc: '累计1000能量' },
-  { id: 'purify_master', name: '星光水晶魔法师', icon: '💎', desc: '净化50个信念' },
-  { id: 'sats_5', name: '梦境公主', icon: '🌙', desc: '完成5次SATS冥想' },
-  { id: 'revision', name: '时光治愈者', icon: '🕊️', desc: '完成修正法冥想' },
-  { id: 'affirm_collector', name: '肯定语收藏家', icon: '💖', desc: '收藏20条肯定语' },
-  { id: 'bookworm', name: '书香公主', icon: '📚', desc: '阅读10篇智慧花园文章' },
-  { id: 'diary_7', name: '日记少女', icon: '📔', desc: '连续写日记7天' },
-  { id: 'course_complete', name: '显化毕业生', icon: '🎓', desc: '学完显化入门7课' },
+  { id: 'first_test', name: '初入仙境', icon: '✨', desc: '完成第一次测试', color: '#E8B5C8' },
+  { id: 'first_wish', name: '许愿少女', icon: '🌠', desc: '许下第一个愿望', color: '#C8A5D8' },
+  { id: 'first_manifest', name: '显化新手', icon: '💫', desc: '显化第一个愿望', color: '#B8A9C9' },
+  { id: 'flower_10', name: '小花仙', icon: '🌸', desc: '种出10朵花', color: '#F0C8D8' },
+  { id: 'flower_50', name: '花仙子', icon: '🌺', desc: '种出50朵花', color: '#E8A8C8' },
+  { id: 'flower_100', name: '百花仙子', icon: '🌷', desc: '种出100朵花', color: '#D488B8' },
+  { id: 'purify_21', name: '信念净化师', icon: '🔮', desc: '信念净化21天', color: '#B8A9D9' },
+  { id: 'purify_50', name: '星光魔法师', icon: '✨', desc: '净化50个信念', color: '#9B8BB9' },
+  { id: 'purify_100', name: '水晶大师', icon: '💎', desc: '净化100个信念', color: '#7A6B99' },
+  { id: 'energy_100', name: '见习公主', icon: '👑', desc: '累计100能量', color: '#E8D5B0' },
+  { id: 'energy_500', name: '正式公主', icon: '👸', desc: '累计500能量', color: '#D4C090' },
+  { id: 'energy_1000', name: '魔法公主', icon: '💎', desc: '累计1000能量', color: '#C8A870' },
+  { id: 'energy_5000', name: '宇宙公主', icon: '🌟', desc: '累计5000能量', color: '#B89850' },
+  { id: 'sats_5', name: '梦境公主', icon: '🌙', desc: '完成5次SATS冥想', color: '#A8B8D8' },
+  { id: 'sats_30', name: '梦境女王', icon: '👑', desc: '完成30次SATS冥想', color: '#8898C8' },
+  { id: 'revision', name: '时光治愈者', icon: '🕊️', desc: '完成修正法冥想', color: '#B8C8D8' },
+  { id: 'revision_10', name: '时光旅人', icon: '⏳', desc: '完成10次修正法', color: '#98A8C8' },
+  { id: 'affirm_collector', name: '肯定语收藏家', icon: '💖', desc: '收藏20条肯定语', color: '#E8B5C8' },
+  { id: 'affirm_collector_50', name: '肯定语大师', icon: '💗', desc: '收藏50条肯定语', color: '#D495A8' },
+  { id: 'bookworm', name: '书香公主', icon: '📚', desc: '阅读10篇智慧花园文章', color: '#C8B8A8' },
+  { id: 'bookworm_50', name: '博学公主', icon: '📖', desc: '阅读50篇文章', color: '#A89888' },
+  { id: 'diary_7', name: '日记少女', icon: '📔', desc: '连续写日记7天', color: '#D8C8B8' },
+  { id: 'diary_30', name: '日记作家', icon: '✍️', desc: '连续写日记30天', color: '#B8A898' },
+  { id: 'course_complete', name: '显化毕业生', icon: '🎓', desc: '学完显化入门7课', color: '#C8D8E8' },
+  { id: 'course_master', name: '显化教授', icon: '🏆', desc: '学完所有课程', color: '#A8C8D8' },
+  { id: 'streak_7', name: '坚持者', icon: '🔥', desc: '连续打卡7天', color: '#E8B090' },
+  { id: 'streak_30', name: '自律女王', icon: '💪', desc: '连续打卡30天', color: '#C89070' },
+  { id: 'mood_30', name: '情绪观察者', icon: '🧘', desc: '记录30天心情', color: '#A8C8B0' },
+  { id: 'mood_100', name: '情绪大师', icon: '🌈', desc: '记录100天心情', color: '#88A890' },
+  { id: 'tarot_10', name: '塔罗学徒', icon: '🔮', desc: '抽牌10次', color: '#B8A9C9' },
+  { id: 'tarot_50', name: '塔罗大师', icon: '🃏', desc: '抽牌50次', color: '#9889A9' },
+  { id: 'welcome_test', name: '潜力发现者', icon: '🔍', desc: '完成欢迎测试', color: '#D8C8E8' },
+  { id: 'night_owl', name: '夜猫子', icon: '🦉', desc: '深夜使用App', color: '#8898C8' },
+  { id: 'early_bird', name: '早起的鸟', icon: '🐦', desc: '清晨使用App', color: '#E8D8A8' },
+  { id: 'generous', name: '分享达人', icon: '💌', desc: '分享3次', color: '#E8B5C8' },
+  { id: 'full_moon', name: '满月仪式', icon: '🌕', desc: '在满月日使用', color: '#C8C8D8' },
 ];
 const LEVELS = [
   { name: '新手', min: 0 },
@@ -1198,6 +1347,7 @@ const DEFAULT_STATE = {
   password: null,
   passwordEnabled: false,
   remindCheckin: false,
+  notifications: false,
   meditationTime: '22:00',
   affirmTime: '09:00',
   startDate: null,
@@ -1474,29 +1624,79 @@ function addEnergy(amount, reason = '') {
 }
 function checkBadges() {
   const nb = [];
-  if (state.testHistory.length > 0 && !state.badges.includes('first_test')) { state.badges.push('first_test'); nb.push('初入仙境'); }
-  if (state.wishes.length > 0 && !state.badges.includes('first_wish')) { state.badges.push('first_wish'); nb.push('许愿少女'); }
-  if (state.wishes.filter(w => w.done).length > 0 && !state.badges.includes('first_manifest')) { state.badges.push('first_manifest'); nb.push('显化新手'); }
-  if (state.garden.flowers && state.garden.flowers.filter(f => f.done).length >= 10 && !state.badges.includes('flower_10')) { state.badges.push('flower_10'); nb.push('小花仙'); }
-  if (state.garden.flowers && state.garden.flowers.filter(f => f.done).length >= 50 && !state.badges.includes('flower_50')) { state.badges.push('flower_50'); nb.push('花仙子'); }
-  if (state.purify.streak >= 21 && !state.badges.includes('purify_21')) { state.badges.push('purify_21'); nb.push('信念净化师'); }
-  if (state.energy >= 100 && !state.badges.includes('energy_100')) { state.badges.push('energy_100'); nb.push('见习公主'); }
-  if (state.energy >= 500 && !state.badges.includes('energy_500')) { state.badges.push('energy_500'); nb.push('正式公主'); }
-  if (state.energy >= 1000 && !state.badges.includes('energy_1000')) { state.badges.push('energy_1000'); nb.push('魔法公主'); }
-  if (state.purify.total >= 50 && !state.badges.includes('purify_master')) { state.badges.push('purify_master'); nb.push('星光水晶魔法师'); }
-  if (state.satsCount >= 5 && !state.badges.includes('sats_5')) { state.badges.push('sats_5'); nb.push('梦境公主'); }
-  if (state.revisionCount >= 1 && !state.badges.includes('revision')) { state.badges.push('revision'); nb.push('时光治愈者'); }
-  if ((state.affirmations.saved || []).length >= 20 && !state.badges.includes('affirm_collector')) { state.badges.push('affirm_collector'); nb.push('肯定语收藏家'); }
-  if (state.libReadCount >= 10 && !state.badges.includes('bookworm')) { state.badges.push('bookworm'); nb.push('书香公主'); }
-  if (state.diaryStreak >= 7 && !state.badges.includes('diary_7')) { state.badges.push('diary_7'); nb.push('日记少女'); }
-  if (state.courseProgress.length >= 7 && !state.badges.includes('course_complete')) { state.badges.push('course_complete'); nb.push('显化毕业生'); }
+  const addBadge = (id, name, condition) => {
+    if (condition && !state.badges.includes(id)) { state.badges.push(id); nb.push(name); }
+  };
+  addBadge('first_test', '初入仙境', state.testHistory.length > 0);
+  addBadge('first_wish', '许愿少女', state.wishes.length > 0);
+  addBadge('first_manifest', '显化新手', state.wishes.filter(w => w.done).length > 0);
+  addBadge('flower_10', '小花仙', state.garden.flowers && state.garden.flowers.filter(f => f.done).length >= 10);
+  addBadge('flower_50', '花仙子', state.garden.flowers && state.garden.flowers.filter(f => f.done).length >= 50);
+  addBadge('flower_100', '百花仙子', state.garden.flowers && state.garden.flowers.filter(f => f.done).length >= 100);
+  addBadge('purify_21', '信念净化师', state.purify.streak >= 21);
+  addBadge('purify_50', '星光魔法师', state.purify.total >= 50);
+  addBadge('purify_100', '水晶大师', state.purify.total >= 100);
+  addBadge('energy_100', '见习公主', state.energy >= 100);
+  addBadge('energy_500', '正式公主', state.energy >= 500);
+  addBadge('energy_1000', '魔法公主', state.energy >= 1000);
+  addBadge('energy_5000', '宇宙公主', state.energy >= 5000);
+  addBadge('sats_5', '梦境公主', state.satsCount >= 5);
+  addBadge('sats_30', '梦境女王', state.satsCount >= 30);
+  addBadge('revision', '时光治愈者', state.revisionCount >= 1);
+  addBadge('revision_10', '时光旅人', state.revisionCount >= 10);
+  addBadge('affirm_collector', '肯定语收藏家', (state.affirmations.saved || []).length >= 20);
+  addBadge('affirm_collector_50', '肯定语大师', (state.affirmations.saved || []).length >= 50);
+  addBadge('bookworm', '书香公主', state.libReadCount >= 10);
+  addBadge('bookworm_50', '博学公主', state.libReadCount >= 50);
+  addBadge('diary_7', '日记少女', state.diaryStreak >= 7);
+  addBadge('diary_30', '日记作家', state.diaryStreak >= 30);
+  addBadge('course_complete', '显化毕业生', state.courseProgress.length >= 7);
+  addBadge('course_master', '显化教授', state.courseProgress.length >= 20);
+  addBadge('streak_7', '坚持者', state.checkinStreak >= 7);
+  addBadge('streak_30', '自律女王', state.checkinStreak >= 30);
+  addBadge('mood_30', '情绪观察者', (state.emotionHistory || []).length >= 30);
+  addBadge('mood_100', '情绪大师', (state.emotionHistory || []).length >= 100);
+  addBadge('tarot_10', '塔罗学徒', (state.tarotDraws || 0) >= 10);
+  addBadge('tarot_50', '塔罗大师', (state.tarotDraws || 0) >= 50);
+  addBadge('welcome_test', '潜力发现者', state.welcomeTestDone);
+  // 时间相关徽章
+  const hour = new Date().getHours();
+  addBadge('night_owl', '夜猫子', hour >= 0 && hour < 5);
+  addBadge('early_bird', '早起的鸟', hour >= 5 && hour < 8);
+  addBadge('full_moon', '满月仪式', isFullMoon());
+  addBadge('generous', '分享达人', (state.shareCount || 0) >= 3);
   if (nb.length) {
     saveState();
-    setTimeout(() => {
-      showAlert('🏆', '获得新徽章啦！', `恭喜公主获得：${nb.join('、')} 🏅`);
-      triggerConfetti();
-    }, 600);
+    nb.forEach((name, i) => setTimeout(() => showBadgeUnlock(name), i * 1200));
   }
+}
+function isFullMoon() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  // 简化判断：农历十五附近（2025-2026 常用满月日期）
+  const knownFullMoons = ['2025-01-14','2025-02-12','2025-03-14','2025-04-13','2025-05-12','2025-06-11','2025-07-10','2025-08-09','2025-10-07','2025-11-05','2025-12-05','2026-01-03','2026-02-02','2026-03-03','2026-04-01','2026-05-01','2026-05-30','2026-06-29','2026-07-28','2026-08-27','2026-09-25','2026-10-25','2026-11-23','2026-12-23'];
+  const todayStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  return knownFullMoons.includes(todayStr);
+}
+function showBadgeUnlock(name) {
+  const badge = BADGES.find(b => b.name === name);
+  if (!badge) return;
+  const modal = document.getElementById('badge-unlock-modal');
+  if (modal) {
+    setText('badge-unlock-name', name);
+    setText('badge-unlock-desc', badge.desc);
+    setText('badge-unlock-icon', badge.icon);
+    if (modal.querySelector('.badge-unlock-bg')) {
+      modal.querySelector('.badge-unlock-bg').style.background = badge.color || '#E8B5C8';
+    }
+    showModal('badge-unlock-modal');
+  } else {
+    showToast(`🏆 获得徽章：${name}！`);
+  }
+  playSound('sparkle');
+  triggerConfetti();
 }
 function triggerConfetti() {
   const emojis = ['✨', '💖', '🌸', '⭐', '💫', '🦋', '🌺', '💎', '🎀', '💕'];
@@ -1967,6 +2167,9 @@ function setTheme(theme, btn) {
 }
 let __pageHistory = [];
 function showPage(name, direction) {
+  // 页面别名映射（统一路由名称）
+  const pageAlias = { dream: 'dreams', checkin: 'habit' };
+  if (pageAlias[name]) name = pageAlias[name];
   const pages = document.querySelectorAll('.page');
   pages.forEach(p => {
     p.classList.remove('active', 'slide-in-right', 'slide-in-left', 'fade-in');
@@ -2065,29 +2268,65 @@ function switchTab(tab) {
   if (tab === 'island') { updateHomeStats(); updateFortuneCard(); updateTimeAndWeather(); }
   if (window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-function loadDataScript(src) {
-  return new Promise((resolve) => {
+function loadDataScript(src, retries = 2) {
+  return new Promise((resolve, reject) => {
     const key = '__data_' + src.replace(/[^a-zA-Z0-9]/g, '_');
     if (window[key]) return resolve();
     const s = document.createElement('script');
     s.src = src;
     s.onload = () => { window[key] = true; resolve(); };
-    s.onerror = () => resolve();
+    s.onerror = () => {
+      if (retries > 0) {
+        setTimeout(() => loadDataScript(src, retries - 1).then(resolve).catch(reject), 800);
+      } else {
+        console.warn('Data script failed:', src);
+        resolve(); // graceful degradation
+      }
+    };
     document.head.appendChild(s);
   });
 }
 const __chunkCache = {};
-async function loadChunk(name) {
+async function loadChunk(name, retries = 2) {
   if (__chunkCache[name]) return __chunkCache[name];
   try {
-    const mod = await import('./js/chunks/' + name + '.js');
+    const mod = await import('./js/chunks/' + name + '.js?v=' + Date.now());
     __chunkCache[name] = mod;
     return mod;
   } catch(e) {
-    console.error('加载 chunk ' + name + ' 失败:', e);
-    showToast('模块加载失败，请刷新页面重试');
+    if (retries > 0) {
+      await new Promise(r => setTimeout(r, 800));
+      return loadChunk(name, retries - 1);
+    }
+    console.error('Chunk load failed:', name, e);
+    showChunkError(name);
     throw e;
   }
+}
+function showChunkError(name) {
+  const el = document.getElementById('chunk-error-modal');
+  if (el) {
+    setText('chunk-error-name', name);
+    showModal('chunk-error-modal');
+  } else {
+    showToast('模块加载失败，点击重试 🔄');
+  }
+}
+function retryLoadChunk(name) {
+  hideModal('chunk-error-modal');
+  delete __chunkCache[name];
+  loadChunk(name).then(() => {
+    showToast('✨ 加载成功！');
+    if (name === 'tarot') { showPage('tarot'); renderTarot(); }
+    if (name === 'garden') { showPage('garden'); renderGarden(); }
+    if (name === 'diary') { showPage('diary'); renderDiary(); }
+    if (name === 'library') { showPage('library'); switchTab('library'); renderLibrary(); }
+    if (name === 'cloud') { showPage('cloud'); renderCloud(); }
+    if (name === 'stars') { showPage('stars'); renderStars(); }
+    if (name === 'wishwall') { showPage('wishwall'); renderWishwall(); }
+    if (name === 'manifest') { showPage('369'); init369(); }
+    if (name === 'tools') { showPage('community'); renderCommunityFeed(); }
+  }).catch(() => showToast('重试失败，请检查网络'));
 }
 function openModule(name) {
   showPage(name);
@@ -2420,6 +2659,7 @@ function initSettingsUI() {
     'toggle-password': state.passwordEnabled,
     'toggle-localonly': true,
     'toggle-remind': state.remindCheckin,
+    'toggle-notification': state.notifications && Notification.permission === 'granted',
   };
   for (const [id, val] of Object.entries(toggles)) {
     const el = document.getElementById(id);
@@ -2476,6 +2716,68 @@ function toggleSetting(key, el) {
   saveState();
   playSound('ding');
 }
+
+/* ===== C8: 每日推送/提醒 ===== */
+function toggleNotificationPermission(el) {
+  if (!('Notification' in window)) {
+    showToast('您的浏览器不支持通知功能');
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    state.notifications = !state.notifications;
+    el.classList.toggle('on', state.notifications);
+    saveState();
+    if (state.notifications) {
+      showToast('🔔 每日提醒已开启');
+      scheduleDailyReminders();
+    } else {
+      showToast('🔕 每日提醒已关闭');
+    }
+  } else {
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') {
+        state.notifications = true;
+        el.classList.add('on');
+        saveState();
+        showToast('🔔 每日提醒已开启');
+        scheduleDailyReminders();
+        sendNotification('✨ 星愿花园', '每日提醒已开启，我会陪伴你度过每一天～');
+      } else {
+        showToast('需要通知权限才能开启提醒');
+      }
+    });
+  }
+}
+function sendNotification(title, body, tag = 'default') {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, { body, tag, icon: './apple-touch-icon.png', badge: './apple-touch-icon.png' });
+  } catch(e) { console.warn('Notification failed:', e); }
+}
+function scheduleDailyReminders() {
+  if (!state.notifications) return;
+  // 清除旧的定时器
+  if (window.__morningTimer) clearTimeout(window.__morningTimer);
+  if (window.__eveningTimer) clearTimeout(window.__eveningTimer);
+  const now = new Date();
+  const morning = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+  const evening = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 0, 0);
+  if (morning <= now) morning.setDate(morning.getDate() + 1);
+  if (evening <= now) evening.setDate(evening.getDate() + 1);
+  const morningDelay = morning - now;
+  const eveningDelay = evening - now;
+  window.__morningTimer = setTimeout(() => {
+    const affirmations = ['今天也是你显化的好日子 ✨', '你值得拥有世间一切美好', '相信自己，你可以创造任何奇迹', '宇宙正在为你安排最美好的事情'];
+    const msg = affirmations[Math.floor(Math.random() * affirmations.length)];
+    sendNotification('☀️ 早安公主', msg, 'morning');
+    scheduleDailyReminders(); // 重新调度下一天
+  }, morningDelay);
+  window.__eveningTimer = setTimeout(() => {
+    sendNotification('🌙 晚安公主', '今天过得怎么样？记得写下今天的日记和感恩清单哦～', 'evening');
+  }, eveningDelay);
+}
+
 function selectVoice(type, el) {
   state.voiceType = type;
   saveState();
@@ -2583,6 +2885,86 @@ function exportData() {
     showToast('数据导出失败: ' + (e.message || '未知错误'));
   }
 }
+
+/* ===== C9: PDF 报告导出 ===== */
+function exportPDFReport() {
+  try {
+    const s = window.state || {};
+    const badges = (s.badges || []).map(b => b.name || b).join(', ') || t('pdf_no_data');
+    const wishes = (s.wishes || []).map(w => w.text || w).join(', ') || t('pdf_no_data');
+    const diaries = (s.diaries || []).length;
+    const streak = s.streak || 0;
+    const energy = s.energy || 0;
+    const level = s.level || t('pdf_no_data');
+    const nickname = s.nickname || t('pdf_no_data');
+    const startDate = s.startDate ? new Date(s.startDate).toLocaleDateString() : t('pdf_no_data');
+    const totalDays = s.startDate ? Math.max(1, Math.ceil((Date.now() - new Date(s.startDate).getTime()) / 86400000)) : 0;
+    const persona = s.mainPersona ? (s.mainPersona.name || s.mainPersona) : t('pdf_no_data');
+    const habits = (s.habits || []).length;
+    const affirmations = (s.affirmations && s.affirmations.saved) ? s.affirmations.saved.length : 0;
+    const moodHistory = (s.moodHistory || []).length;
+    const reportHTML = `
+<!DOCTYPE html>
+<html lang="${currentLang}">
+<head>
+<meta charset="UTF-8">
+<title>${t('pdf_report_title')}</title>
+<style>
+body{font-family:'Noto Sans SC',sans-serif;background:#FAF5F7;color:#5D4E6D;padding:40px;max-width:800px;margin:0 auto}
+h1{font-family:'ZCOOL XiaoWei',serif;color:#B8A9C9;border-bottom:2px solid #E8D5E0;padding-bottom:16px;margin-bottom:24px}
+.section{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 4px 24px rgba(184,169,201,0.08)}
+.label{font-size:12px;color:#8B7E9C;margin-bottom:4px}
+.value{font-size:16px;font-weight:500;color:#5D4E6D}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.badge{display:inline-block;background:linear-gradient(135deg,#F5E1EA,#E8DEEF);padding:4px 12px;border-radius:12px;font-size:12px;margin:4px 4px 0 0}
+.footer{text-align:center;font-size:12px;color:#B8A9C9;margin-top:32px;padding-top:16px;border-top:1px solid #E8D5E0}
+@media print{body{background:#fff;padding:20px}.no-print{display:none!important}}
+</style>
+</head>
+<body>
+<h1>📊 ${t('pdf_report_title')}</h1>
+<div class="section"><div class="label">${t('pdf_report_generated')}</div><div class="value">${new Date().toLocaleString()}</div></div>
+<div class="grid">
+<div class="section"><div class="label">${t('pdf_nickname')}</div><div class="value">${nickname}</div></div>
+<div class="section"><div class="label">${t('pdf_persona')}</div><div class="value">${persona}</div></div>
+<div class="section"><div class="label">${t('pdf_energy')}</div><div class="value">${energy} 💎</div></div>
+<div class="section"><div class="label">${t('pdf_level')}</div><div class="value">${level}</div></div>
+<div class="section"><div class="label">${t('pdf_streak')}</div><div class="value">${streak} ${t('days')}</div></div>
+<div class="section"><div class="label">${t('pdf_total_days')}</div><div class="value">${totalDays} ${t('days')}</div></div>
+<div class="section"><div class="label">${t('pdf_start_date')}</div><div class="value">${startDate}</div></div>
+<div class="section"><div class="label">${t('pdf_diaries')}</div><div class="value">${diaries}</div></div>
+</div>
+<div class="section"><div class="label">${t('pdf_badges')}</div><div>${badges.split(', ').map(b => b ? '<span class="badge">' + b + '</span>' : '').join('')}</div></div>
+<div class="section"><div class="label">${t('pdf_wishes')}</div><div class="value">${wishes}</div></div>
+<div class="grid">
+<div class="section"><div class="label">${t('pdf_habits')}</div><div class="value">${habits}</div></div>
+<div class="section"><div class="label">${t('pdf_affirmations')}</div><div class="value">${affirmations}</div></div>
+<div class="section"><div class="label">${t('pdf_mood_history')}</div><div class="value">${moodHistory}</div></div>
+</div>
+<div class="footer">
+<p>${t('app_name')} · ${t('enjoy_journey')}</p>
+<p class="no-print" style="margin-top:8px;color:#8B7E9C">${t('print_tip')}</p>
+</div>
+</body>
+</html>`;
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(reportHTML);
+    doc.close();
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 1000);
+    }, 400);
+    showToast(t('pdf_report_title') + ' ' + t('success'));
+  } catch(e) {
+    showToast(t('data_export_failed') + ': ' + (e.message || 'Error'));
+  }
+}
+
 function clearCache() {
   if (confirm('确定要清除所有数据吗？这将删除你所有的记录哦～')) {
     try { localStorage.removeItem('cosmos_island_state_v3'); } catch(e) {}
@@ -4908,10 +5290,8 @@ function init() {
       const hasActivity = Object.keys(activityLog).length > 0;
       if (hasActivity) heatmapWrap.classList.remove('hidden');
     }
-    if ('Notification' in window && Notification.permission === 'default') {
-      setTimeout(() => {
-        Notification.requestPermission().catch(() => {});
-      }, 3000);
+    if ('Notification' in window && state.notifications && Notification.permission === 'granted') {
+      scheduleDailyReminders();
     }
     if (__initInterval) clearInterval(__initInterval);
     __initInterval = setInterval(() => {
@@ -8585,3 +8965,126 @@ window.updateNickname = updateNickname;
 window.saveBirthday = saveBirthday;
 window.openZodiacFortune = openZodiacFortune;
 window.initZodiacAndBirthday = initZodiacAndBirthday;
+window.showBadgeUnlock = showBadgeUnlock;
+window.isFullMoon = isFullMoon;
+window.retryLoadChunk = retryLoadChunk;
+window.toggleNotificationPermission = toggleNotificationPermission;
+window.sendNotification = sendNotification;
+window.scheduleDailyReminders = scheduleDailyReminders;
+
+/* ===== 手势滑动返回 + 下拉刷新 + 统一音效 ===== */
+(function initGesturesAndEffects() {
+  // B4: 手势滑动返回上一页
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    }
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    if (!touchStartX && !touchStartY) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+    // 从屏幕左边缘向右滑动超过 80px，横向位移大于纵向，且时间在 400ms 内
+    if (touchStartX < 40 && dx > 80 && Math.abs(dx) > Math.abs(dy) * 2 && dt < 400) {
+      goBack();
+    }
+    touchStartX = 0; touchStartY = 0;
+  }, { passive: true });
+
+  // B5: 下拉刷新（仅在首页顶部下拉时刷新运势和肯定语）
+  let pullStartY = 0, isPulling = false;
+  const islandPage = document.getElementById('page-island');
+  if (islandPage) {
+    islandPage.addEventListener('touchstart', function(e) {
+      if (islandPage.scrollTop <= 0 && e.touches.length === 1) {
+        pullStartY = e.touches[0].clientY;
+        isPulling = true;
+      }
+    }, { passive: true });
+    islandPage.addEventListener('touchmove', function(e) {
+      if (!isPulling || e.touches.length !== 1) return;
+      const dy = e.touches[0].clientY - pullStartY;
+      if (dy > 120 && islandPage.scrollTop <= 0) {
+        isPulling = false;
+        playSound('ding');
+        showToast('🔄 正在刷新运势...');
+        updateFortuneCard();
+        refreshDailyAffirm();
+        updateTimeAndWeather();
+        setTimeout(() => showToast('✨ 刷新完成'), 600);
+      }
+    }, { passive: true });
+    islandPage.addEventListener('touchend', function() { isPulling = false; }, { passive: true });
+  }
+
+  // B6: 统一点击音效反馈（给所有按钮、卡片、chip 添加 subtle haptic + sound）
+  document.addEventListener('click', function(e) {
+    const el = e.target.closest('button, .card-hover, .chip-soft, .soft-btn, .mood-emoji, .step-dot');
+    if (!el) return;
+    // 视觉反馈：缩放动画
+    el.style.transform = 'scale(0.96)';
+    setTimeout(() => el.style.transform = '', 150);
+    // 音效：区分类型
+    if (el.classList.contains('btn-primary') || el.classList.contains('soft-btn') && el.classList.contains('btn-primary')) {
+      playSound('ding');
+    } else if (el.classList.contains('chip-soft') || el.classList.contains('mood-emoji')) {
+      playSound('pop');
+    } else {
+      playSound('click');
+    }
+  });
+})();
+
+/* ===== C9: 导出 PDF 报告 ===== */
+function exportPDFReport() {
+  const today = getTodayStr();
+  const badgeList = (state.badges || []).map(id => {
+    const b = BADGES.find(x => x.id === id);
+    return b ? `${b.icon} ${b.name}` : id;
+  }).join('、') || '暂无';
+  const wishes = (state.wishes || []).map((w, i) => `<tr><td>${i+1}</td><td>${w.text || w.be || '-'}</td><td>${w.done ? '✅ 已显化' : '⏳ 进行中'}</td></tr>`).join('');
+  const html = `
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>星愿花园报告 ${today}</title>
+<style>
+body{font-family:'Noto Sans SC',sans-serif;max-width:700px;margin:40px auto;padding:20px;color:#5D4E6D;background:#FAF5F7;line-height:1.6}
+h1{color:#B8A9C9;font-size:24px;border-bottom:2px solid #E8D5E0;padding-bottom:10px}
+.meta{font-size:12px;color:#8B7E9C;margin-bottom:20px}
+.section{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(184,169,201,0.1)}
+.section h2{font-size:16px;color:#B8A9C9;margin-top:0;border-left:3px solid #D4B5C7;padding-left:8px}
+.badge{display:inline-block;background:linear-gradient(135deg,#E8D5E0,#D4B5C7);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;margin:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px;border-bottom:1px solid #E8D5E0;text-align:left}
+th{background:#FAF5F7;color:#8B7E9C;font-weight:500}
+@media print{body{background:#fff;margin:0;padding:16px}}
+</style></head><body>
+<h1>🌸 星愿花园 · 个人报告</h1>
+<div class="meta">生成日期：${today} &nbsp;|&nbsp; 昵称：${state.nickname || '小公主'}</div>
+<div class="section"><h2>📊 基础数据</h2>
+<p>💎 能量：${state.energy || 0} &nbsp;|&nbsp; 等级：${getLevel()} &nbsp;|&nbsp; 徽章：${(state.badges || []).length} 个</p>
+<p>📝 日记：${(state.diaries || []).length} 篇 &nbsp;|&nbsp; 愿望：${(state.wishes || []).length} 个 &nbsp;|&nbsp; 已显化：${(state.wishes || []).filter(w => w.done).length} 个</p>
+</div>
+<div class="section"><h2>🏆 徽章墙</h2><p>${badgeList}</p></div>
+<div class="section"><h2>🌠 愿望清单</h2>
+<table><thead><tr><th>#</th><th>愿望</th><th>状态</th></tr></thead><tbody>${wishes || '<tr><td colspan="3" style="text-align:center;color:#B8A9C9">暂无愿望</td></tr>'}</tbody></table>
+</div>
+<div class="section"><h2>🧘 练习统计</h2>
+<p>SATS 冥想：${state.satsCount || 0} 次 &nbsp;|&nbsp; 修正法：${state.revisionCount || 0} 次</p>
+<p>肯定语收藏：${(state.affirmations?.saved || []).length} 条 &nbsp;|&nbsp; 阅读文章：${state.libReadCount || 0} 篇</p>
+</div>
+<div class="meta" style="text-align:center;margin-top:30px">🌸 星愿花园为你记录每一份美好</div>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) { showToast('请允许弹出窗口以导出 PDF'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
+}
+
+/* ===== window 挂载 ===== */
+window.t = t;
+window.setLang = setLang;
+window.exportPDFReport = exportPDFReport;
