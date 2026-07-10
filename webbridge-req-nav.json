@@ -1,0 +1,9 @@
+{
+  "action": "navigate",
+  "args": {
+    "url": "http://127.0.0.1:8001/index.html",
+    "newTab": true,
+    "group_title": "星愿花园系统测试"
+  },
+  "session": "cosmos-test-v7"
+}

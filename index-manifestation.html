@@ -1438,6 +1438,34 @@
       .modal-content {
         border-radius: 20px 20px 16px 16px;
       }
+      .nav-item {
+        padding: 2px 4px;
+        font-size: 9px;
+        min-height: 40px;
+        gap: 1px;
+      }
+      .nav-item svg {
+        width: 18px;
+        height: 18px;
+      }
+      .bottom-nav {
+        padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+      }
+    }
+
+    /* 极小屏：导航栏只显示图标 */
+    @media (max-width: 360px) {
+      .nav-item span {
+        display: none;
+      }
+      .nav-item {
+        min-height: 36px;
+        padding: 4px 2px;
+      }
+      .nav-item svg {
+        width: 20px;
+        height: 20px;
+      }
     }
 
     /* 横屏优化 */
@@ -5240,10 +5268,11 @@ function remCls(id, cls) { const el = $el(id); if (el) el.classList.remove(cls);
 function toggleCls(id, cls, force) { const el = $el(id); if (el) el.classList.toggle(cls, force); }
 function setStyle(id, prop, val) { const el = $el(id); if (el) el.style[prop] = val; }
 function setVal(id, val) { const el = $el(id); if (el) el.value = val; }
-function showModal(id) { addCls(id, 'show'); }
+function showModal(id) { var el = document.getElementById(id); if (el) { el.style.display = ''; el.classList.add('show'); } }
 function hideModal(id) { remCls(id, 'show'); }
 
 // ============================================================
+
 //  开发者日志系统 (v6.4 实时调试面板)
 // ============================================================
 (function initDevLog() {
@@ -6503,9 +6532,26 @@ const DEFAULT_STATE = {
   planNotes: [],
   completedChallenges: [],
   plans: {},
-  completedChallenges: [],
+  // v6.4+ 缺失属性补全
+  favorites: [],
+  tried: {},
+  notes: {},
+  bookReadProgress: {},
+  cbtDrafts: {},
+  currentWheel: null,
+  day: 1,
+  affirmation: '',
+  currentLevel: null,
+  wishDrafts: {},
+  cycleLength: 28,
+  dailyCount: 0,
+  currentDay: 1,
+  currentWish: '',
+  activeCategory: '',
+  lastDailyReset: null,
+  memories: [],
+  cycleStart: null,
 };
-
 let state = loadState();
 
 function loadState() {
@@ -6524,7 +6570,7 @@ function loadState() {
         todayDone: { ...DEFAULT_STATE.todayDone, ...(parsed.todayDone || {}) },
       };
       // 确保数组属性始终存在（防止旧数据覆盖为 null）
-      const arrayProps = ['wishes','diaries','emotionHistory','badges','unlockedPersonas','testHistory','courseProgress','topBeliefs','moodHistory','cbtRecords','revisionNotes','satsRecords','habits','myTasks','universeTasks','items','rampages','signs','wheels','history','bookmarks','bookNotes','favMovies','movieLinks','cards','planNotes','completedChallenges'];
+      const arrayProps = ['wishes','diaries','emotionHistory','badges','unlockedPersonas','testHistory','courseProgress','topBeliefs','moodHistory','cbtRecords','revisionNotes','satsRecords','habits','myTasks','universeTasks','items','rampages','signs','wheels','history','bookmarks','bookNotes','favMovies','movieLinks','cards','planNotes','completedChallenges','favorites','memories'];
       for (const prop of arrayProps) {
         if (!Array.isArray(result[prop])) result[prop] = [];
       }
@@ -6542,6 +6588,11 @@ function loadState() {
       if (!Array.isArray(result.mentalDiet.records)) result.mentalDiet.records = [];
       if (typeof result.volumes !== 'object' || result.volumes === null) result.volumes = { ...DEFAULT_STATE.volumes };
       if (typeof result.todayDone !== 'object' || result.todayDone === null) result.todayDone = {};
+      if (typeof result.tried !== 'object' || result.tried === null) result.tried = {};
+      if (typeof result.notes !== 'object' || result.notes === null) result.notes = {};
+      if (typeof result.bookReadProgress !== 'object' || result.bookReadProgress === null) result.bookReadProgress = {};
+      if (typeof result.cbtDrafts !== 'object' || result.cbtDrafts === null) result.cbtDrafts = {};
+      if (typeof result.wishDrafts !== 'object' || result.wishDrafts === null) result.wishDrafts = {};
       return result;
     }
   } catch (e) {}
@@ -9321,8 +9372,10 @@ function toggleRevision() {
   if (revisionRunning) {
     revisionRunning = false;
     clearInterval(revisionInterval);
+    revisionInterval = null;
     btn.innerHTML = '▶️ 继续';
   } else {
+    if (revisionInterval) { clearInterval(revisionInterval); revisionInterval = null; }
     revisionRunning = true;
     btn.innerHTML = '⏸️ 暂停';
     revisionInterval = setInterval(() => {
@@ -9355,7 +9408,7 @@ function updateRevisionTimer() {
 
 function stopRevision() {
   revisionRunning = false;
-  clearInterval(revisionInterval);
+  if (revisionInterval) { clearInterval(revisionInterval); revisionInterval = null; }
   setHTML('revision-toggle-btn', '▶️ 开始');
 }
 
@@ -9766,8 +9819,10 @@ function toggleSATS() {
   if (satsRunning) {
     satsRunning = false;
     clearInterval(satsInterval);
+    satsInterval = null;
     btn.innerHTML = '▶️ 继续';
   } else {
+    if (satsInterval) { clearInterval(satsInterval); satsInterval = null; }
     satsRunning = true;
     btn.innerHTML = '⏸️ 暂停';
     satsInterval = setInterval(() => {
@@ -9802,7 +9857,7 @@ function updateSATSTimer() {
 
 function stopSATS() {
   satsRunning = false;
-  clearInterval(satsInterval);
+  if (satsInterval) { clearInterval(satsInterval); satsInterval = null; }
   setHTML('sats-toggle-btn', '▶️ 开始');
 }
 
@@ -10185,6 +10240,7 @@ function addInspirationAction() {
 
 function renderActionList() {
   const el = document.getElementById('action-list');
+  if (!el) return;
   const todayStr = getTodayStr();
   const todayActions = (state.garden.flowers || []).filter(f => f.date === todayStr);
   setText('today-action-count', todayActions.length);
@@ -10225,6 +10281,7 @@ function completeAction(id) {
 
 function renderFlowerGrid() {
   const el = document.getElementById('flower-grid');
+  if (!el) return;
   const total = state.garden.flowers ? state.garden.flowers.length : 0;
   setText('flower-count', total);
   const cells = 30;
@@ -10249,6 +10306,7 @@ function renderFlowerGrid() {
 
 function renderWinList() {
   const el = document.getElementById('win-list');
+  if (!el) return;
   const done = (state.garden.flowers || []).filter(f => f.done);
   if (done.length === 0) {
     el.innerHTML = `<div class="text-center py-4 text-sm" style="color:var(--theme-text); opacity:0.4">完成第一个行动后，来记录你的感受吧～</div>`;
@@ -10274,6 +10332,7 @@ function renderGardenStats() {
 
 function renderGardenBadges() {
   const el = document.getElementById('garden-badges');
+  if (!el) return;
   const gBadges = BADGES.filter(b => ['flower_10', 'flower_50', 'first_manifest'].includes(b.id));
   el.innerHTML = gBadges.map(b => {
     const got = state.badges.includes(b.id);
@@ -10414,7 +10473,7 @@ function showDiaryHistory() {
     el.innerHTML = state.diaries.map((d, i) => `
       <div class="p-3 rounded-xl cursor-pointer card-hover" style="background:linear-gradient(135deg, rgba(240,213,224,0.15), rgba(184,169,201,0.08))" onclick="viewDiary(${i})">
         <div class="text-xs mb-1" style="color:var(--theme-text); opacity:0.5">📅 ${d.date}</div>
-        <div class="text-xs line-clamp-2" style="color:var(--theme-text); opacity:0.8">${(d.content||'').substring(0, 60)}${(d.content||'').length > 60 ? '...' : ''}</div>
+        <div class="text-xs line-clamp-2" style="color:var(--theme-text); opacity:0.8">${escapeHtml((d.content||'').substring(0, 60))}${(d.content||'').length > 60 ? '...' : ''}</div>
       </div>
     `).join('');
   }
@@ -10434,7 +10493,7 @@ function viewDiary(i) {
     <button onclick="showDiaryHistory()" class="text-xs mb-3" style="color:#B8A9C9">← 返回列表</button>
     <div class="letter-paper p-4 min-h-[300px] page-turn-anim" style="background:linear-gradient(180deg, #FFFEFF, #FAF5F7)">
       <div class="text-xs mb-2" style="color:var(--theme-text); opacity:0.5">📅 ${d.date}</div>
-      <div class="text-sm whitespace-pre-wrap leading-7" style="color:var(--theme-text)">${d.content}</div>
+      <div class="text-sm whitespace-pre-wrap leading-7" style="color:var(--theme-text)">${escapeHtml(d.content)}</div>
     </div>
   `;
   playSound('page');
@@ -11586,6 +11645,7 @@ function toggleHabitCheckin(id) {
   const today = getTodayStr();
   const habit = state.habits.find(h => h.id === id);
   if (!habit) return;
+  if (!habit.checkins) habit.checkins = {};
   
   if (habit.checkins[today]) {
     delete habit.checkins[today];
@@ -11604,7 +11664,7 @@ function toggleHabitCheckin(id) {
     // 检查是否所有习惯都打卡了，奖励治愈卡片
     const allDone = state.habits.every(h => {
       if (!isHabitDueToday(h)) return true;
-      return h.checkins[today];
+      return h.checkins && h.checkins[today];
     });
     if (allDone && state.habits.length > 0 && !state.todayDone.cardReward) {
       state.todayDone.cardReward = true;
@@ -11632,6 +11692,7 @@ function isHabitDueToday(habit) {
 function recalcHabitStreak(habit) {
   let streak = 0;
   let d = new Date();
+  if (!habit.checkins) habit.checkins = {};
   while (true) {
     const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     if (habit.checkins[dateStr]) {
@@ -11672,7 +11733,8 @@ function renderHabits() {
   
   const catEmojis = { affirm: '💖', meditation: '🧘', gratitude: '🙏', visualize: '✨', journal: '📔', other: '🌸' };
   list.innerHTML = habits.map(h => {
-    const done = h.checkins[today];
+    const checkins = h.checkins || {};
+    const done = checkins[today];
     const due = isHabitDueToday(h);
     return `
       <div class="flex items-center gap-3 p-3 rounded-xl ${done ? '' : 'card-hover cursor-pointer'}" 
@@ -11718,7 +11780,7 @@ function renderHabitCalendar() {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = dateStr === today;
     // 统计当天打卡数
-    const checked = habits.filter(h => h.checkins[dateStr]).length;
+    const checked = habits.filter(h => h.checkins && h.checkins[dateStr]).length;
     const total = habits.filter(h => {
       if (h.frequency === 'daily') return true;
       if (h.frequency === 'custom') {
@@ -12408,12 +12470,13 @@ function toggleTimer() {
   const btn = document.getElementById('timer-toggle-btn');
   if (timerRunning) {
     timerRunning = false;
-    clearInterval(timerInterval);
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     btn.innerHTML = '▶️ 继续';
   } else {
     if (timerRemaining <= 0) {
       timerRemaining = timerDuration;
     }
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     timerRunning = true;
     btn.innerHTML = '⏸️ 暂停';
     timerInterval = setInterval(() => {
@@ -12429,7 +12492,7 @@ function toggleTimer() {
 
 function resetTimer() {
   timerRunning = false;
-  clearInterval(timerInterval);
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   timerRemaining = timerDuration;
   updateTimerDisplay();
   setHTML('timer-toggle-btn', '▶️ 开始');
@@ -13957,7 +14020,7 @@ function appendAiMessage(text, fromUser, save) {
   if(!area) return;
   const div = document.createElement('div');
   div.className = 'flex items-start gap-3 ' + (fromUser ? 'flex-row-reverse' : '');
-  div.innerHTML = fromUser ? `<div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm" style="background:linear-gradient(135deg,#B8A9C9,#D4B5C7)">🌸</div><div class="p-4 rounded-2xl rounded-tr-sm text-sm" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white;max-width:75%">${text}</div>` : `<div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">🌙</div><div class="p-4 rounded-2xl rounded-tl-sm text-sm" style="background:rgba(255,255,255,0.8);color:var(--theme-text);max-width:75%">${text}</div>`;
+  div.innerHTML = fromUser ? `<div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm" style="background:linear-gradient(135deg,#B8A9C9,#D4B5C7)">🌸</div><div class="p-4 rounded-2xl rounded-tr-sm text-sm" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white;max-width:75%">${escapeHtml(text)}</div>` : `<div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">🌙</div><div class="p-4 rounded-2xl rounded-tl-sm text-sm" style="background:rgba(255,255,255,0.8);color:var(--theme-text);max-width:75%">${escapeHtml(text)}</div>`;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
   if(save) { aiChatHistory.push({ text, fromUser, time: Date.now() }); saveAiHistory(); }
@@ -14636,20 +14699,22 @@ function addVipNavEntry() {
   if(!nav) return;
   const existing = nav.querySelector('[onclick*="vip"]');
   if(existing) return;
+  
+  // Find the flex container inside the nav (the div that holds the nav items)
+  const flexContainer = nav.querySelector('div.flex.justify-around') || nav.querySelector('div');
+  if(!flexContainer) return;
+  
   const vipItem = document.createElement('div');
   vipItem.className = 'nav-item';
   vipItem.setAttribute('onclick', "showPage('vip');initVip()");
   vipItem.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>会员</span>`;
-  const navItems = nav.querySelectorAll('.nav-item');
-  let lastItem = null;
-  for (let i = navItems.length - 1; i >= 0; i--) {
-    if (navItems[i].parentNode === nav) { lastItem = navItems[i]; break; }
+  
+  const navItems = flexContainer.querySelectorAll('.nav-item');
+  if(navItems.length > 0) {
+    flexContainer.insertBefore(vipItem, navItems[navItems.length - 1]);
+  } else {
+    flexContainer.appendChild(vipItem);
   }
-  if(!lastItem) {
-    nav.appendChild(vipItem);
-    return;
-  }
-  nav.insertBefore(vipItem, lastItem);
 }
 
 // ===== 在'我的'页面添加会员入口 =====
@@ -14743,6 +14808,7 @@ function renderAudioScenes() {
 }
 
 function startAudioScene(idx) {
+  if(audioGuideInterval) { clearInterval(audioGuideInterval); audioGuideInterval = null; }
   const scenes = [
     {title:"肯定语循环",duration:1800,affirmations:["我值得一切美好","我正在显化我想要的一切","我是宇宙最爱的孩子"]},
     {title:"SATS 语音引导",duration:900,guide:["请找到一个舒适的位置，轻轻闭上眼睛","感受你的呼吸，每一次呼气都在释放紧张","想象你的愿望已经实现，你就在那个场景里","感受这种已经拥有的喜悦，让它充满全身","保持这种感觉，直到你自然入睡"]},
@@ -15001,7 +15067,7 @@ function renderCommunityFeed() {
   const all = [...communityPosts, ...defaultPosts];
   if(!all.length) { el.innerHTML = '<div class="text-center text-sm py-6" style="color:var(--text-mute)">还没有帖子，来做第一个分享者吧 ✨</div>'; return; }
   
-  el.innerHTML = all.map(p => `<div class="glass-card p-4 mb-3"><div class="flex items-center gap-2 mb-2"><div class="text-lg">${p.mood}</div><div class="text-xs" style="color:var(--text-mute)">${p.date}</div></div><p class="text-sm mb-3" style="color:var(--theme-text)">${p.text}</p><div class="flex items-center gap-3"><button onclick="likeCommunityPost(${p.id})" class="text-xs flex items-center gap-1 ${p.liked ? 'text-red-400' : ''}" style="color:var(--text-mute)"><span>${p.liked ? '💖' : '❤️'}</span> ${p.likes}</button><span class="text-xs" style="color:var(--text-mute)">💬 评论</span></div></div>`).join('');
+  el.innerHTML = all.map(p => `<div class="glass-card p-4 mb-3"><div class="flex items-center gap-2 mb-2"><div class="text-lg">${p.mood}</div><div class="text-xs" style="color:var(--text-mute)">${p.date}</div></div><p class="text-sm mb-3" style="color:var(--theme-text)">${escapeHtml(p.text)}</p><div class="flex items-center gap-3"><button onclick="likeCommunityPost(${p.id})" class="text-xs flex items-center gap-1 ${p.liked ? 'text-red-400' : ''}" style="color:var(--text-mute)"><span>${p.liked ? '💖' : '❤️'}</span> ${p.likes}</button><span class="text-xs" style="color:var(--text-mute)">💬 评论</span></div></div>`).join('');
 }
 
 // ===== 反馈系统 =====
@@ -15097,7 +15163,7 @@ function renderSearchResults(query) {
   
   if(!results.length) { el.innerHTML = '<div class="text-center py-8 text-sm" style="color:var(--text-mute)">没有找到相关内容，换个关键词试试 ✨</div>'; return; }
   
-  el.innerHTML = results.map((r, i) => `<div class="glass-card p-4 mb-3 cursor-pointer card-hover" data-search-kind="${r.kind}" data-search-id="${r.id}" data-search-data="${(r.data||'').replace(/"/g,'&quot;')}"><div class="flex items-center gap-2 mb-1"><span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">${r.type}</span><span class="text-xs" style="color:var(--text-mute)">${r.cat}</span></div><div class="text-sm font-medium" style="color:var(--theme-text)">${r.text}</div></div>`).join('');
+  el.innerHTML = results.map((r, i) => `<div class="glass-card p-4 mb-3 cursor-pointer card-hover" data-search-kind="${r.kind}" data-search-id="${r.id}" data-search-data="${(r.data||'').replace(/"/g,'&quot;')}"><div class="flex items-center gap-2 mb-1"><span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">${r.type}</span><span class="text-xs" style="color:var(--text-mute)">${r.cat}</span></div><div class="text-sm font-medium" style="color:var(--theme-text)">${escapeHtml(r.text)}</div></div>`).join('');
   
   // Bind click handlers safely via event delegation
   el.querySelectorAll('.glass-card').forEach(card => {
@@ -15550,6 +15616,7 @@ function toggleVoiceRecord() {
 }
 
 function startVoiceRecord() {
+  if (voiceRecordInterval) { stopVoiceRecord(); }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     showToast('您的浏览器不支持录音功能'); return;
   }
@@ -15602,7 +15669,7 @@ function startVoiceRecord() {
 
 function stopVoiceRecord() {
   if (voiceRecorder && voiceRecorder.state !== 'inactive') voiceRecorder.stop();
-  if (voiceRecordInterval) clearInterval(voiceRecordInterval);
+  if (voiceRecordInterval) { clearInterval(voiceRecordInterval); voiceRecordInterval = null; }
   voiceRecorder = null;
 }
 
@@ -15929,18 +15996,24 @@ function renderSmartRecommendations() {
 
 // ===== v5.4 星光徽章系统 =====
 function getUnlockedBadges() {
+  if (typeof NEW_BADGES === 'undefined' || !Array.isArray(NEW_BADGES)) return [];
   return NEW_BADGES.filter(b => b.check());
 }
 
 function getBadgeProgress() {
+  if (typeof NEW_BADGES === 'undefined' || !Array.isArray(NEW_BADGES)) return { total: 0, unlocked: 0, percent: 0 };
   const total = NEW_BADGES.length;
   const unlocked = getUnlockedBadges().length;
-  return { total, unlocked, percent: Math.round((unlocked / total) * 100) };
+  return { total, unlocked, percent: total > 0 ? Math.round((unlocked / total) * 100) : 0 };
 }
 
 function renderBadgeWall() {
   const el = document.getElementById('badge-wall');
   if (!el) return;
+  if (typeof NEW_BADGES === 'undefined' || !Array.isArray(NEW_BADGES)) {
+    el.innerHTML = '<div class="glass-card p-6 text-center text-sm" style="color:var(--text-soft)">徽章数据加载中...</div>';
+    return;
+  }
   const unlocked = getUnlockedBadges();
   const unlockedIds = new Set(unlocked.map(b => b.id));
   
@@ -16717,7 +16790,10 @@ function resetAllData() {
 
 // ==================== 三六九书写咒 ====================
 function get369State() {
-  return StorageUtil.get('cosmos_369_state', { affirmation: '', cycleLength: 21, cycleStart: '', records: {}, streak: 0 });
+  const s = StorageUtil.get('cosmos_369_state', { affirmation: '', cycleLength: 21, cycleStart: '', records: {}, streak: 0 });
+  if (!s.records) s.records = {};
+  if (typeof s.streak !== 'number') s.streak = 0;
+  return s;
 }
 function save369State(state) { StorageUtil.set('cosmos_369_state', state); }
 
@@ -16822,7 +16898,12 @@ function start369Cycle() {
 
 // ==================== 五五五显化咒 ====================
 function get55x5State() {
-  return StorageUtil.get('cosmos_55x5_state', { affirmation: '', currentDay: 1, dailyCount: 0, records: {}, completedChallenges: [] });
+  const s = StorageUtil.get('cosmos_55x5_state', { affirmation: '', currentDay: 1, dailyCount: 0, records: {}, completedChallenges: [] });
+  if (!Array.isArray(s.completedChallenges)) s.completedChallenges = [];
+  if (!s.records) s.records = {};
+  if (typeof s.currentDay !== 'number') s.currentDay = 1;
+  if (typeof s.dailyCount !== 'number') s.dailyCount = 0;
+  return s;
 }
 function save55x5State(state) { StorageUtil.set('cosmos_55x5_state', state); }
 
@@ -16881,6 +16962,7 @@ function add55x5Entry() {
     const doneDays = Object.values(state.records).filter(c => c >= 55).length;
     state.currentDay = Math.min(doneDays + 1, 5);
     if (doneDays >= 5) {
+      if (!Array.isArray(state.completedChallenges)) state.completedChallenges = [];
       state.completedChallenges.push({ affirmation: state.affirmation, date: today });
       state.affirmation = '';
       state.currentDay = 1;
@@ -16910,7 +16992,9 @@ function start55x5Challenge() {
 const SIGN_CATEGORIES = ["💰 金钱", "💕 爱情", "🏥 健康", "🎯 机会", "🌙 梦境", "🔮 直觉", "✨ 其他"];
 
 function getSignsState() {
-  return StorageUtil.get('cosmos_signs_state', { signs: [] });
+  const s = StorageUtil.get('cosmos_signs_state', { signs: [] });
+  if (!Array.isArray(s.signs)) s.signs = [];
+  return s;
 }
 function saveSignsState(state) { StorageUtil.set('cosmos_signs_state', state); }
 
@@ -16978,7 +17062,9 @@ function addSign() {
 
 // ==================== Focus Wheel 心念转轮 ====================
 function getWheelState() {
-  return StorageUtil.get('cosmos_wheel_state', { wheels: [], currentWheel: null });
+  const s = StorageUtil.get('cosmos_wheel_state', { wheels: [], currentWheel: null });
+  if (!Array.isArray(s.wheels)) s.wheels = [];
+  return s;
 }
 function saveWheelState(state) { StorageUtil.set('cosmos_wheel_state', state); }
 
@@ -17110,7 +17196,9 @@ function deleteWheel(id) {
 
 // ==================== v6.1 一分钟魔法 ====================
 function get68secState() {
-  return StorageUtil.get('cosmos_68sec_state', { records: [] });
+  const s = StorageUtil.get('cosmos_68sec_state', { records: [] });
+  if (!Array.isArray(s.records)) s.records = [];
+  return s;
 }
 function save68secState(state) { StorageUtil.set('cosmos_68sec_state', state); }
 
@@ -17153,6 +17241,7 @@ let _68secInterval = null;
 let _68secRemaining = 68;
 
 function start68sec() {
+  if (_68secInterval) { clearInterval(_68secInterval); _68secInterval = null; }
   const text = document.getElementById('68sec-input')?.value.trim();
   if (!text) { showToast('请先输入愿望或肯定语'); return; }
   document.getElementById('68sec-timer-area')?.classList.remove('hidden');
@@ -17197,7 +17286,10 @@ function stop68sec() {
 
 // ==================== v6.1 宇宙钱包 ====================
 function getProsperityState() {
-  return StorageUtil.get('cosmos_prosperity_state', { day: 1, records: [] });
+  const s = StorageUtil.get('cosmos_prosperity_state', { day: 1, records: [] });
+  if (!Array.isArray(s.records)) s.records = [];
+  if (typeof s.day !== 'number') s.day = 1;
+  return s;
 }
 function saveProsperityState(state) { StorageUtil.set('cosmos_prosperity_state', state); }
 
@@ -17282,7 +17374,10 @@ const EMOTIONAL_SCALE = [
 ];
 
 function getEmoscaleState() {
-  return StorageUtil.get('cosmos_emoscale_state', { history: [], currentLevel: 7 });
+  const s = StorageUtil.get('cosmos_emoscale_state', { history: [], currentLevel: 7 });
+  if (!Array.isArray(s.history)) s.history = [];
+  if (typeof s.currentLevel !== 'number') s.currentLevel = 7;
+  return s;
 }
 function saveEmoscaleState(state) { StorageUtil.set('cosmos_emoscale_state', state); }
 
@@ -17371,7 +17466,9 @@ function getEmoSuggestions(level) {
 
 // ==================== v6.1 枕边蜜语 ====================
 function getPillowState() {
-  return StorageUtil.get('cosmos_pillow_state', { currentWish: '', history: [] });
+  const s = StorageUtil.get('cosmos_pillow_state', { currentWish: '', history: [] });
+  if (!Array.isArray(s.history)) s.history = [];
+  return s;
 }
 function savePillowState(state) { StorageUtil.set('cosmos_pillow_state', state); }
 
@@ -17428,7 +17525,11 @@ function savePillowWish() {
 
 // ==================== v6.2 放手仪式 (Placemat Process) ====================
 function getPlacematState() {
-  return StorageUtil.get('cosmos_placemat_state', { myTasks: [], universeTasks: [], history: [] });
+  const s = StorageUtil.get('cosmos_placemat_state', { myTasks: [], universeTasks: [], history: [] });
+  if (!Array.isArray(s.myTasks)) s.myTasks = [];
+  if (!Array.isArray(s.universeTasks)) s.universeTasks = [];
+  if (!Array.isArray(s.history)) s.history = [];
+  return s;
 }
 function savePlacematState(state) { StorageUtil.set('cosmos_placemat_state', state); }
 
@@ -17533,7 +17634,9 @@ function savePlacematDay() {
 
 // ==================== v6.2 旧故事翻篇 (I Remember When) ====================
 function getRememberState() {
-  return StorageUtil.get('cosmos_remember_state', { memories: [] });
+  const s = StorageUtil.get('cosmos_remember_state', { memories: [] });
+  if (!Array.isArray(s.memories)) s.memories = [];
+  return s;
 }
 function saveRememberState(state) { StorageUtil.set('cosmos_remember_state', state); }
 
@@ -17586,7 +17689,9 @@ function saveRemember() {
 
 // ==================== v6.2 心愿宝盒 (Magical Creation Box) ====================
 function getCreationBoxState() {
-  return StorageUtil.get('cosmos_creationbox_state', { items: [] });
+  const s = StorageUtil.get('cosmos_creationbox_state', { items: [] });
+  if (!Array.isArray(s.items)) s.items = [];
+  return s;
 }
 function saveCreationBoxState(state) { StorageUtil.set('cosmos_creationbox_state', state); }
 
@@ -17662,7 +17767,9 @@ function deleteCreationBoxItem(idx) {
 
 // ==================== v6.2 感恩风暴 (Rampage of Appreciation) ====================
 function getRampageState() {
-  return StorageUtil.get('cosmos_rampage_state', { rampages: [] });
+  const s = StorageUtil.get('cosmos_rampage_state', { rampages: [] });
+  if (!Array.isArray(s.rampages)) s.rampages = [];
+  return s;
 }
 function saveRampageState(state) { StorageUtil.set('cosmos_rampage_state', state); }
 
@@ -17744,7 +17851,11 @@ function completeRampage() {
 
 // ==================== v6.3 显化百宝箱 ====================
 function getTreasureBoxState() {
-  return StorageUtil.get('cosmos_treasurebox_state', { tried: {}, favorites: [], notes: {} });
+  const s = StorageUtil.get('cosmos_treasurebox_state', { tried: {}, favorites: [], notes: {} });
+  if (!s.tried || typeof s.tried !== 'object') s.tried = {};
+  if (!Array.isArray(s.favorites)) s.favorites = [];
+  if (!s.notes || typeof s.notes !== 'object') s.notes = {};
+  return s;
 }
 function saveTreasureBoxState(state) { StorageUtil.set('cosmos_treasurebox_state', state); }
 
@@ -17906,7 +18017,7 @@ function renderTimeline() {
       <div class="glass-card p-6 text-center">
         <div class="text-4xl mb-3">✨</div>
         <p class="text-sm" style="color:var(--text-soft)">还没有许愿记录</p>
-        <button onclick="showPage('wishwall');initWishStarDrag()" class="btn-primary mt-3 px-4 py-2 rounded-xl text-sm">去许愿墙许愿</button>
+        <button onclick="openModule('wishwall')" class="btn-primary mt-3 px-4 py-2 rounded-xl text-sm">去许愿墙许愿</button>
       </div>
     `;
   } else {
@@ -18155,7 +18266,32 @@ function setAffirmLoopInterval() {
 }
 
 // ========== v6.4 兼容性存根（向后兼容旧测试/外部调用） ==========
-function addWish() { return addWishProgress.apply(this, arguments); }
+function addWish(text, type, fields) {
+  const wish = {
+    id: Date.now(),
+    type: type || 'life',
+    be: (fields && fields.be) || text || '',
+    do: (fields && fields.do) || '',
+    have: (fields && fields.have) || '',
+    sight: (fields && fields.sight) || '',
+    sound: (fields && fields.sound) || '',
+    touch: (fields && fields.touch) || '',
+    feel: (fields && fields.feel) || '',
+    firstAction: (fields && fields.firstAction) || '',
+    done: false,
+    date: getTodayStr(),
+    skyX: Math.random() * 70 + 15,
+    skyY: Math.random() * 50 + 15,
+  };
+  if (!state.wishes) state.wishes = [];
+  state.wishes.unshift(wish);
+  saveState();
+  addEnergy(30, '许下愿望');
+  const starsPage = document.getElementById('page-stars');
+  const wishwallPage = document.getElementById('page-wishwall');
+  if (starsPage && starsPage.classList.contains('active')) renderStars();
+  if (wishwallPage && wishwallPage.classList.contains('active')) renderWishWall();
+}
 function addDiary() { return newDiaryPrompt.apply(this, arguments); }
 function logEmotion() { return recordMood.apply(this, arguments); }
 function addTask(name) { return addPlacematTask('my', name); }

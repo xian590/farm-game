@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宠物医生模拟器 - 场景切换原型</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+#game-container {
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.scene {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+    pointer-events: none;
+}
+.scene.active {
+    opacity: 1;
+    pointer-events: all;
+}
+.scene img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.scene-label {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    border: 1px solid rgba(255,255,255,0.15);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.4s ease;
+}
+.scene.active .scene-label {
+    opacity: 1;
+    transform: translateY(0);
+}
+.scene-hint {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.5s ease 0.3s;
+}
+.scene.active .scene-hint {
+    opacity: 1;
+}
+#nav-bar {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 16px 24px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+.nav-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.08);
+    color: #aaa;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.nav-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    transform: translateY(-2px);
+}
+.nav-btn.active {
+    background: linear-gradient(135deg, #5BC0BE, #3A7BD5);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 20px rgba(91,192,190,0.4);
+}
+#title-bar {
+    color: #fff;
+    text-align: center;
+    margin-bottom: 16px;
+}
+#title-bar h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #5BC0BE, #3A7BD5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+#title-bar p {
+    color: #888;
+    font-size: 14px;
+    margin-top: 6px;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+#game-container {
+    animation: fadeInUp 0.8s ease;
+}
+</style>
+</head>
+<body>
+
+<div id="title-bar">
+    <h1>🐾 宠物医生模拟器</h1>
+    <p>场景切换原型 | 点击底部按钮切换场景</p>
+</div>
+
+<div id="game-container">
+    <div class="scene active" data-scene="0">
+        <img src="scene_clinic_hall.png" alt="诊所大厅">
+        <div class="scene-label">🏥 诊所大厅</div>
+        <div class="scene-hint">接待宠物主人 · 查看排队 · 管理诊所</div>
+    </div>
+    <div class="scene" data-scene="1">
+        <img src="scene_exam_room.png" alt="检查室">
+        <div class="scene-label">🔍 检查室</div>
+        <div class="scene-hint">诊断宠物 · 测量体温 · 检查症状</div>
+    </div>
+    <div class="scene" data-scene="2">
+        <img src="scene_pharmacy.png" alt="药房">
+        <div class="scene-label">💊 药房</div>
+        <div class="scene-hint">调配药剂 · 研磨草药 · 准备治疗</div>
+    </div>
+    <div class="scene" data-scene="3">
+        <img src="scene_herb_garden.png" alt="草药花园">
+        <div class="scene-label">🌿 草药花园</div>
+        <div class="scene-hint">采集药材 · 种植草药 · 晾晒处理</div>
+    </div>
+    <div class="scene" data-scene="4">
+        <img src="scene_pet_shop.png" alt="宠物商店">
+        <div class="scene-label">🛒 宠物商店</div>
+        <div class="scene-hint">采购药品 · 购买设备 · 补充物资</div>
+    </div>
+</div>
+
+<div id="nav-bar">
+    <button class="nav-btn active" onclick="switchScene(0)">🏥 大厅</button>
+    <button class="nav-btn" onclick="switchScene(1)">🔍 检查</button>
+    <button class="nav-btn" onclick="switchScene(2)">💊 药房</button>
+    <button class="nav-btn" onclick="switchScene(3)">🌿 花园</button>
+    <button class="nav-btn" onclick="switchScene(4)">🛒 商店</button>
+</div>
+
+<script>
+let currentScene = 0;
+
+function switchScene(index) {
+    if (index === currentScene) return;
+    
+    const scenes = document.querySelectorAll('.scene');
+    const buttons = document.querySelectorAll('.nav-btn');
+    
+    scenes[currentScene].classList.remove('active');
+    buttons[currentScene].classList.remove('active');
+    
+    currentScene = index;
+    
+    scenes[currentScene].classList.add('active');
+    buttons[currentScene].classList.add('active');
+}
+
+// 键盘快捷键：1-5 切换场景
+document.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '5') {
+        switchScene(parseInt(e.key) - 1);
+    }
+});
+</script>
+
+</body>
+</html>

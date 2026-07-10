@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 宠物医生模拟器 v0.3 — 模块化重构版</title>
+
+<!-- ==================== 样式 ==================== -->
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    overflow: hidden;
+}
+
+#game-container {
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16/9;
+    background: #0a0a15;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+/* ====== 场景 ====== */
+.scene {
+    position: absolute; inset: 0;
+    opacity: 0; transition: opacity 0.5s ease;
+    pointer-events: none; z-index: 1;
+}
+.scene.active { opacity: 1; pointer-events: all; }
+.scene-bg { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ====== 角色层 ====== */
+.character-layer {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 72%;
+    pointer-events: none; z-index: 5;
+}
+
+/* 呼吸动效 */
+@keyframes breathe-doctor {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    25% { transform: translateY(-3px) scale(1.008, 0.995); }
+    50% { transform: translateY(-4px) scale(1.012, 0.992); }
+    75% { transform: translateY(-2px) scale(1.005, 0.996); }
+}
+@keyframes breathe-pet {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    20% { transform: translateY(-2px) scale(1.01, 0.99); }
+    40% { transform: translateY(-3px) scale(1.015, 0.985); }
+    60% { transform: translateY(-1px) scale(1.008, 0.992); }
+}
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    92% { transform: translateX(0); }
+    94% { transform: translateX(-2px); }
+    96% { transform: translateX(2px); }
+    98% { transform: translateX(-1px); }
+}
+
+.doctor-sprite {
+    position: absolute; bottom: 16px; left: 50px;
+    height: 78%; width: auto;
+    filter: drop-shadow(0 12px 30px rgba(0,0,0,0.35));
+    animation: breathe-doctor 3s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+.pet-sprite {
+    position: absolute; bottom: 24px; right: 70px;
+    height: 42%; width: auto;
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.3));
+    animation: breathe-pet 2.2s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+.pet-sprite.sick { animation: breathe-pet 2.2s ease-in-out infinite, shake 4s ease-in-out infinite; }
+
+/* ====== 状态栏（顶部） ====== */
+.status-bar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 15;
+    padding: 10px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    pointer-events: none;
+}
+.status-left, .status-right { display: flex; gap: 12px; align-items: center; }
+.status-item {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+    padding: 5px 12px; border-radius: 20px;
+    color: #fff; font-size: 13px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.08);
+    pointer-events: all;
+}
+.status-item img { width: 18px; height: 18px; object-fit: contain; }
+
+/* 压力条 */
+.pressure-bar-wrap {
+    width: 160px; height: 22px;
+    background: url('ui_pressure_frame.png') no-repeat center;
+    background-size: 100% 100%;
+    border-radius: 12px; overflow: hidden;
+    position: relative;
+    padding: 2px 4px;
+}
+.pressure-fill {
+    height: 100%; width: 0%;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    background: url('ui_pressure_green.png') repeat-x;
+    background-size: auto 100%;
+}
+.pressure-fill.zone-yellow {
+    background: url('ui_pressure_yellow.png') repeat-x;
+    background-size: auto 100%;
+}
+.pressure-fill.zone-red {
+    background: url('ui_pressure_red.png') repeat-x;
+    background-size: auto 100%;
+}
+.pressure-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #fff; font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    pointer-events: none;
+}
+.pressure-high {
+    animation: pressurePulse 0.8s ease infinite;
+    box-shadow: 0 0 20px rgba(248,113,113,0.5);
+}
+@keyframes pressurePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* 声望星星 */
+.stars-display { display: flex; gap: 2px; }
+.star-icon {
+    width: 16px; height: 16px;
+    filter: grayscale(1) brightness(0.4);
+    transition: filter 0.3s ease;
+}
+.star-icon.lit { filter: none; }
+
+/* ====== 流程指示器 ====== */
+.flow-indicator {
+    position: absolute; top: 52px; left: 50%;
+    transform: translateX(-50%); z-index: 15;
+    display: flex; gap: 6px; align-items: center;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(10px);
+    padding: 8px 16px; border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.08);
+    pointer-events: none;
+}
+.flow-step {
+    font-size: 12px; color: rgba(255,255,255,0.35);
+    transition: all 0.3s ease; white-space: nowrap;
+}
+.flow-step.active { color: #5bc0be; font-weight: 700; text-shadow: 0 0 10px rgba(91,192,190,0.5); }
+.flow-step.done { color: rgba(255,255,255,0.6); }
+.flow-arrow { color: rgba(255,255,255,0.15); font-size: 10px; }
+
+/* ====== 对话系统 ====== */
+.dialogue-box {
+    position: absolute; bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    width: 94%; max-width: 1080px; z-index: 20;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.dialogue-box.show { opacity: 1; }
+.dialogue-inner {
+    background: rgba(15,20,35,0.92);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(91,192,190,0.15);
+    display: flex; gap: 14px; align-items: flex-start;
+}
+.dialogue-avatar {
+    width: 58px; height: 58px; border-radius: 50%;
+    object-fit: cover; border: 3px solid rgba(91,192,190,0.4);
+    flex-shrink: 0; animation: breathe-doctor 3s ease-in-out infinite;
+    background: rgba(15,25,45,0.6);
+}
+.dialogue-content { flex: 1; }
+.dialogue-name-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 3px;
+}
+.dialogue-name {
+    font-size: 15px; font-weight: 700; color: #5bc0be;
+}
+.dialogue-mood {
+    font-size: 11px; color: #aaa;
+    background: rgba(255,255,255,0.08); padding: 1px 8px;
+    border-radius: 10px;
+}
+.dialogue-text {
+    font-size: 14px; color: #e0e0e0; line-height: 1.6;
+    min-height: 42px;
+}
+.dialogue-choices {
+    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.choice-btn {
+    padding: 9px 18px;
+    border: 2px solid #5bc0be;
+    border-radius: 12px;
+    background: rgba(91,192,190,0.1);
+    color: #5bc0be;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease;
+}
+.choice-btn:hover {
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5);
+    color: #fff; border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(91,192,190,0.4);
+}
+
+/* ====== 道具栏 ====== */
+.item-bar {
+    position: absolute; right: 14px;
+    top: 50%; transform: translateY(-50%);
+    z-index: 15;
+    display: flex; flex-direction: column; gap: 8px;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.item-bar.show { opacity: 1; }
+.item-slot {
+    width: 50px; height: 50px;
+    background: rgba(15,25,45,0.88);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+    border: 2px solid rgba(91,192,190,0.25);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    position: relative;
+}
+.item-slot img { width: 30px; height: 30px; object-fit: contain; }
+.item-slot:hover { transform: scale(1.12); border-color: #5bc0be; }
+.item-slot.active {
+    border-color: #5bc0be;
+    background: rgba(91,192,190,0.15);
+    animation: itemPulse 1.2s ease infinite;
+}
+@keyframes itemPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(91,192,190,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(91,192,190,0); }
+}
+.item-count {
+    position: absolute; bottom: -2px; right: -2px;
+    background: #f87171; color: #fff;
+    font-size: 9px; font-weight: 700;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ====== 通用迷你游戏覆盖层 ====== */
+.minigame-overlay {
+    position: absolute; inset: 0; z-index: 25;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column;
+}
+.minigame-overlay.show { display: flex; }
+
+/* 迷你游戏通用样式 */
+.mg-title {
+    color: #fff; font-size: 20px; font-weight: 700;
+    margin-bottom: 16px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    text-align: center;
+}
+.mg-area {
+    width: 500px; height: 400px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 20px; border: 2px solid rgba(255,255,255,0.12);
+    position: relative; overflow: hidden;
+    cursor: crosshair;
+}
+.mg-pet-outline {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 240px; height: 300px;
+    background: rgba(220,160,100,0.15);
+    border-radius: 40%;
+}
+.mg-heart-zone {
+    position: absolute; width: 60px; height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(248,113,113,0.25), transparent);
+    border: 2px dashed rgba(248,113,113,0.35);
+    animation: heartZonePulse 1.5s ease infinite;
+}
+@keyframes heartZonePulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 0.3; }
+}
+.mg-cursor {
+    position: absolute; width: 36px; height: 36px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+.mg-timer {
+    position: absolute; top: 14px; left: 50%;
+    transform: translateX(-50%);
+    color: #fff; font-size: 26px; font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.mg-wave-display {
+    position: absolute; bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    width: 380px; height: 70px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 10px;
+    display: flex; align-items: center;
+    justify-content: center; gap: 2px;
+    padding: 8px;
+}
+.mg-wave-bar {
+    width: 4px; background: #5bc0be;
+    border-radius: 2px;
+    transition: height 0.1s ease;
+}
+.mg-result {
+    color: #fff; font-size: 16px; margin-top: 14px;
+    text-align: center; min-height: 28px;
+}
+
+/* 研磨游戏 */
+.mg-grind-area {
+    width: 400px; height: 400px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%; border: 3px solid rgba(255,255,255,0.12);
+    position: relative; overflow: hidden;
+    cursor: grab;
+}
+.mg-grind-area:active { cursor: grabbing; }
+.mg-grind-bowl {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px; height: 180px;
+    background: rgba(200,170,140,0.25);
+    border-radius: 50%;
+}
+.mg-grind-ring {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px; height: 250px;
+    border-radius: 50%;
+    border: 8px solid rgba(255,255,255,0.1);
+    border-top-color: #5bc0be;
+    transition: transform 0.1s linear;
+}
+.mg-grind-particles { position: absolute; inset: 0; pointer-events: none; }
+.mg-grind-particle {
+    position: absolute; width: 5px; height: 5px;
+    background: #a3d9a5; border-radius: 50%;
+    animation: particleFly 0.8s ease forwards;
+}
+@keyframes particleFly {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0) translate(var(--tx), var(--ty)); opacity: 0; }
+}
+.mg-grind-progress {
+    position: absolute; top: 10px; left: 50%;
+    transform: translateX(-50%);
+    color: #fff; font-size: 18px; font-weight: 600;
+}
+
+/* 研磨游戏素材图片 */
+.mg-grind-bowl-img {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px; height: 180px;
+    object-fit: contain;
+    pointer-events: none;
+}
+.mg-grind-ring-img {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px; height: 250px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+/* 听诊器游戏素材图片 */
+.mg-pet-body {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 260px; height: auto;
+    object-fit: contain;
+    pointer-events: none;
+    opacity: 0.8;
+}
+.mg-wave-bg {
+    position: absolute; bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    width: 360px; height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+    opacity: 0.6;
+}
+
+/* 缝合游戏 */
+.mg-suture-area {
+    width: 500px; height: 400px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 20px; border: 2px solid rgba(255,255,255,0.12);
+    position: relative; overflow: hidden;
+    cursor: crosshair;
+}
+.mg-wound-img {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px; height: 200px;
+    object-fit: contain;
+    pointer-events: none;
+}
+.mg-suture-line {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px; height: 220px;
+    object-fit: contain;
+    pointer-events: none;
+    opacity: 0.5;
+}
+.mg-hit-zone {
+    position: absolute; width: 50px; height: 50px;
+    object-fit: contain;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.mg-scalpel-cursor {
+    position: absolute; width: 32px; height: 32px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+.mg-suture-progress {
+    position: absolute; top: 14px; left: 50%;
+    transform: translateX(-50%);
+    color: #fff; font-size: 18px; font-weight: 600;
+}
+
+/* 温度计游戏 */
+.mg-thermo-area {
+    width: 500px; height: 400px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 20px; border: 2px solid rgba(255,255,255,0.12);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+}
+.mg-thermo-wrap {
+    position: relative;
+    width: 80px; height: 320px;
+}
+.mg-thermo-body {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+}
+.mg-thermo-scale {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    opacity: 0.7;
+}
+.mg-thermo-liquid {
+    position: absolute; bottom: 10%; left: 42%;
+    width: 16%; height: 0%;
+    background: linear-gradient(to top, #ef4444, #f97316);
+    border-radius: 10px;
+    transition: height 0.05s linear;
+    opacity: 0.8;
+}
+.mg-thermo-zone {
+    position: absolute; bottom: 35%; left: 35%;
+    width: 30%; height: 15%;
+    background: rgba(74,222,128,0.3);
+    border-radius: 8px;
+    border: 2px dashed rgba(74,222,128,0.5);
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+.mg-thermo-readout {
+    color: #fff; font-size: 28px; font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    margin-top: 16px;
+}
+
+/* ====== 治愈特效 ====== */
+.heal-burst {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); z-index: 30;
+    pointer-events: none; opacity: 0;
+}
+.heal-burst.show { animation: healBurst 1.2s ease forwards; }
+@keyframes healBurst {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+    60% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+}
+.heal-burst img { width: 180px; height: 180px; filter: drop-shadow(0 0 40px rgba(255,200,100,0.8)); }
+
+/* 金币弹出 */
+.coin-pop {
+    position: absolute; z-index: 30;
+    color: #fbbf24; font-size: 20px; font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    pointer-events: none;
+    animation: coinFloat 1.5s ease forwards;
+}
+@keyframes coinFloat {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-60px); }
+}
+
+/* ====== 一天结算界面 ====== */
+.day-summary {
+    position: absolute; inset: 0; z-index: 40;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(15px);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column;
+}
+.day-summary.show { display: flex; }
+.summary-card {
+    background: rgba(15,20,35,0.92);
+    border-radius: 24px;
+    padding: 32px 48px;
+    max-width: 500px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 1px solid rgba(91,192,190,0.15);
+}
+.summary-title {
+    font-size: 24px; font-weight: 800;
+    color: #5bc0be; text-align: center; margin-bottom: 20px;
+}
+.summary-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 15px; color: #ccc;
+}
+.summary-row .label { font-weight: 600; }
+.summary-row .value { font-weight: 700; color: #e0e0e0; }
+.summary-row .value.positive { color: #22c55e; }
+.summary-row .value.negative { color: #ef4444; }
+.summary-btn {
+    width: 100%; margin-top: 20px;
+    padding: 14px; border: none; border-radius: 14px;
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5);
+    color: #fff; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: transform 0.2s ease;
+}
+.summary-btn:hover { transform: scale(1.03); }
+
+/* ====== 场景导航 ====== */
+.scene-nav {
+    display: flex; gap: 8px; margin-top: 12px;
+    padding: 12px 18px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px; backdrop-filter: blur(10px);
+}
+.scene-btn {
+    padding: 9px 18px; border: none; border-radius: 12px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.25s ease;
+    background: rgba(255,255,255,0.07);
+    color: #aaa; border: 1px solid rgba(255,255,255,0.05);
+}
+.scene-btn:hover { background: rgba(255,255,255,0.13); color: #fff; transform: translateY(-2px); }
+.scene-btn.active {
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 20px rgba(91,192,190,0.4);
+}
+
+/* ====== 标题 ====== */
+#title-bar { text-align: center; margin-bottom: 10px; }
+#title-bar h1 {
+    font-size: 24px; font-weight: 800;
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5, #7b68ee);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    letter-spacing: 1px;
+}
+#title-bar p { color: rgba(255,255,255,0.35); font-size: 12px; margin-top: 3px; }
+
+/* 病人等待队列 */
+.waiting-queue {
+    position: absolute; top: 82px; right: 18px; z-index: 12;
+    display: flex; flex-direction: column; gap: 6px;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.waiting-queue.show { opacity: 1; }
+.waiting-pet {
+    width: 44px; height: 44px;
+    background: rgba(15,25,45,0.85);
+    border-radius: 12px; padding: 4px;
+    border: 2px solid rgba(91,192,190,0.25);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: breathe-pet 2s ease-in-out infinite;
+    cursor: pointer; transition: transform 0.2s ease;
+}
+.waiting-pet:hover { transform: scale(1.15); }
+.waiting-pet img { width: 100%; height: 100%; object-fit: contain; }
+.waiting-count {
+    position: absolute; top: -6px; right: -6px;
+    background: #f87171; color: #fff;
+    font-size: 10px; font-weight: 700;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* 压力高警告 */
+.pressure-warning {
+    position: absolute; inset: 0; z-index: 3;
+    pointer-events: none; opacity: 0;
+    box-shadow: inset 0 0 60px rgba(248,113,113,0);
+    transition: opacity 0.5s ease, box-shadow 0.5s ease;
+}
+.pressure-warning.show {
+    opacity: 1;
+    box-shadow: inset 0 0 80px rgba(248,113,113,0.4);
+    animation: warningPulse 1s ease infinite;
+}
+@keyframes warningPulse {
+    0%, 100% { box-shadow: inset 0 0 60px rgba(248,113,113,0.3); }
+    50% { box-shadow: inset 0 0 100px rgba(248,113,113,0.5); }
+}
+
+/* ====== 数值调试面板 ====== */
+.debug-panel {
+    position: fixed; bottom: 10px; left: 10px; z-index: 100;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+    padding: 12px; color: #fff; font-size: 11px; font-family: monospace;
+    width: 260px; display: none; max-height: 400px; overflow-y: auto;
+}
+.debug-panel.show { display: block; }
+.debug-panel h4 { margin: 0 0 8px; font-size: 12px; color: #5bc0be; }
+.debug-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.debug-row .val { color: #fbbf24; font-weight: 700; }
+.debug-btn {
+    padding: 4px 8px; margin: 2px; border: none; border-radius: 4px;
+    background: rgba(255,255,255,0.1); color: #fff; font-size: 10px; cursor: pointer;
+}
+.debug-btn:hover { background: #5bc0be; }
+.debug-hint { position: fixed; bottom: 4px; left: 4px; z-index: 99; color: rgba(255,255,255,0.2); font-size: 9px; }
+</style>
+</head>
+<body>
+
+<div id="title-bar">
+    <h1>🐾 宠物医生模拟器 v0.3</h1>
+    <p>模块化重构 | 存档系统 | 随机病例 | 一天完整循环</p>
+</div>
+
+<div id="game-container">
+
+    <!-- ====== 场景层 ====== -->
+    <div class="scene active" data-scene="0"><img class="scene-bg" src="scene_clinic_hall.png" alt="大厅"></div>
+    <div class="scene" data-scene="1"><img class="scene-bg" src="scene_exam_room.png" alt="检查室"></div>
+    <div class="scene" data-scene="2"><img class="scene-bg" src="scene_pharmacy.png" alt="药房"></div>
+    <div class="scene" data-scene="3"><img class="scene-bg" src="scene_herb_garden.png" alt="花园"></div>
+    <div class="scene" data-scene="4"><img class="scene-bg" src="scene_pet_shop.png" alt="商店"></div>
+    <div class="scene" data-scene="5"><img class="scene-bg" src="scene_surgery_room.png" alt="手术室"></div>
+    <div class="scene" data-scene="6"><img class="scene-bg" src="scene_clinic_exterior_day.png" alt="诊所外"></div>
+    <div class="scene" data-scene="7"><img class="scene-bg" src="scene_clinic_exterior_night.png" alt="夜景"></div>
+    <div class="scene" data-scene="8"><img class="scene-bg" src="scene_lounge.png" alt="休息室"></div>
+
+    <!-- 压力警告遮罩 -->
+    <div class="pressure-warning" id="pressure-warning"></div>
+
+    <!-- 流程指示器 -->
+    <div class="flow-indicator">
+        <span class="flow-step active" id="step-0">📋 接诊</span><span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-1">🔍 问诊</span><span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-2">🩺 检查</span><span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-3">💊 治疗</span><span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-4">✨ 完成</span>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-item">
+                <img src="item_coin.png" alt="金币"> ¥<span id="ui-gold">1500</span>
+            </div>
+            <div class="status-item">
+                <img src="item_star.png" alt="声望">
+                <div class="stars-display" id="stars-display">
+                    <img class="star-icon" src="item_star.png" alt="星">
+                    <img class="star-icon" src="item_star.png" alt="星">
+                    <img class="star-icon" src="item_star.png" alt="星">
+                    <img class="star-icon" src="item_star.png" alt="星">
+                    <img class="star-icon" src="item_star.png" alt="星">
+                </div>
+            </div>
+            <div class="status-item">
+                <span style="font-size:11px">😰 压力</span>
+                <div class="pressure-bar-wrap">
+                    <div class="pressure-fill" id="pressure-fill" style="width:20%"></div>
+                    <div class="pressure-text" id="pressure-text">20%</div>
+                </div>
+            </div>
+        </div>
+        <div class="status-right">
+            <div class="status-item">
+                <img src="item_heart.png" alt="天数"> <span id="ui-day">Day 1</span>
+            </div>
+            <div class="status-item">
+                🏥 <span id="ui-patients">0/2</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 等待队列 -->
+    <div class="waiting-queue" id="waiting-queue"></div>
+
+    <!-- 角色层 -->
+    <div class="character-layer" id="char-layer">
+        <img class="doctor-sprite" id="doctor" src="doctor_smile.png" alt="医生">
+        <img class="pet-sprite" id="pet" src="dog_sick.png" alt="宠物" style="display:none">
+    </div>
+
+    <!-- 治愈特效 -->
+    <div class="heal-burst" id="heal-burst">
+        <img src="item_heart.png" alt="治愈">
+    </div>
+
+    <!-- 道具栏 -->
+    <div class="item-bar show" id="item-bar">
+        <div class="item-slot" data-item="stethoscope" title="听诊器">
+            <img src="item_stethoscope.png" alt="听诊器">
+        </div>
+        <div class="item-slot" data-item="thermometer" title="温度计">
+            <img src="item_thermometer.png" alt="温度计">
+        </div>
+        <div class="item-slot" data-item="medicine" title="药瓶">
+            <img src="item_medicine.png" alt="药瓶">
+            <div class="item-count">4</div>
+        </div>
+        <div class="item-slot" data-item="herb" title="草药">
+            <img src="item_herb.png" alt="草药">
+            <div class="item-count">3</div>
+        </div>
+        <div class="item-slot" data-item="bandage" title="绷带">
+            <img src="item_bandage.png" alt="绷带">
+            <div class="item-count">3</div>
+        </div>
+        <div class="item-slot" data-item="scalpel" title="手术刀">
+            <img src="item_scalpel.png" alt="手术刀">
+        </div>
+        <div class="item-slot" data-item="syringe" title="注射器">
+            <img src="item_syringe.png" alt="注射器">
+        </div>
+        <div class="item-slot" data-item="xray" title="X光片">
+            <img src="item_xray.png" alt="X光片">
+        </div>
+        <div class="item-slot" data-item="pill_red" title="红色药丸">
+            <img src="item_pill_red.png" alt="红色药丸">
+        </div>
+        <div class="item-slot" data-item="pill_blue" title="蓝色药丸">
+            <img src="item_pill_blue.png" alt="蓝色药丸">
+        </div>
+        <div class="item-slot" data-item="pill_yellow" title="黄色药丸">
+            <img src="item_pill_yellow.png" alt="黄色药丸">
+        </div>
+        <div class="item-slot" data-item="can_cat" title="猫罐头">
+            <img src="item_can_cat.png" alt="猫罐头">
+        </div>
+        <div class="item-slot" data-item="magnifier" title="放大镜">
+            <img src="item_magnifier.png" alt="放大镜">
+        </div>
+    </div>
+
+    <!-- 通用迷你游戏覆盖层 -->
+    <div class="minigame-overlay" id="minigame-overlay"></div>
+
+    <!-- 一天结算 -->
+    <div class="day-summary" id="day-summary">
+        <div class="summary-card">
+            <div class="summary-title">📋 今日营业总结</div>
+            <div class="summary-row"><span class="label">接诊数量</span><span class="value" id="sum-patients">0</span></div>
+            <div class="summary-row"><span class="label">成功治愈</span><span class="value positive" id="sum-cured">0</span></div>
+            <div class="summary-row"><span class="label">治疗失败</span><span class="value negative" id="sum-failed">0</span></div>
+            <div class="summary-row"><span class="label">今日收入</span><span class="value positive" id="sum-income">+¥0</span></div>
+            <div class="summary-row"><span class="label">药品支出</span><span class="value negative" id="sum-cost">-¥0</span></div>
+            <div class="summary-row"><span class="label">声望变化</span><span class="value positive" id="sum-rep">+0.00 ⭐</span></div>
+            <div class="summary-row" style="border-top:2px solid rgba(0,0,0,0.1);margin-top:8px;padding-top:12px">
+                <span class="label">净利润</span><span class="value positive" id="sum-profit" style="font-size:18px">+¥0</span>
+            </div>
+            <button class="summary-btn">🌅 开始新的一天</button>
+        </div>
+    </div>
+
+    <!-- 对话系统 -->
+    <div class="dialogue-box show" id="dialogue-box">
+        <div class="dialogue-inner">
+            <img class="dialogue-avatar" id="dialogue-avatar" src="doctor_smile.png" alt="头像">
+            <div class="dialogue-content">
+                <div class="dialogue-name-row">
+                    <span class="dialogue-name" id="dialogue-name">林医生</span>
+                    <span class="dialogue-mood" id="dialogue-mood">准备接诊</span>
+                </div>
+                <div class="dialogue-text" id="dialogue-text">
+                    游戏加载中...
+                </div>
+                <div class="dialogue-choices" id="dialogue-choices"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 场景导航 -->
+<div class="scene-nav">
+    <button class="scene-btn active">🏥 大厅</button>
+    <button class="scene-btn">🔍 检查</button>
+    <button class="scene-btn">💊 药房</button>
+    <button class="scene-btn">🌿 花园</button>
+    <button class="scene-btn">🛒 商店</button>
+    <button class="scene-btn">🔪 手术室</button>
+    <button class="scene-btn">🏠 诊所外</button>
+    <button class="scene-btn">🌙 夜景</button>
+    <button class="scene-btn">☕ 休息室</button>
+</div>
+
+<!-- ==================== JS模块加载（按依赖顺序） ==================== -->
+<script src="js/constants.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/core.js"></script>
+<script src="js/patients.js"></script>
+<script src="js/minigames.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/buffs.js"></script>
+<script src="js/negotiation.js"></script>
+<script src="js/season.js"></script>
+<script src="js/achievements.js"></script>
+<script src="js/endings.js"></script>
+<script src="js/bonds.js"></script>
+<script src="js/feedback.js"></script>
+
+<!-- 调试面板快捷键 -->
+<script>
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'd' || e.key === 'D') {
+        document.getElementById('debug-panel').classList.toggle('show');
+    }
+});
+// 每2秒更新调试面板
+setInterval(() => {
+    const p = document.getElementById('debug-panel');
+    if (!p.classList.contains('show')) return;
+    try {
+        const s = Core.getState();
+        document.getElementById('dbg-day').textContent = s.day;
+        document.getElementById('dbg-gold').textContent = s.gold;
+        document.getElementById('dbg-rep').textContent = s.reputation.toFixed(2);
+        document.getElementById('dbg-pressure').textContent = s.pressure;
+        document.getElementById('dbg-max').textContent = s.patientsMax;
+        document.getElementById('dbg-streak').textContent = s.streakCured;
+        document.getElementById('dbg-inv').textContent = 
+            `药${s.inventory.medicine||0}草${s.inventory.herb||0}绷${s.inventory.bandage||0}`;
+    } catch(e) {}
+}, 2000);
+</script>
+
+<script src="js/main.js"></script>
+
+
+<!-- 数值调试面板 (按D键切换) -->
+<div class="debug-hint">按 D 键打开调试面板</div>
+<div class="debug-panel" id="debug-panel">
+    <h4>🔧 数值调试</h4>
+    <div class="debug-row">Day: <span class="val" id="dbg-day">-</span></div>
+    <div class="debug-row">Gold: <span class="val" id="dbg-gold">-</span></div>
+    <div class="debug-row">Reputation: <span class="val" id="dbg-rep">-</span></div>
+    <div class="debug-row">Pressure: <span class="val" id="dbg-pressure">-</span></div>
+    <div class="debug-row">PatientsMax: <span class="val" id="dbg-max">-</span></div>
+    <div class="debug-row">Streak: <span class="val" id="dbg-streak">-</span></div>
+    <div class="debug-row">Inventory: <span class="val" id="dbg-inv">-</span></div>
+    <div style="margin-top:8px">
+        <button class="debug-btn" onclick="Core.addGold(500)">+¥500</button>
+        <button class="debug-btn" onclick="Core.addGold(-500)">-¥500</button>
+        <button class="debug-btn" onclick="Core.addReputation(0.5)">+Rep</button>
+        <button class="debug-btn" onclick="Core.addPressure(-20)">-压力</button>
+    </div>
+    <div style="margin-top:4px">
+        <button class="debug-btn" onclick="Core.getState().day+=10;Core.save();location.reload()">+10天</button>
+        <button class="debug-btn" onclick="Core.modifyInventory('medicine',5)">+5药瓶</button>
+        <button class="debug-btn" onclick="Core.deleteSave();location.reload()">删档</button>
+        <button class="debug-btn" onclick="FeedbackSystem.showFeedbackPanel()">🐛 反馈</button>
+        <button class="debug-btn" onclick="alert(FeedbackSystem.formatLogs(10))">📋 日志</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'd' || e.key === 'D') {
+        document.getElementById('debug-panel').classList.toggle('show');
+    }
+});
+setInterval(() => {
+    const p = document.getElementById('debug-panel');
+    if (!p.classList.contains('show')) return;
+    try {
+        const s = Core.getState();
+        document.getElementById('dbg-day').textContent = s.day;
+        document.getElementById('dbg-gold').textContent = s.gold;
+        document.getElementById('dbg-rep').textContent = s.reputation.toFixed(2);
+        document.getElementById('dbg-pressure').textContent = s.pressure;
+        document.getElementById('dbg-max').textContent = s.patientsMax;
+        document.getElementById('dbg-streak').textContent = s.streakCured;
+        document.getElementById('dbg-inv').textContent = 
+            `药${s.inventory.medicine||0}草${s.inventory.herb||0}绷${s.inventory.bandage||0}`;
+    } catch(e) {}
+}, 2000);
+</script>
+
+</body>
+</html>

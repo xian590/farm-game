@@ -1,10 +1,39 @@
 {
   "name": "星愿花园",
   "short_name": "星愿花园",
-  "description": "温柔显化陪伴",
+  "description": "用科学方法温柔显化你的人生。许愿、冥想、肯定语、显化日记、塔罗指引，一站式显化工具。",
   "start_url": ".",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#FAF5F7",
   "theme_color": "#FDF2F8",
-  "icons": []
+  "categories": ["lifestyle", "health", "productivity"],
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 375 812'%3E%3Crect fill='%23FAF5F7' width='375' height='812'/%3E%3Ctext x='187' y='400' font-size='40' text-anchor='middle' fill='%235D4E6D'%3E星愿花园%3C/text%3E%3C/svg%3E",
+      "sizes": "375x812",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
 }

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 宠物医生模拟器 - 完整原型 v0.1</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+}
+
+/* ========== 游戏主容器 ========== */
+#game-container {
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+/* ========== 场景层 ========== */
+.scene {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    pointer-events: none;
+    z-index: 1;
+}
+.scene.active {
+    opacity: 1;
+    pointer-events: all;
+}
+.scene-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ========== 角色层 ========== */
+.character-layer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70%;
+    pointer-events: none;
+    z-index: 10;
+}
+.doctor-sprite {
+    position: absolute;
+    bottom: 20px;
+    left: 60px;
+    height: 75%;
+    width: auto;
+    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+    transition: transform 0.3s ease, filter 0.3s ease;
+    animation: doctorIdle 3s ease-in-out infinite;
+}
+@keyframes doctorIdle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+.pet-sprite {
+    position: absolute;
+    bottom: 30px;
+    right: 80px;
+    height: 40%;
+    width: auto;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.25));
+    animation: petIdle 2.5s ease-in-out infinite;
+}
+@keyframes petIdle {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.02); }
+}
+
+/* ========== 对话系统 ========== */
+.dialogue-box {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 94%;
+    max-width: 1100px;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.dialogue-box.show {
+    opacity: 1;
+}
+.dialogue-inner {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 18px 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.5);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.dialogue-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(90,180,210,0.3);
+    flex-shrink: 0;
+}
+.dialogue-content {
+    flex: 1;
+}
+.dialogue-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #3a7bd5;
+    margin-bottom: 4px;
+}
+.dialogue-mood {
+    font-size: 12px;
+    color: #999;
+    margin-left: 8px;
+    font-weight: 400;
+}
+.dialogue-text {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.6;
+    min-height: 48px;
+}
+.dialogue-choices {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+.choice-btn {
+    padding: 10px 20px;
+    border: 2px solid #5bc0be;
+    border-radius: 12px;
+    background: rgba(91,192,190,0.08);
+    color: #3a7bd5;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.choice-btn:hover {
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5);
+    color: #fff;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(91,192,190,0.4);
+}
+
+/* ========== 顶部状态栏 ========== */
+.status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 15;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+    pointer-events: none;
+}
+.status-left, .status-right {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    padding: 6px 14px;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.status-item img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+/* ========== 道具快捷栏 ========== */
+.item-bar {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.item-bar.show {
+    opacity: 1;
+}
+.item-slot {
+    width: 56px;
+    height: 56px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    position: relative;
+}
+.item-slot img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+.item-slot:hover {
+    transform: scale(1.15);
+    box-shadow: 0 6px 25px rgba(91,192,190,0.5);
+    border-color: #5bc0be;
+}
+.item-slot.active {
+    border-color: #5bc0be;
+    background: rgba(91,192,190,0.15);
+    animation: itemPulse 1s ease infinite;
+}
+@keyframes itemPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(91,192,190,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(91,192,190,0); }
+}
+
+/* ========== 场景导航（底部） ========== */
+.scene-nav {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+.scene-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: rgba(255,255,255,0.08);
+    color: #aaa;
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.scene-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    transform: translateY(-2px);
+}
+.scene-btn.active {
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 20px rgba(91,192,190,0.4);
+}
+
+/* ========== 标题 ========== */
+#title-bar {
+    text-align: center;
+    margin-bottom: 12px;
+}
+#title-bar h1 {
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5, #7b68ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+}
+#title-bar p {
+    color: rgba(255,255,255,0.4);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+/* ========== 治疗特效 ========== */
+.heal-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+}
+.heal-effect.show {
+    animation: healBurst 1.5s ease forwards;
+}
+@keyframes healBurst {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+.heal-effect img {
+    width: 200px;
+    height: 200px;
+    filter: drop-shadow(0 0 30px rgba(255,200,100,0.8));
+}
+
+/* ========== 流程指示器 ========== */
+.flow-indicator {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    display: flex;
+    gap: 8px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.flow-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    transition: color 0.3s ease;
+}
+.flow-step.active {
+    color: #5bc0be;
+    font-weight: 600;
+}
+.flow-step.done {
+    color: rgba(255,255,255,0.7);
+}
+.flow-arrow {
+    color: rgba(255,255,255,0.2);
+    font-size: 12px;
+}
+
+/* ========== 宠物状态标签 ========== */
+.pet-status {
+    position: absolute;
+    right: 60px;
+    bottom: 35%;
+    z-index: 12;
+    background: rgba(255,100,100,0.85);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+.pet-status.show {
+    opacity: 1;
+}
+.pet-status.healed {
+    background: rgba(100,200,100,0.85);
+}
+</style>
+</head>
+<body>
+
+<div id="title-bar">
+    <h1>🐾 宠物医生模拟器</h1>
+    <p>场景切换 + 角色对话 + 道具交互 | 完整原型 v0.1</p>
+</div>
+
+<div id="game-container">
+
+    <!-- ====== 场景层 ====== -->
+    <div class="scene active" data-scene="0">
+        <img class="scene-bg" src="scene_clinic_hall.png" alt="诊所大厅">
+    </div>
+    <div class="scene" data-scene="1">
+        <img class="scene-bg" src="scene_exam_room.png" alt="检查室">
+    </div>
+    <div class="scene" data-scene="2">
+        <img class="scene-bg" src="scene_pharmacy.png" alt="药房">
+    </div>
+    <div class="scene" data-scene="3">
+        <img class="scene-bg" src="scene_herb_garden.png" alt="草药花园">
+    </div>
+    <div class="scene" data-scene="4">
+        <img class="scene-bg" src="scene_pet_shop.png" alt="宠物商店">
+    </div>
+
+    <!-- ====== 流程指示器 ====== -->
+    <div class="flow-indicator">
+        <span class="flow-step active" id="step-0">📋 接诊</span>
+        <span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-1">🔍 问诊</span>
+        <span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-2">🩺 检查</span>
+        <span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-3">💊 治疗</span>
+        <span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-4">✨ 完成</span>
+    </div>
+
+    <!-- ====== 状态栏 ====== -->
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-item">
+                <img src="item_coin.png" alt="金币"> ¥3,250
+            </div>
+            <div class="status-item">
+                <img src="item_heart.png" alt="爱心"> 声誉 4.2
+            </div>
+        </div>
+        <div class="status-right">
+            <div class="status-item">
+                <img src="item_star.png" alt="星星"> 今日 1/12
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 角色层 ====== -->
+    <div class="character-layer" id="char-layer">
+        <img class="doctor-sprite" id="doctor" src="doctor_smile.png" alt="医生">
+        <img class="pet-sprite" id="pet" src="dog_sick.png" alt="宠物">
+        <div class="pet-status show" id="pet-status">😷 生病中</div>
+    </div>
+
+    <!-- ====== 道具快捷栏 ====== -->
+    <div class="item-bar" id="item-bar">
+        <div class="item-slot" data-item="stethoscope" title="听诊器">
+            <img src="item_stethoscope.png" alt="听诊器">
+        </div>
+        <div class="item-slot" data-item="thermometer" title="温度计">
+            <img src="item_thermometer.png" alt="温度计">
+        </div>
+        <div class="item-slot" data-item="medicine" title="药瓶">
+            <img src="item_medicine.png" alt="药瓶">
+        </div>
+        <div class="item-slot" data-item="bandage" title="绷带">
+            <img src="item_bandage.png" alt="绷带">
+        </div>
+        <div class="item-slot" data-item="herb" title="草药">
+            <img src="item_herb.png" alt="草药">
+        </div>
+    </div>
+
+    <!-- ====== 治疗特效 ====== -->
+    <div class="heal-effect" id="heal-effect">
+        <img src="item_heart.png" alt="治愈">
+    </div>
+
+    <!-- ====== 对话系统 ====== -->
+    <div class="dialogue-box show" id="dialogue-box">
+        <div class="dialogue-inner">
+            <img class="dialogue-avatar" id="dialogue-avatar" src="doctor_smile.png" alt="头像">
+            <div class="dialogue-content">
+                <div class="dialogue-name">
+                    <span id="dialogue-name">林医生</span>
+                    <span class="dialogue-mood" id="dialogue-mood">微笑</span>
+                </div>
+                <div class="dialogue-text" id="dialogue-text">
+                    欢迎来到宠物诊所！今天第一位患者是一只柴犬豆豆，主人说它从早上开始呕吐腹泻...
+                </div>
+                <div class="dialogue-choices" id="dialogue-choices">
+                    <button class="choice-btn" onclick="nextStep(1)">🔍 开始问诊</button>
+                    <button class="choice-btn" onclick="skipIntro()">⏭ 跳过介绍</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ====== 场景导航 ====== -->
+<div class="scene-nav">
+    <button class="scene-btn active" onclick="switchScene(0)">🏥 大厅</button>
+    <button class="scene-btn" onclick="switchScene(1)">🔍 检查</button>
+    <button class="scene-btn" onclick="switchScene(2)">💊 药房</button>
+    <button class="scene-btn" onclick="switchScene(3)">🌿 花园</button>
+    <button class="scene-btn" onclick="switchScene(4)">🛒 商店</button>
+</div>
+
+<script>
+// ========== 游戏状态 ==========
+let currentScene = 0;
+let currentStep = 0;
+let doctorMood = 'smile';
+let petState = 'sick';
+let selectedItem = null;
+
+// ========== 场景切换 ==========
+function switchScene(index) {
+    if (index === currentScene) return;
+    
+    const scenes = document.querySelectorAll('.scene');
+    const buttons = document.querySelectorAll('.scene-btn');
+    
+    scenes[currentScene].classList.remove('active');
+    buttons[currentScene].classList.remove('active');
+    
+    currentScene = index;
+    
+    scenes[currentScene].classList.add('active');
+    buttons[currentScene].classList.add('active');
+}
+
+// ========== 流程控制 ==========
+const dialogues = {
+    0: {
+        name: '林医生',
+        mood: '微笑',
+        avatar: 'doctor_smile.png',
+        text: '欢迎来到宠物诊所！今天第一位患者是一只柴犬豆豆，主人说它从早上开始呕吐腹泻，精神很差...',
+        choices: [
+            { text: '🔍 开始问诊', action: () => nextStep(1) },
+            { text: '⏭ 跳过介绍', action: () => skipIntro() }
+        ]
+    },
+    1: {
+        name: '林医生',
+        mood: '认真',
+        avatar: 'doctor_serious.png',
+        text: '豆豆主人说："它昨天偷吃了垃圾桶里的剩菜，然后就开始不舒服了..." 这很可能是食物中毒。',
+        choices: [
+            { text: '🩺 用听诊器检查', action: () => { selectItem('stethoscope'); nextStep(2); } },
+            { text: '🌡 测量体温', action: () => { selectItem('thermometer'); nextStep(2); } },
+            { text: '🤔 再问问细节', action: () => showConfused() }
+        ]
+    },
+    2: {
+        name: '林医生',
+        mood: '专注',
+        avatar: 'doctor_serious.png',
+        text: '听诊检查完成。豆豆的肠胃有轻微炎症，体温38.5°C偏高。需要调配止泻药和消炎药。',
+        choices: [
+            { text: '💊 去药房配药', action: () => { switchScene(2); nextStep(3); } },
+            { text: '🌿 去花园采草药', action: () => { switchScene(3); nextStep(3); } }
+        ]
+    },
+    3: {
+        name: '林医生',
+        mood: '认真',
+        avatar: 'doctor_serious.png',
+        text: '从药柜取出黄连素和益生菌，研磨草药，混合温水... 药剂调配完成！',
+        choices: [
+            { text: '💉 给豆豆喂药', action: () => nextStep(4) },
+            { text: '📋 查看病历', action: () => showClipboard() }
+        ]
+    },
+    4: {
+        name: '林医生',
+        mood: '开心',
+        avatar: 'doctor_happy.png',
+        text: '豆豆喝完药后精神明显好转了！主人非常感谢，诊所声誉+1，获得诊金¥200。',
+        choices: [
+            { text: '🎉 接诊下一位', action: () => resetFlow() },
+            { text: '🏥 回大厅休息', action: () => { switchScene(0); resetFlow(); } }
+        ]
+    }
+};
+
+function nextStep(step) {
+    currentStep = step;
+    
+    // 更新流程指示器
+    document.querySelectorAll('.flow-step').forEach((el, i) => {
+        el.classList.remove('active', 'done');
+        if (i < step) el.classList.add('done');
+        if (i === step) el.classList.add('active');
+    });
+    
+    // 更新对话
+    const d = dialogues[step];
+    if (d) {
+        updateDialogue(d);
+    }
+    
+    // 特殊步骤处理
+    if (step === 1) {
+        setDoctorMood('serious');
+    } else if (step === 4) {
+        setDoctorMood('happy');
+        healPet();
+    }
+}
+
+function updateDialogue(d) {
+    document.getElementById('dialogue-name').textContent = d.name;
+    document.getElementById('dialogue-mood').textContent = d.mood;
+    document.getElementById('dialogue-avatar').src = d.avatar;
+    document.getElementById('dialogue-text').textContent = d.text;
+    
+    const choicesDiv = document.getElementById('dialogue-choices');
+    choicesDiv.innerHTML = '';
+    d.choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = c.text;
+        btn.onclick = c.action;
+        choicesDiv.appendChild(btn);
+    });
+}
+
+function skipIntro() {
+    nextStep(1);
+}
+
+function showConfused() {
+    setDoctorMood('confused');
+    const d = {
+        name: '林医生',
+        mood: '困惑',
+        avatar: 'doctor_confused.png',
+        text: '嗯... 剩菜里可能有洋葱或巧克力？这两种对狗狗都是剧毒。让我再仔细检查看看...',
+        choices: [
+            { text: '🔍 仔细检查', action: () => { setDoctorMood('serious'); nextStep(2); } },
+            { text: '💉 先用药', action: () => nextStep(3) }
+        ]
+    };
+    updateDialogue(d);
+}
+
+function showClipboard() {
+    const d = {
+        name: '系统',
+        mood: '病历',
+        avatar: 'item_clipboard.png',
+        text: '【豆豆的病历】品种：柴犬 | 年龄：3岁 | 症状：呕吐、腹泻、精神萎靡 | 初步诊断：食物中毒 | 处方：黄连素+益生菌',
+        choices: [
+            { text: '💊 继续治疗', action: () => nextStep(4) }
+        ]
+    };
+    updateDialogue(d);
+}
+
+function resetFlow() {
+    currentStep = 0;
+    petState = 'sick';
+    document.getElementById('pet').src = 'dog_sick.png';
+    document.getElementById('pet-status').textContent = '😷 生病中';
+    document.getElementById('pet-status').classList.remove('healed');
+    document.querySelectorAll('.flow-step').forEach((el, i) => {
+        el.classList.remove('active', 'done');
+        if (i === 0) el.classList.add('active');
+    });
+    setDoctorMood('smile');
+    switchScene(0);
+    updateDialogue(dialogues[0]);
+}
+
+// ========== 角色表情 ==========
+function setDoctorMood(mood) {
+    doctorMood = mood;
+    const doctorImg = document.getElementById('doctor');
+    const moodMap = {
+        'smile': 'doctor_smile.png',
+        'serious': 'doctor_serious.png',
+        'confused': 'doctor_confused.png',
+        'surprised': 'doctor_surprised.png',
+        'happy': 'doctor_happy.png'
+    };
+    doctorImg.src = moodMap[mood] || 'doctor_smile.png';
+}
+
+// ========== 宠物治愈 ==========
+function healPet() {
+    petState = 'healthy';
+    const petImg = document.getElementById('pet');
+    const statusDiv = document.getElementById('pet-status');
+    
+    // 显示治愈特效
+    const effect = document.getElementById('heal-effect');
+    effect.classList.add('show');
+    setTimeout(() => effect.classList.remove('show'), 1500);
+    
+    // 切换宠物图
+    setTimeout(() => {
+        petImg.src = 'dog_healthy.png';
+        statusDiv.textContent = '💚 已治愈';
+        statusDiv.classList.add('healed');
+    }, 800);
+}
+
+// ========== 道具选择 ==========
+function selectItem(itemName) {
+    selectedItem = itemName;
+    document.querySelectorAll('.item-slot').forEach(slot => {
+        slot.classList.toggle('active', slot.dataset.item === itemName);
+    });
+    // 显示道具栏
+    document.getElementById('item-bar').classList.add('show');
+}
+
+// 道具点击事件
+document.querySelectorAll('.item-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+        selectItem(slot.dataset.item);
+    });
+});
+
+// ========== 键盘快捷键 ==========
+document.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '5') {
+        switchScene(parseInt(e.key) - 1);
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+        // 触发第一个选项
+        const firstBtn = document.querySelector('.choice-btn');
+        if (firstBtn) firstBtn.click();
+    }
+});
+
+// 初始化：显示道具栏
+document.getElementById('item-bar').classList.add('show');
+</script>
+
+</body>
+</html>

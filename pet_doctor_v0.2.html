@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 宠物医生模拟器 v0.2 — 压力系统+迷你游戏</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    overflow: hidden;
+}
+
+#game-container {
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16/9;
+    background: #0a0a15;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+/* ====== 场景 ====== */
+.scene {
+    position: absolute; inset: 0;
+    opacity: 0; transition: opacity 0.5s ease;
+    pointer-events: none; z-index: 1;
+}
+.scene.active { opacity: 1; pointer-events: all; }
+.scene-bg { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ====== 角色层 ====== */
+.character-layer {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 72%;
+    pointer-events: none; z-index: 5;
+}
+
+/* 呼吸动效：身体缩放+上下浮动模拟呼吸 */
+@keyframes breathe-doctor {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    25% { transform: translateY(-3px) scale(1.008, 0.995); }
+    50% { transform: translateY(-4px) scale(1.012, 0.992); }
+    75% { transform: translateY(-2px) scale(1.005, 0.996); }
+}
+@keyframes breathe-pet {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    20% { transform: translateY(-2px) scale(1.01, 0.99); }
+    40% { transform: translateY(-3px) scale(1.015, 0.985); }
+    60% { transform: translateY(-1px) scale(1.008, 0.992); }
+}
+@keyframes blink {
+    0%, 90%, 100% { opacity: 1; }
+    95% { opacity: 0.3; }
+}
+
+.doctor-sprite {
+    position: absolute; bottom: 16px; left: 50px;
+    height: 78%; width: auto;
+    filter: drop-shadow(0 12px 30px rgba(0,0,0,0.35));
+    animation: breathe-doctor 3s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+.pet-sprite {
+    position: absolute; bottom: 24px; right: 70px;
+    height: 42%; width: auto;
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.3));
+    animation: breathe-pet 2.2s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+.pet-sprite.sick { animation: breathe-pet 2.2s ease-in-out infinite, shake 4s ease-in-out infinite; }
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    92% { transform: translateX(0); }
+    94% { transform: translateX(-2px); }
+    96% { transform: translateX(2px); }
+    98% { transform: translateX(-1px); }
+}
+
+/* ====== 状态栏（顶部） ====== */
+.status-bar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 15;
+    padding: 10px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    pointer-events: none;
+}
+.status-left, .status-right { display: flex; gap: 12px; align-items: center; }
+.status-item {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+    padding: 5px 12px; border-radius: 20px;
+    color: #fff; font-size: 13px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.08);
+    pointer-events: all;
+}
+.status-item img { width: 18px; height: 18px; object-fit: contain; }
+
+/* 压力条 */
+.pressure-bar-wrap {
+    width: 140px; height: 18px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px; overflow: hidden;
+    position: relative; border: 1px solid rgba(255,255,255,0.1);
+}
+.pressure-fill {
+    height: 100%; width: 0%;
+    border-radius: 10px;
+    transition: width 0.5s ease, background 0.5s ease;
+    background: linear-gradient(90deg, #4ade80, #fbbf24, #f87171);
+    background-size: 300% 100%;
+    background-position: 0% 0%;
+}
+.pressure-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #fff; font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.pressure-high {
+    animation: pressurePulse 0.8s ease infinite;
+    box-shadow: 0 0 20px rgba(248,113,113,0.5);
+}
+@keyframes pressurePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* 声望星星 */
+.stars-display { display: flex; gap: 2px; }
+.star-icon {
+    width: 16px; height: 16px;
+    filter: grayscale(1) brightness(0.4);
+    transition: filter 0.3s ease;
+}
+.star-icon.lit { filter: none; }
+
+/* ====== 流程指示器 ====== */
+.flow-indicator {
+    position: absolute; top: 52px; left: 50%;
+    transform: translateX(-50%); z-index: 15;
+    display: flex; gap: 6px; align-items: center;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(10px);
+    padding: 8px 16px; border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.08);
+    pointer-events: none;
+}
+.flow-step {
+    font-size: 12px; color: rgba(255,255,255,0.35);
+    transition: all 0.3s ease; white-space: nowrap;
+}
+.flow-step.active { color: #5bc0be; font-weight: 700; text-shadow: 0 0 10px rgba(91,192,190,0.5); }
+.flow-step.done { color: rgba(255,255,255,0.6); }
+.flow-arrow { color: rgba(255,255,255,0.15); font-size: 10px; }
+
+/* ====== 对话系统 ====== */
+.dialogue-box {
+    position: absolute; bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    width: 94%; max-width: 1080px; z-index: 20;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.dialogue-box.show { opacity: 1; }
+.dialogue-inner {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.5);
+    display: flex; gap: 14px; align-items: flex-start;
+}
+.dialogue-avatar {
+    width: 58px; height: 58px; border-radius: 50%;
+    object-fit: cover; border: 3px solid rgba(90,180,210,0.25);
+    flex-shrink: 0; animation: breathe-doctor 3s ease-in-out infinite;
+}
+.dialogue-content { flex: 1; }
+.dialogue-name-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 3px;
+}
+.dialogue-name {
+    font-size: 15px; font-weight: 700; color: #3a7bd5;
+}
+.dialogue-mood {
+    font-size: 11px; color: #999;
+    background: rgba(0,0,0,0.05); padding: 1px 8px;
+    border-radius: 10px;
+}
+.dialogue-text {
+    font-size: 14px; color: #444; line-height: 1.6;
+    min-height: 42px;
+}
+.dialogue-choices {
+    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.choice-btn {
+    padding: 9px 18px;
+    border: 2px solid #5bc0be;
+    border-radius: 12px;
+    background: rgba(91,192,190,0.06);
+    color: #3a7bd5;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease;
+}
+.choice-btn:hover {
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5);
+    color: #fff; border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(91,192,190,0.4);
+}
+
+/* ====== 道具栏 ====== */
+.item-bar {
+    position: absolute; right: 14px;
+    top: 50%; transform: translateY(-50%);
+    z-index: 15;
+    display: flex; flex-direction: column; gap: 8px;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.item-bar.show { opacity: 1; }
+.item-slot {
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    position: relative;
+}
+.item-slot img { width: 30px; height: 30px; object-fit: contain; }
+.item-slot:hover { transform: scale(1.12); border-color: #5bc0be; }
+.item-slot.active {
+    border-color: #5bc0be;
+    background: rgba(91,192,190,0.15);
+    animation: itemPulse 1.2s ease infinite;
+}
+@keyframes itemPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(91,192,190,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(91,192,190,0); }
+}
+.item-count {
+    position: absolute; bottom: -2px; right: -2px;
+    background: #f87171; color: #fff;
+    font-size: 9px; font-weight: 700;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ====== 迷你游戏：听诊器 ====== */
+.minigame-overlay {
+    position: absolute; inset: 0; z-index: 25;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column;
+}
+.minigame-overlay.show { display: flex; }
+.minigame-title {
+    color: #fff; font-size: 22px; font-weight: 700;
+    margin-bottom: 16px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+.minigame-area {
+    width: 500px; height: 400px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 20px; border: 2px solid rgba(255,255,255,0.15);
+    position: relative; overflow: hidden;
+    cursor: crosshair;
+}
+.pet-body-outline {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 240px; height: 300px;
+    opacity: 0.6;
+}
+.heart-zone {
+    position: absolute; width: 60px; height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(248,113,113,0.3), transparent);
+    border: 2px dashed rgba(248,113,113,0.4);
+    animation: heartZonePulse 1.5s ease infinite;
+}
+@keyframes heartZonePulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 0.3; }
+}
+.stethoscope-cursor {
+    position: absolute; width: 40px; height: 40px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+.wave-display {
+    position: absolute; bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    width: 400px; height: 80px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    display: flex; align-items: center;
+    justify-content: center; gap: 2px;
+    padding: 10px;
+}
+.wave-bar {
+    width: 4px; background: #5bc0be;
+    border-radius: 2px;
+    transition: height 0.1s ease;
+}
+.minigame-timer {
+    position: absolute; top: 14px; left: 50%;
+    transform: translateX(-50%);
+    color: #fff; font-size: 28px; font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.minigame-result {
+    color: #fff; font-size: 18px; margin-top: 16px;
+    text-align: center; min-height: 30px;
+}
+
+/* ====== 迷你游戏：研磨草药 ====== */
+.grind-area {
+    width: 450px; height: 450px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%; border: 3px solid rgba(255,255,255,0.15);
+    position: relative; overflow: hidden;
+    cursor: grab;
+}
+.grind-area:active { cursor: grabbing; }
+.grind-bowl {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px; height: 200px;
+}
+.grind-progress-ring {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    border: 8px solid rgba(255,255,255,0.1);
+    border-top-color: #5bc0be;
+    transition: transform 0.1s linear;
+}
+.grind-particles {
+    position: absolute; inset: 0;
+    pointer-events: none;
+}
+.grind-particle {
+    position: absolute; width: 6px; height: 6px;
+    background: #a3d9a5; border-radius: 50%;
+    animation: particleFly 0.8s ease forwards;
+}
+@keyframes particleFly {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0) translate(var(--tx), var(--ty)); opacity: 0; }
+}
+
+/* ====== 治愈特效 ====== */
+.heal-burst {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); z-index: 30;
+    pointer-events: none; opacity: 0;
+}
+.heal-burst.show { animation: healBurst 1.2s ease forwards; }
+@keyframes healBurst {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+    60% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+}
+.heal-burst img { width: 180px; height: 180px; filter: drop-shadow(0 0 40px rgba(255,200,100,0.8)); }
+
+/* 金币弹出 */
+.coin-pop {
+    position: absolute; z-index: 30;
+    color: #fbbf24; font-size: 20px; font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    pointer-events: none;
+    animation: coinFloat 1.5s ease forwards;
+}
+@keyframes coinFloat {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-60px); }
+}
+
+/* ====== 一天结算界面 ====== */
+.day-summary {
+    position: absolute; inset: 0; z-index: 40;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(15px);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column;
+}
+.day-summary.show { display: flex; }
+.summary-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 24px;
+    padding: 32px 48px;
+    max-width: 500px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.summary-title {
+    font-size: 24px; font-weight: 800;
+    color: #3a7bd5; text-align: center; margin-bottom: 20px;
+}
+.summary-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-size: 15px; color: #555;
+}
+.summary-row .label { font-weight: 600; }
+.summary-row .value { font-weight: 700; color: #333; }
+.summary-row .value.positive { color: #22c55e; }
+.summary-row .value.negative { color: #ef4444; }
+.summary-btn {
+    width: 100%; margin-top: 20px;
+    padding: 14px; border: none; border-radius: 14px;
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5);
+    color: #fff; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: transform 0.2s ease;
+}
+.summary-btn:hover { transform: scale(1.03); }
+
+/* ====== 场景导航 ====== */
+.scene-nav {
+    display: flex; gap: 8px; margin-top: 12px;
+    padding: 12px 18px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px; backdrop-filter: blur(10px);
+}
+.scene-btn {
+    padding: 9px 18px; border: none; border-radius: 12px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.25s ease;
+    background: rgba(255,255,255,0.07);
+    color: #aaa; border: 1px solid rgba(255,255,255,0.05);
+}
+.scene-btn:hover { background: rgba(255,255,255,0.13); color: #fff; transform: translateY(-2px); }
+.scene-btn.active {
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 20px rgba(91,192,190,0.4);
+}
+
+/* ====== 标题 ====== */
+#title-bar { text-align: center; margin-bottom: 10px; }
+#title-bar h1 {
+    font-size: 24px; font-weight: 800;
+    background: linear-gradient(135deg, #5bc0be, #3a7bd5, #7b68ee);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    letter-spacing: 1px;
+}
+#title-bar p { color: rgba(255,255,255,0.35); font-size: 12px; margin-top: 3px; }
+
+/* 病人等待队列 */
+.waiting-queue {
+    position: absolute; top: 82px; right: 18px; z-index: 12;
+    display: flex; flex-direction: column; gap: 6px;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.waiting-queue.show { opacity: 1; }
+.waiting-pet {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px; padding: 4px;
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: breathe-pet 2s ease-in-out infinite;
+    cursor: pointer; transition: transform 0.2s ease;
+}
+.waiting-pet:hover { transform: scale(1.15); }
+.waiting-pet img { width: 100%; height: 100%; object-fit: contain; }
+.waiting-count {
+    position: absolute; top: -6px; right: -6px;
+    background: #f87171; color: #fff;
+    font-size: 10px; font-weight: 700;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* 压力高警告 */
+.pressure-warning {
+    position: absolute; inset: 0; z-index: 3;
+    pointer-events: none; opacity: 0;
+    box-shadow: inset 0 0 60px rgba(248,113,113,0);
+    transition: opacity 0.5s ease, box-shadow 0.5s ease;
+}
+.pressure-warning.show {
+    opacity: 1;
+    box-shadow: inset 0 0 80px rgba(248,113,113,0.4);
+    animation: warningPulse 1s ease infinite;
+}
+@keyframes warningPulse {
+    0%, 100% { box-shadow: inset 0 0 60px rgba(248,113,113,0.3); }
+    50% { box-shadow: inset 0 0 100px rgba(248,113,113,0.5); }
+}
+</style>
+</head>
+<body>
+
+<div id="title-bar">
+    <h1>🐾 宠物医生模拟器 v0.2</h1>
+    <p>压力系统 + 迷你游戏 + 呼吸动效</p>
+</div>
+
+<div id="game-container">
+
+    <!-- 场景层 -->
+    <div class="scene active" data-scene="0"><img class="scene-bg" src="scene_clinic_hall.png"></div>
+    <div class="scene" data-scene="1"><img class="scene-bg" src="scene_exam_room.png"></div>
+    <div class="scene" data-scene="2"><img class="scene-bg" src="scene_pharmacy.png"></div>
+    <div class="scene" data-scene="3"><img class="scene-bg" src="scene_herb_garden.png"></div>
+    <div class="scene" data-scene="4"><img class="scene-bg" src="scene_pet_shop.png"></div>
+
+    <!-- 压力警告遮罩 -->
+    <div class="pressure-warning" id="pressure-warning"></div>
+
+    <!-- 流程指示器 -->
+    <div class="flow-indicator">
+        <span class="flow-step active" id="step-0">📋 接诊</span><span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-1">🔍 问诊</span><span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-2">🩺 检查</span><span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-3">💊 治疗</span><span class="flow-arrow">▶</span>
+        <span class="flow-step" id="step-4">✨ 完成</span>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-item">
+                <img src="item_coin.png"> ¥<span id="gold-display">3250</span>
+            </div>
+            <div class="status-item">
+                <img src="item_star.png">
+                <div class="stars-display" id="stars-display">
+                    <img class="star-icon lit" src="item_star.png">
+                    <img class="star-icon lit" src="item_star.png">
+                    <img class="star-icon lit" src="item_star.png">
+                    <img class="star-icon" src="item_star.png">
+                    <img class="star-icon" src="item_star.png">
+                </div>
+            </div>
+            <div class="status-item">
+                <span style="font-size:11px">😰 压力</span>
+                <div class="pressure-bar-wrap">
+                    <div class="pressure-fill" id="pressure-fill" style="width:15%"></div>
+                    <div class="pressure-text" id="pressure-text">15%</div>
+                </div>
+            </div>
+        </div>
+        <div class="status-right">
+            <div class="status-item">
+                <img src="item_heart.png"> <span id="day-display">Day 1</span>
+            </div>
+            <div class="status-item">
+                🏥 <span id="patients-display">1/5</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 等待队列 -->
+    <div class="waiting-queue show" id="waiting-queue">
+        <div class="waiting-pet" title="豆豆（正在看诊）">
+            <img src="dog_sick.png">
+        </div>
+        <div class="waiting-pet" title="咪咪（等待中）">
+            <img src="cat_sick.png">
+            <div class="waiting-count">!</div>
+        </div>
+    </div>
+
+    <!-- 角色层 -->
+    <div class="character-layer" id="char-layer">
+        <img class="doctor-sprite" id="doctor" src="doctor_smile.png">
+        <img class="pet-sprite sick" id="pet" src="dog_sick.png">
+    </div>
+
+    <!-- 治愈特效 -->
+    <div class="heal-burst" id="heal-burst">
+        <img src="item_heart.png">
+    </div>
+
+    <!-- 道具栏 -->
+    <div class="item-bar show" id="item-bar">
+        <div class="item-slot" data-item="stethoscope" title="听诊器">
+            <img src="item_stethoscope.png">
+        </div>
+        <div class="item-slot" data-item="thermometer" title="温度计">
+            <img src="item_thermometer.png">
+        </div>
+        <div class="item-slot" data-item="medicine" title="药瓶">
+            <img src="item_medicine.png">
+            <div class="item-count">8</div>
+        </div>
+        <div class="item-slot" data-item="herb" title="草药">
+            <img src="item_herb.png">
+            <div class="item-count">5</div>
+        </div>
+        <div class="item-slot" data-item="bandage" title="绷带">
+            <img src="item_bandage.png">
+            <div class="item-count">3</div>
+        </div>
+    </div>
+
+    <!-- 迷你游戏：听诊器 -->
+    <div class="minigame-overlay" id="mg-stethoscope">
+        <div class="minigame-title">🔍 听诊诊断 — 移动鼠标找到心跳位置</div>
+        <div class="minigame-area" id="stethoscope-area">
+            <div class="pet-body-outline" style="background:rgba(220,160,100,0.2);border-radius:40%"></div>
+            <div class="heart-zone" id="heart-zone" style="top:45%;left:52%"></div>
+            <img class="stethoscope-cursor" id="steth-cursor" src="item_stethoscope.png" style="display:none">
+            <div class="minigame-timer" id="steth-timer">10.0</div>
+            <div class="wave-display" id="wave-display"></div>
+        </div>
+        <div class="minigame-result" id="steth-result"></div>
+    </div>
+
+    <!-- 迷你游戏：研磨草药 -->
+    <div class="minigame-overlay" id="mg-grind">
+        <div class="minigame-title">🌿 研磨草药 — 按住鼠标画圈研磨</div>
+        <div class="grind-area" id="grind-area">
+            <div class="grind-bowl" style="background:rgba(200,170,140,0.3);border-radius:50%"></div>
+            <div class="grind-progress-ring" id="grind-ring"></div>
+            <div class="grind-particles" id="grind-particles"></div>
+            <div class="minigame-timer" style="top:10px">进度: <span id="grind-percent">0</span>%</div>
+        </div>
+        <div class="minigame-result" id="grind-result"></div>
+    </div>
+
+    <!-- 一天结算 -->
+    <div class="day-summary" id="day-summary">
+        <div class="summary-card">
+            <div class="summary-title">📋 今日营业总结</div>
+            <div class="summary-row"><span class="label">接诊数量</span><span class="value" id="sum-patients">3</span></div>
+            <div class="summary-row"><span class="label">成功治愈</span><span class="value positive" id="sum-cured">3</span></div>
+            <div class="summary-row"><span class="label">治疗失败</span><span class="value negative" id="sum-failed">0</span></div>
+            <div class="summary-row"><span class="label">今日收入</span><span class="value positive" id="sum-income">+¥600</span></div>
+            <div class="summary-row"><span class="label">药品支出</span><span class="value negative" id="sum-cost">-¥150</span></div>
+            <div class="summary-row"><span class="label">声望变化</span><span class="value positive" id="sum-rep">+0.3 ⭐</span></div>
+            <div class="summary-row" style="border-top:2px solid rgba(0,0,0,0.1);margin-top:8px;padding-top:12px">
+                <span class="label">净利润</span><span class="value positive" id="sum-profit" style="font-size:18px">+¥450</span>
+            </div>
+            <button class="summary-btn" onclick="nextDay()">🌅 开始新的一天</button>
+        </div>
+    </div>
+
+    <!-- 对话系统 -->
+    <div class="dialogue-box show" id="dialogue-box">
+        <div class="dialogue-inner">
+            <img class="dialogue-avatar" id="dialogue-avatar" src="doctor_smile.png">
+            <div class="dialogue-content">
+                <div class="dialogue-name-row">
+                    <span class="dialogue-name" id="dialogue-name">林医生</span>
+                    <span class="dialogue-mood" id="dialogue-mood">准备接诊</span>
+                </div>
+                <div class="dialogue-text" id="dialogue-text">
+                    今天是诊所开业第一天！已经有两位宠物主人在等待了。第一位是柴犬豆豆，主人说它从早上开始呕吐腹泻...
+                </div>
+                <div class="dialogue-choices" id="dialogue-choices">
+                    <button class="choice-btn" onclick="startPatient(0)">🔍 接待豆豆</button>
+                    <button class="choice-btn" onclick="checkInventory()">📦 查看库存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="scene-nav">
+    <button class="scene-btn active" onclick="switchScene(0)">🏥 大厅</button>
+    <button class="scene-btn" onclick="switchScene(1)">🔍 检查</button>
+    <button class="scene-btn" onclick="switchScene(2)">💊 药房</button>
+    <button class="scene-btn" onclick="switchScene(3)">🌿 花园</button>
+    <button class="scene-btn" onclick="switchScene(4)">🛒 商店</button>
+</div>
+
+<script>
+// ==================== 游戏状态 ====================
+const gameState = {
+    day: 1,
+    gold: 3250,
+    reputation: 3.0, // 0-5
+    pressure: 15, // 0-100
+    patientsToday: 0,
+    patientsMax: 5,
+    curedToday: 0,
+    failedToday: 0,
+    incomeToday: 0,
+    costToday: 0,
+    inventory: {
+        medicine: 8,
+        herb: 5,
+        bandage: 3
+    },
+    currentPatient: null,
+    currentStep: 0,
+    doctorMood: 'smile',
+    selectedItem: null
+};
+
+// ==================== 病人数据 ====================
+const patients = [
+    {
+        id: 0, name: '豆豆', species: '柴犬', age: 3,
+        owner: '林先生', mood: '焦急',
+        symptom: '呕吐、腹泻、精神萎靡',
+        diagnosis: '食物中毒',
+        treatment: '黄连素+益生菌',
+        sickImg: 'dog_sick.png', healthyImg: 'dog_healthy.png',
+        fee: 200, difficulty: 1
+    },
+    {
+        id: 1, name: '咪咪', species: '橘猫', age: 2,
+        owner: '王小姐', mood: '担心',
+        symptom: '打喷嚏、流鼻涕、食欲不振',
+        diagnosis: '猫流感',
+        treatment: '退烧药+营养剂',
+        sickImg: 'cat_sick.png', healthyImg: 'cat_healthy.png',
+        fee: 150, difficulty: 1
+    }
+];
+
+// ==================== 场景切换 ====================
+function switchScene(index) {
+    if (index === currentScene) return;
+    const scenes = document.querySelectorAll('.scene');
+    const buttons = document.querySelectorAll('.scene-btn');
+    scenes[currentScene].classList.remove('active');
+    buttons[currentScene].classList.remove('active');
+    currentScene = index;
+    scenes[currentScene].classList.add('active');
+    buttons[currentScene].classList.add('active');
+}
+let currentScene = 0;
+
+// ==================== 压力系统 ====================
+function updatePressure(delta) {
+    gameState.pressure = Math.max(0, Math.min(100, gameState.pressure + delta));
+    const fill = document.getElementById('pressure-fill');
+    const text = document.getElementById('pressure-text');
+    const warning = document.getElementById('pressure-warning');
+    
+    fill.style.width = gameState.pressure + '%';
+    fill.style.backgroundPosition = (100 - gameState.pressure) + '% 0%';
+    text.textContent = gameState.pressure + '%';
+    
+    if (gameState.pressure >= 60) {
+        fill.classList.add('pressure-high');
+        warning.classList.add('show');
+    } else {
+        fill.classList.remove('pressure-high');
+        warning.classList.remove('show');
+    }
+    
+    if (gameState.pressure >= 100) {
+        gameOverPressure();
+    }
+}
+
+function gameOverPressure() {
+    updateDialogue({
+        name: '系统',
+        mood: '诊所失控',
+        avatar: 'item_heart.png',
+        text: '压力爆表！太多客人在等待，诊所陷入混乱。今天的营业被迫结束。声望-0.5',
+        choices: [{text:'😫 结束今天', action:()=>showDaySummary()}]
+    });
+    gameState.reputation = Math.max(0, gameState.reputation - 0.5);
+}
+
+// ==================== 金币系统 ====================
+function addGold(amount, x, y) {
+    gameState.gold += amount;
+    gameState.incomeToday += amount;
+    document.getElementById('gold-display').textContent = gameState.gold;
+    
+    // 金币弹出动画
+    const pop = document.createElement('div');
+    pop.className = 'coin-pop';
+    pop.textContent = (amount >= 0 ? '+' : '') + '¥' + amount;
+    pop.style.left = (x || 60) + '%';
+    pop.style.top = (y || 40) + '%';
+    pop.style.color = amount >= 0 ? '#fbbf24' : '#f87171';
+    document.getElementById('game-container').appendChild(pop);
+    setTimeout(() => pop.remove(), 1500);
+}
+
+function updateStars() {
+    const stars = document.querySelectorAll('.star-icon');
+    const lit = Math.floor(gameState.reputation);
+    stars.forEach((s, i) => s.classList.toggle('lit', i < lit));
+}
+
+// ==================== 对话系统 ====================
+function updateDialogue(d) {
+    document.getElementById('dialogue-name').textContent = d.name;
+    document.getElementById('dialogue-mood').textContent = d.mood;
+    document.getElementById('dialogue-avatar').src = d.avatar;
+    document.getElementById('dialogue-text').textContent = d.text;
+    
+    const choicesDiv = document.getElementById('dialogue-choices');
+    choicesDiv.innerHTML = '';
+    d.choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = c.text;
+        btn.onclick = c.action;
+        choicesDiv.appendChild(btn);
+    });
+}
+
+function setDoctorMood(mood) {
+    gameState.doctorMood = mood;
+    const map = {
+        smile:'doctor_smile.png', serious:'doctor_serious.png',
+        confused:'doctor_confused.png', surprised:'doctor_surprised.png',
+        happy:'doctor_happy.png'
+    };
+    document.getElementById('doctor').src = map[mood] || map.smile;
+    document.getElementById('dialogue-avatar').src = map[mood] || map.smile;
+}
+
+// ==================== 接诊流程 ====================
+function startPatient(patientId) {
+    const p = patients[patientId];
+    gameState.currentPatient = p;
+    gameState.currentStep = 1;
+    gameState.patientsToday++;
+    document.getElementById('patients-display').textContent = gameState.patientsToday + '/' + gameState.patientsMax;
+    
+    // 切换宠物图
+    document.getElementById('pet').src = p.sickImg;
+    document.getElementById('pet').classList.add('sick');
+    
+    updateFlowSteps(1);
+    setDoctorMood('serious');
+    updateDialogue({
+        name: p.owner,
+        mood: p.mood,
+        avatar: 'doctor_smile.png',
+        text: `"医生！我家${p.name}(${p.species}，${p.age}岁)从${p.symptom.includes('早上')?'早上':'昨晚'}开始就${p.symptom}，它是不是吃坏什么东西了？"`,
+        choices: [
+            {text:'🩺 先用听诊器检查', action:()=>{switchScene(1); startMinigameStethoscope();}},
+            {text:'🌡 测量体温', action:()=>{switchScene(1); updatePressure(5); goToTreatment();}},
+            {text:'🤔 再详细问问', action:()=>{setDoctorMood('confused'); askMore(p);}}
+        ]
+    });
+    updatePressure(5);
+}
+
+function askMore(p) {
+    updateDialogue({
+        name: p.owner,
+        mood: '补充信息',
+        avatar: 'doctor_smile.png',
+        text: `"哦对了！昨天它偷吃了垃圾桶里的剩菜，里面可能有洋葱... 它精神很差，一直在发抖。"`,
+        choices: [
+            {text:'💡 很可能是食物中毒', action:()=>{setDoctorMood('serious'); goToTreatment();}}
+        ]
+    });
+    updatePressure(3);
+}
+
+function updateFlowSteps(step) {
+    gameState.currentStep = step;
+    document.querySelectorAll('.flow-step').forEach((el, i) => {
+        el.classList.remove('active', 'done');
+        if (i < step) el.classList.add('done');
+        if (i === step) el.classList.add('active');
+    });
+}
+
+// ==================== 迷你游戏：听诊器 ====================
+function startMinigameStethoscope() {
+    const overlay = document.getElementById('mg-stethoscope');
+    const area = document.getElementById('stethoscope-area');
+    const cursor = document.getElementById('steth-cursor');
+    const result = document.getElementById('steth-result');
+    const timerEl = document.getElementById('steth-timer');
+    const waveDisplay = document.getElementById('wave-display');
+    
+    overlay.classList.add('show');
+    cursor.style.display = 'block';
+    result.textContent = '';
+    
+    // 生成随机心跳区域
+    const heartZone = document.getElementById('heart-zone');
+    const zoneX = 35 + Math.random() * 30;
+    const zoneY = 35 + Math.random() * 25;
+    heartZone.style.left = zoneX + '%';
+    heartZone.style.top = zoneY + '%';
+    
+    let timeLeft = 10;
+    let found = false;
+    let mouseX = 0, mouseY = 0;
+    
+    // 生成波形条
+    waveDisplay.innerHTML = '';
+    const bars = [];
+    for (let i = 0; i < 40; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'wave-bar';
+        bar.style.height = '8px';
+        waveDisplay.appendChild(bar);
+        bars.push(bar);
+    }
+    
+    const onMouseMove = (e) => {
+        const rect = area.getBoundingClientRect();
+        mouseX = ((e.clientX - rect.left) / rect.width) * 100;
+        mouseY = ((e.clientY - rect.top) / rect.height) * 100;
+        cursor.style.left = mouseX + '%';
+        cursor.style.top = mouseY + '%';
+        
+        // 计算距离心跳区域的距离
+        const dist = Math.sqrt(Math.pow(mouseX - zoneX, 2) + Math.pow(mouseY - zoneY, 2));
+        
+        // 更新波形
+        bars.forEach((bar, i) => {
+            let h = 8;
+            if (dist < 8) {
+                // 在心跳区：规律波形
+                h = 20 + Math.sin(Date.now() / 200 + i * 0.5) * 25;
+                bar.style.background = '#4ade80';
+            } else if (dist < 20) {
+                // 附近：混乱波形
+                h = 10 + Math.random() * 20;
+                bar.style.background = '#fbbf24';
+            } else {
+                // 远离：噪声
+                h = 5 + Math.random() * 10;
+                bar.style.background = '#5bc0be';
+            }
+            bar.style.height = Math.max(4, Math.min(50, h)) + 'px';
+        });
+        
+        if (dist < 8 && !found) {
+            found = true;
+            setTimeout(() => {
+                endStethoscope(true);
+            }, 800);
+        }
+    };
+    
+    const onClick = () => {
+        if (found) return;
+        const dist = Math.sqrt(Math.pow(mouseX - zoneX, 2) + Math.pow(mouseY - zoneY, 2));
+        if (dist < 10) {
+            endStethoscope(true);
+        } else {
+            result.textContent = '❌ 位置不对，再仔细找找...';
+            updatePressure(5);
+        }
+    };
+    
+    area.addEventListener('mousemove', onMouseMove);
+    area.addEventListener('click', onClick);
+    
+    // 计时器
+    const timerInt = setInterval(() => {
+        timeLeft -= 0.1;
+        timerEl.textContent = timeLeft.toFixed(1);
+        if (timeLeft <= 0) {
+            clearInterval(timerInt);
+            endStethoscope(false);
+        }
+    }, 100);
+    
+    function endStethoscope(success) {
+        clearInterval(timerInt);
+        area.removeEventListener('mousemove', onMouseMove);
+        area.removeEventListener('click', onClick);
+        cursor.style.display = 'none';
+        
+        if (success) {
+            result.innerHTML = '✅ 诊断完成！心跳规律，确认是<span style="color:#4ade80">' + gameState.currentPatient.diagnosis + '</span>';
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                goToTreatment();
+            }, 1500);
+        } else {
+            result.innerHTML = '⏰ 时间到！诊断不够准确，声望-0.1';
+            gameState.reputation = Math.max(0, gameState.reputation - 0.1);
+            updateStars();
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                goToTreatment();
+            }, 1500);
+        }
+    }
+}
+
+// ==================== 治疗流程 ====================
+function goToTreatment() {
+    updateFlowSteps(3);
+    switchScene(2);
+    setDoctorMood('serious');
+    updateDialogue({
+        name: '林医生',
+        mood: '专注治疗',
+        avatar: 'doctor_serious.png',
+        text: `确诊是${gameState.currentPatient.diagnosis}。需要${gameState.currentPatient.treatment}。先研磨草药，然后调配药剂。`,
+        choices: [
+            {text:'🌿 开始研磨草药', action:()=>startMinigameGrind()},
+            {text:'💊 直接用成药', action:()=>{gameState.costToday += 50; addGold(-50); finishTreatment(true);}}
+        ]
+    });
+}
+
+// ==================== 迷你游戏：研磨草药 ====================
+function startMinigameGrind() {
+    const overlay = document.getElementById('mg-grind');
+    const area = document.getElementById('grind-area');
+    const ring = document.getElementById('grind-ring');
+    const result = document.getElementById('grind-result');
+    const percentEl = document.getElementById('grind-percent');
+    const particles = document.getElementById('grind-particles');
+    
+    overlay.classList.add('show');
+    result.textContent = '';
+    
+    let progress = 0;
+    let isDrawing = false;
+    let lastAngle = 0;
+    let totalRotation = 0;
+    
+    const onMouseDown = (e) => { isDrawing = true; lastAngle = getAngle(e); };
+    const onMouseUp = () => { isDrawing = false; };
+    
+    const onMouseMove = (e) => {
+        if (!isDrawing) return;
+        const angle = getAngle(e);
+        let diff = angle - lastAngle;
+        if (diff > 180) diff -= 360;
+        if (diff < -180) diff += 360;
+        
+        if (Math.abs(diff) > 2 && Math.abs(diff) < 60) {
+            totalRotation += Math.abs(diff);
+            progress = Math.min(100, totalRotation / 15);
+            ring.style.transform = `translate(-50%, -50%) rotate(${totalRotation}deg)`;
+            percentEl.textContent = Math.floor(progress);
+            
+            // 生成粒子
+            if (Math.random() > 0.7) {
+                const p = document.createElement('div');
+                p.className = 'grind-particle';
+                const rect = area.getBoundingClientRect();
+                p.style.left = (e.clientX - rect.left) + 'px';
+                p.style.top = (e.clientY - rect.top) + 'px';
+                p.style.setProperty('--tx', (Math.random()-0.5)*60 + 'px');
+                p.style.setProperty('--ty', (Math.random()-0.5)*60 + 'px');
+                particles.appendChild(p);
+                setTimeout(() => p.remove(), 800);
+            }
+            
+            if (progress >= 100) {
+                endGrind(true);
+            }
+        }
+        lastAngle = angle;
+    };
+    
+    function getAngle(e) {
+        const rect = area.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width/2;
+        const y = e.clientY - rect.top - rect.height/2;
+        return Math.atan2(y, x) * 180 / Math.PI;
+    }
+    
+    area.addEventListener('mousedown', onMouseDown);
+    area.addEventListener('mouseup', onMouseUp);
+    area.addEventListener('mouseleave', onMouseUp);
+    area.addEventListener('mousemove', onMouseMove);
+    
+    function endGrind(success) {
+        area.removeEventListener('mousedown', onMouseDown);
+        area.removeEventListener('mouseup', onMouseUp);
+        area.removeEventListener('mouseleave', onMouseUp);
+        area.removeEventListener('mousemove', onMouseMove);
+        
+        if (success) {
+            result.innerHTML = '✅ 草药研磨完成！药性释放充分';
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                finishTreatment(true);
+            }, 1200);
+        }
+    }
+}
+
+// ==================== 治疗完成 ====================
+function finishTreatment(success) {
+    updateFlowSteps(4);
+    const p = gameState.currentPatient;
+    
+    if (success) {
+        gameState.curedToday++;
+        addGold(p.fee, 70, 35);
+        gameState.reputation = Math.min(5, gameState.reputation + 0.15);
+        updateStars();
+        
+        // 治愈特效
+        document.getElementById('heal-burst').classList.add('show');
+        setTimeout(() => document.getElementById('heal-burst').classList.remove('show'), 1200);
+        
+        // 切换宠物为健康状态
+        document.getElementById('pet').src = p.healthyImg;
+        document.getElementById('pet').classList.remove('sick');
+        
+        setDoctorMood('happy');
+        updateDialogue({
+            name: '林医生',
+            mood: '治愈成功',
+            avatar: 'doctor_happy.png',
+            text: `${p.name}喝完药后精神明显好转了！${p.owner}非常感谢，诊所声誉+0.15，获得诊金¥${p.fee}。`,
+            choices: [
+                {text:'🎉 接待下一位', action:()=>nextPatient()},
+                {text:'📋 查看病历', action:()=>showMedicalRecord(p)}
+            ]
+        });
+        updatePressure(-10);
+    } else {
+        gameState.failedToday++;
+        gameState.reputation = Math.max(0, gameState.reputation - 0.3);
+        updateStars();
+        setDoctorMood('confused');
+        updateDialogue({
+            name: '林医生',
+            mood: '治疗失败',
+            avatar: 'doctor_confused.png',
+            text: '治疗不够及时... ' + p.name + '的病情恶化了，主人非常失望。声望-0.3。',
+            choices: [{text:'😔 继续接诊', action:()=>nextPatient()}]
+        });
+        updatePressure(15);
+    }
+}
+
+function showMedicalRecord(p) {
+    updateDialogue({
+        name: '病历 #' + (100 + p.id),
+        mood: '档案',
+        avatar: 'item_clipboard.png',
+        text: `【${p.name}的病历】品种：${p.species} | 年龄：${p.age}岁 | 症状：${p.symptom} | 诊断：${p.diagnosis} | 治疗：${p.treatment} | 状态：已治愈`,
+        choices: [{text:'🎉 接待下一位', action:()=>nextPatient()}]
+    });
+}
+
+function nextPatient() {
+    if (gameState.patientsToday >= gameState.patientsMax) {
+        showDaySummary();
+        return;
+    }
+    // 循环病人（简化版）
+    const nextId = gameState.patientsToday % patients.length;
+    startPatient(nextId);
+}
+
+// ==================== 一天结算 ====================
+function showDaySummary() {
+    document.getElementById('day-summary').classList.add('show');
+    document.getElementById('sum-patients').textContent = gameState.patientsToday;
+    document.getElementById('sum-cured').textContent = gameState.curedToday;
+    document.getElementById('sum-failed').textContent = gameState.failedToday;
+    document.getElementById('sum-income').textContent = '+' + gameState.incomeToday;
+    document.getElementById('sum-cost').textContent = '-' + gameState.costToday;
+    document.getElementById('sum-profit').textContent = '+' + (gameState.incomeToday - gameState.costToday);
+}
+
+function nextDay() {
+    document.getElementById('day-summary').classList.remove('show');
+    gameState.day++;
+    gameState.patientsToday = 0;
+    gameState.curedToday = 0;
+    gameState.failedToday = 0;
+    gameState.incomeToday = 0;
+    gameState.costToday = 0;
+    gameState.pressure = 10;
+    
+    document.getElementById('day-display').textContent = 'Day ' + gameState.day;
+    document.getElementById('patients-display').textContent = '0/' + gameState.patientsMax;
+    updatePressure(0);
+    
+    setDoctorMood('smile');
+    switchScene(0);
+    updateFlowSteps(0);
+    updateDialogue({
+        name: '林医生',
+        mood: '新的一天',
+        avatar: 'doctor_smile.png',
+        text: `第${gameState.day}天开始了！诊所声誉${gameState.reputation.toFixed(1)}星，当前资金¥${gameState.gold}。今天预计有${gameState.patientsMax}位病人。`,
+        choices: [
+            {text:'🔍 开始接诊', action:()=>startPatient(0)},
+            {text:'📦 查看库存', action:()=>checkInventory()}
+        ]
+    });
+}
+
+function checkInventory() {
+    updateDialogue({
+        name: '库存管理',
+        mood: '物资清点',
+        avatar: 'item_clipboard.png',
+        text: `当前库存：药瓶×${gameState.inventory.medicine} | 草药×${gameState.inventory.herb} | 绷带×${gameState.inventory.bandage} | 金币：¥${gameState.gold}`,
+        choices: [
+            {text:'🛒 去商店采购', action:()=>switchScene(4)},
+            {text:'🔍 继续接诊', action:()=>startPatient(0)}
+        ]
+    });
+}
+
+// ==================== 道具交互 ====================
+document.querySelectorAll('.item-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+        document.querySelectorAll('.item-slot').forEach(s => s.classList.remove('active'));
+        slot.classList.add('active');
+        gameState.selectedItem = slot.dataset.item;
+    });
+});
+
+// ==================== 键盘快捷键 ====================
+document.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '5') switchScene(parseInt(e.key) - 1);
+});
+
+// ==================== 初始化 ====================
+updateStars();
+updatePressure(0);
+</script>
+
+</body>
+</html>

@@ -14482,6 +14482,15 @@ function triggerNightEvent() {
     
     saveGame();
     updateUI();
+}
+
+// 显示故事事件弹窗（用于 STORY_EVENTS 数组中的事件）
+function showEventPopup(event) {
+        '<span style="color: ' + (selectedEvent.type === 'good' ? '#27ae60' : '#e74c3c') + ';">' +
+        escapeHtml(selectedEvent.effectText) + '</span>', null, null, { allowHtml: true });
+    
+    saveGame();
+    updateUI();
     });
 }
 
