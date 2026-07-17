@@ -3215,6 +3215,10 @@
             <div class="w-12 h-12 mx-auto mb-1.5 rounded-2xl flex items-center justify-center text-xl" style="background:rgba(212,181,199,0.3)">📈</div>
             <div class="text-[11px]" style="color:var(--theme-text)">情绪</div>
           </div>
+          <div class="text-center cursor-pointer card-hover" onclick="showPage('quest')" tabindex="0">
+            <div class="w-12 h-12 mx-auto mb-1.5 rounded-2xl flex items-center justify-center text-xl" style="background:linear-gradient(135deg,rgba(184,169,201,0.25),rgba(212,181,199,0.2))">🎯</div>
+            <div class="text-[11px]" style="color:var(--theme-text)">历练</div>
+          </div>
           <div class="text-center cursor-pointer card-hover" onclick="showPage('habit-calendar');initHabitCalendar()" tabindex="0">
             <div class="w-12 h-12 mx-auto mb-1.5 rounded-2xl flex items-center justify-center text-xl" style="background:rgba(201,216,232,0.3)">📅</div>
             <div class="text-[11px]" style="color:var(--theme-text)">日历</div>
@@ -3234,6 +3238,110 @@
     </section>
 
   </div>
+
+    <!-- ========== 页面：历练（任务+计时+统计） ========== -->
+    <section id="page-quest" class="page">
+      <div class="mb-4">
+        <h2 class="font-display text-xl sm:text-2xl mb-1" style="color:var(--theme-text)">🎯 历练之路</h2>
+        <p class="text-xs" style="color:var(--theme-text); opacity:0.6">任务 · 专注 · 成长记录</p>
+      </div>
+
+      <!-- 统计概览 -->
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="glass-card p-3 text-center">
+          <div class="text-lg font-bold" style="color:var(--theme-text)" id="stat-today">0.0h</div>
+          <div class="text-[10px]" style="color:var(--text-mute)">今日专注</div>
+        </div>
+        <div class="glass-card p-3 text-center">
+          <div class="text-lg font-bold" style="color:var(--theme-text)" id="stat-week">0.0h</div>
+          <div class="text-[10px]" style="color:var(--text-mute)">本周专注</div>
+        </div>
+        <div class="glass-card p-3 text-center">
+          <div class="text-lg font-bold" style="color:var(--theme-text)" id="stat-month">0.0h</div>
+          <div class="text-[10px]" style="color:var(--text-mute)">本月专注</div>
+        </div>
+      </div>
+
+      <!-- 子Tab切换 -->
+      <div class="flex gap-2 mb-4">
+        <button type="button" id="quest-tab-tasks" onclick="switchQuestTab('tasks')" class="flex-1 py-2 rounded-xl text-xs font-medium" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white">任务</button>
+        <button type="button" id="quest-tab-timer" onclick="switchQuestTab('timer')" class="flex-1 py-2 rounded-xl text-xs font-medium" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">计时</button>
+        <button type="button" id="quest-tab-stats" onclick="switchQuestTab('stats')" class="flex-1 py-2 rounded-xl text-xs font-medium" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">统计</button>
+      </div>
+
+      <!-- 任务面板 -->
+      <div id="quest-panel-tasks">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs" style="color:var(--text-mute)">共 <span id="quest-stat-total">0</span> 个 · 完成 <span id="quest-stat-done">0</span> · 完成率 <span id="quest-stat-rate">0%</span></div>
+          <select id="quest-filter" onchange="if(typeof renderQuests==='function')renderQuests()" class="text-xs rounded-lg px-2 py-1" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)">
+            <option value="all">全部</option>
+            <option value="active">进行中</option>
+            <option value="done">已完成</option>
+          </select>
+        </div>
+        <div id="quest-list"></div>
+        <div class="mt-4">
+          <div class="text-xs font-medium mb-2" style="color:var(--theme-text); opacity:0.7">➕ 添加新任务</div>
+          <div class="flex gap-2 mb-2">
+            <input type="text" id="quest-input" placeholder="输入任务名称..." class="flex-1 px-3 py-2 rounded-xl text-xs outline-none" style="background:rgba(255,255,255,0.6);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)">
+          </div>
+          <div class="flex gap-2 mb-3">
+            <select id="quest-category" class="text-xs rounded-lg px-2 py-1.5" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)">
+              <option value="工作">💼 工作</option>
+              <option value="学习">📚 学习</option>
+              <option value="生活">🏠 生活</option>
+              <option value="健康">💪 健康</option>
+              <option value="社交">👥 社交</option>
+              <option value="其他" selected>🌸 其他</option>
+            </select>
+            <select id="quest-priority" class="text-xs rounded-lg px-2 py-1.5" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)">
+              <option value="高">🔴 高优</option>
+              <option value="中" selected>🟡 中优</option>
+              <option value="低">🟢 低优</option>
+            </select>
+          </div>
+          <button type="button" onclick="const t=document.getElementById('quest-input').value.trim();if(t&&typeof QuestAPI!=='undefined'){QuestAPI.add(t,{category:document.getElementById('quest-category').value,priority:document.getElementById('quest-priority').value});document.getElementById('quest-input').value='';}" class="soft-btn btn-primary w-full py-2.5 text-xs">添加任务</button>
+        </div>
+      </div>
+
+      <!-- 计时面板 -->
+      <div id="quest-panel-timer" class="hidden">
+        <div class="glass-card p-6 text-center mb-4">
+          <div class="text-5xl font-bold mb-4 font-mono" style="color:var(--theme-text)" id="timer-display">25:00</div>
+          <div class="flex justify-center gap-3 mb-4">
+            <button type="button" id="timer-btn" onclick="if(typeof TimerAPI!=='undefined'){if(document.getElementById('timer-btn').textContent.includes('开始'))TimerAPI.start();else TimerAPI.pause();}" class="soft-btn btn-primary px-6 py-2.5 text-sm">▶ 开始</button>
+            <button type="button" onclick="if(typeof TimerAPI!=='undefined')TimerAPI.reset()" class="soft-btn btn-soft px-4 py-2.5 text-xs">重置</button>
+            <button type="button" onclick="if(typeof TimerAPI!=='undefined')TimerAPI.finish()" class="soft-btn btn-soft px-4 py-2.5 text-xs">完成</button>
+          </div>
+          <div class="flex items-center justify-center gap-2 mb-3">
+            <select id="timer-task-select" onchange="if(typeof TimerAPI!=='undefined')TimerAPI.setTask(this.value)" class="text-xs rounded-lg px-2 py-1.5" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)">
+              <option value="">选择关联任务</option>
+            </select>
+          </div>
+          <div class="flex justify-center gap-2">
+            <button type="button" onclick="if(typeof TimerAPI!=='undefined')TimerAPI.setMode('countdown');TimerAPI.setDuration(25);" class="text-[10px] px-2 py-1 rounded-lg" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">🍅 25分</button>
+            <button type="button" onclick="if(typeof TimerAPI!=='undefined')TimerAPI.setMode('countdown');TimerAPI.setDuration(45);" class="text-[10px] px-2 py-1 rounded-lg" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">⏳ 45分</button>
+            <button type="button" onclick="if(typeof TimerAPI!=='undefined')TimerAPI.setMode('stopwatch');" class="text-[10px] px-2 py-1 rounded-lg" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">⏱️ 正计时</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 统计面板 -->
+      <div id="quest-panel-stats" class="hidden">
+        <div class="glass-card p-4 mb-4">
+          <div class="text-xs font-medium mb-3" style="color:var(--theme-text)">📊 今日分类分布</div>
+          <div id="stat-categories">
+            <div class="text-xs" style="color:var(--text-mute)">今天还没有专注记录</div>
+          </div>
+        </div>
+        <div class="glass-card p-4">
+          <div class="text-xs font-medium mb-2" style="color:var(--theme-text)">📝 最近专注记录</div>
+          <div id="stat-recent" class="space-y-2">
+            <div class="text-xs" style="color:var(--text-mute)">暂无记录</div>
+          </div>
+        </div>
+      </div>
+    </section>
 </main>
 
 <!-- 底部导航 -->

@@ -2294,6 +2294,24 @@ function switchTab(tab) {
   if (tab === 'island') { updateHomeStats(); updateFortuneCard(); updateTimeAndWeather(); }
   if (window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+function switchQuestTab(tab) {
+  const panels = ['tasks', 'timer', 'stats'];
+  panels.forEach(p => {
+    const panel = document.getElementById('quest-panel-' + p);
+    const btn = document.getElementById('quest-tab-' + p);
+    if (panel) panel.classList.toggle('hidden', p !== tab);
+    if (btn) {
+      if (p === tab) {
+        btn.style.background = 'linear-gradient(135deg,#E8B5C8,#C8A5D8)';
+        btn.style.color = 'white';
+      } else {
+        btn.style.background = 'rgba(184,169,201,0.12)';
+        btn.style.color = 'var(--theme-text)';
+      }
+    }
+  });
+}
+
 function loadDataScript(src, retries = 2) {
   return new Promise((resolve, reject) => {
     const key = '__data_' + src.replace(/[^a-zA-Z0-9]/g, '_');
@@ -2349,6 +2367,8 @@ function retryLoadChunk(name) {
     if (name === 'stars') { showPage('stars'); renderStars(); }
     if (name === 'wishwall') { showPage('wishwall'); renderWishwall(); }
     if (name === 'manifest') { showPage('369'); init369(); }
+    if (name === 'quest') { showPage('quest'); if (typeof initQuestModule === 'function') initQuestModule(); }
+    if (name === 'tools') { showPage('community'); renderCommunityFeed(); }
     if (name === 'tools') { showPage('community'); renderCommunityFeed(); }
   }).catch(() => showToast('重试失败，请检查网络'));
 }
@@ -2386,6 +2406,7 @@ function openModule(name) {
   if (name === 'creationbox') { showPage('creationbox'); initCreationBox(); return; }
   if (name === 'rampage') { showPage('rampage'); initRampage(); return; }
   if (name === 'treasurebox') { loadDataScript('data/treasure_tools.js').then(() => { showPage('treasurebox'); initTreasureBox(); }); return; }
+  if (name === 'quest') { loadChunk('quest').then(() => { if (typeof initQuestModule === 'function') initQuestModule(); }); return; }
   if (name === 'timeline') { showPage('timeline'); initTimeline(); return; }
   if (name === 'manifest-report') { showPage('manifest-report'); initManifestReport(); return; }
   if (name === 'affirm-loop') { showPage('affirm-loop'); initAffirmLoop(); return; }
