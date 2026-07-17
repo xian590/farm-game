@@ -211,6 +211,7 @@ function submitFeedback() {
   const feedbacks = safeLocalStorage.getObject('wish_island_feedback', []);
   feedbacks.push({ text: val, date: new Date().toISOString(), version: '6.4' });
   safeLocalStorage.setObject('wish_island_feedback', feedbacks.slice(-20));
+  trackFeedback(val);
   text.value = '';
   document.getElementById('feedback-modal').classList.remove('show');
   showToast('反馈已提交，感谢你的建议！💫');
@@ -2381,6 +2382,8 @@ let __pageHistory = [];
 function showPage(name, direction) {
   // 追踪使用次数，用于触发付费转化
   if (typeof trackUsage === 'function') trackUsage();
+  // 页面浏览埋点
+  if (typeof trackPageView === 'function') trackPageView(name);
   // 页面别名映射（统一路由名称）
   const pageAlias = { dream: 'dreams', checkin: 'habit' };
   if (pageAlias[name]) name = pageAlias[name];
@@ -5380,6 +5383,7 @@ let __initInterval = null;
 function init() {
   if (__initDone) return;
   __initDone = true;
+  trackAppStart();
   setTimeout(() => {
     try {
       const sk = document.getElementById('skeleton-screen');
@@ -6306,6 +6310,7 @@ function doCheckIn() {
   renderCheckIn();
   renderTasks();
   updateCrystalDisplay();
+  trackCheckIn(streak, reward);
   showToast(`签到成功！连续 ${streak} 天，获得 ${reward} 星光水晶 ✨`);
   triggerConfetti();
 }
@@ -6366,6 +6371,7 @@ function unlockWithCrystals(type, cost) {
   if(crystalState.crystals < cost) { showToast(`星光水晶不足，还需要 ${cost - crystalState.crystals} 个 💎`); showPage('vip'); return; }
   if(!confirm(`确认花费 ${cost} 星光水晶解锁？`)) return;
   crystalState.crystals -= cost;
+  trackCrystalUnlock(type, cost);
   if(type === 'book') { /* would need to select a book, simplified for now */ showToast('已解锁书籍！📖'); }
   if(type === 'ai5') { crystalState.aiUnlocks += 5; showToast('已解锁 5 次 AI 对话！🤖'); }
   if(type === 'member1d') { 
@@ -6391,6 +6397,7 @@ function selectSubscriptionPlan(planId) {
 function showPaymentModal(planId) {
   const plan = 星光会员_PRICES[planId];
   if(!plan) return;
+  trackPaymentModal(planId);
   const tierName = plan.tier === 'member' ? '自然会员' : '星际高级会员';
   // 模拟社交证明数字
   const socialProof = 1200 + Math.floor(Math.random() * 300);
@@ -6420,10 +6427,10 @@ function showPaymentModal(planId) {
         ${plan.limited ? `<div class="text-xs font-medium" style="color:#F59E0B">⏰ 限时特惠 · 剩余 <span id="payment-countdown">05:00</span></div>` : ''}
       </div>
       <div class="space-y-2 mb-4">
-        <button type="button" onclick="processPayment('${planId}', 'wechat')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#07C160" aria-label="微信支付">
+        <button type="button" onclick="trackPaymentMethod('${planId}', 'wechat');processPayment('${planId}', 'wechat')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#07C160" aria-label="微信支付">
           <span>💚</span> 微信支付
         </button>
-        <button type="button" onclick="processPayment('${planId}', 'alipay')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#1677FF" aria-label="支付宝">
+        <button type="button" onclick="trackPaymentMethod('${planId}', 'alipay');processPayment('${planId}', 'alipay')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#1677FF" aria-label="支付宝">
           <span>💙</span> 支付宝
         </button>
       </div>
@@ -6475,6 +6482,7 @@ function processPayment(planId, method) {
     if(plan.bonus) { crystalState.crystals += plan.bonus; showToast(`额外赠送 ${plan.bonus} 星光水晶！`); }
     saveVipState();
     closePaymentModal();
+    trackPaymentSuccess(planId, method);
     showToast(`🎉 支付成功！已升级为 ${tierName}`);
     triggerConfetti();
     // 隐藏"我的"页面VIP横幅
@@ -6505,6 +6513,7 @@ function shareForCrystals() {
   };
   if(navigator.share) {
     navigator.share(shareData).then(() => {
+      trackShare('native');
       // 检查今天是否已分享
       const today = new Date().toDateString();
       const lastShare = safeLocalStorage.getItem('wish_island_last_share');
@@ -6532,6 +6541,7 @@ function copyShareLink() {
   const link = window.location.href;
   if(navigator.clipboard) {
     navigator.clipboard.writeText(link).then(() => {
+      trackShare('clipboard');
       const today = new Date().toDateString();
       const lastShare = safeLocalStorage.getItem('wish_island_last_share');
       if(lastShare !== today) {
@@ -6556,6 +6566,7 @@ function claimFreeTrial() {
     showToast('你已经领取过免费体验了 ✨');
     return;
   }
+  trackFreeTrial();
   if(getCurrentTier() !== 'free') {
     showToast('你已经是会员了，无需体验 ✨');
     return;
@@ -6580,6 +6591,7 @@ function hasUsedFreeTrial() {
 
 function showLimitedOffer() {
   if(safeLocalStorage.getItem('wish_island_offer_never') === 'true') return;
+  trackOfferShown();
   const m = document.getElementById('limited-offer-modal');
   if(m) m.classList.add('show');
   startOfferTimer();
@@ -6611,6 +6623,76 @@ function checkAutoPromotions() {
     setTimeout(() => showLimitedOffer(), 2000);
   }
 }
+/* ===== 数据埋点 ===== */
+function trackEvent(eventName, params) {
+  try {
+    const event = {
+      event: eventName,
+      params: params || {},
+      timestamp: Date.now(),
+      date: new Date().toISOString(),
+      userTier: getCurrentTier(),
+      sessionId: getSessionId()
+    };
+    // 保存到本地事件队列
+    const events = safeLocalStorage.getObject('wish_island_events', []);
+    events.push(event);
+    // 只保留最近 200 条
+    if(events.length > 200) events.shift();
+    safeLocalStorage.setObject('wish_island_events', events);
+    // 同时输出到 console（开发调试）
+    console.log('[Track]', eventName, event.params);
+  } catch(e) {}
+}
+function getSessionId() {
+  let sid = safeLocalStorage.getItem('wish_island_session_id');
+  if(!sid) {
+    sid = 's_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+    safeLocalStorage.setItem('wish_island_session_id', sid);
+  }
+  return sid;
+}
+function trackPageView(pageName) {
+  trackEvent('page_view', { page: pageName });
+}
+function trackFeatureLock(featureName) {
+  trackEvent('feature_lock_shown', { feature: featureName, tier: getCurrentTier() });
+}
+function trackPaymentModal(planId) {
+  trackEvent('payment_modal_open', { planId: planId, tier: getCurrentTier() });
+}
+function trackPaymentMethod(planId, method) {
+  trackEvent('payment_method_click', { planId: planId, method: method, price: 星光会员_PRICES[planId]?.price });
+}
+function trackPaymentSuccess(planId, method) {
+  trackEvent('payment_success', { planId: planId, method: method, price: 星光会员_PRICES[planId]?.price });
+}
+function trackPaymentCancel(planId) {
+  trackEvent('payment_cancel', { planId: planId });
+}
+function trackFreeTrial() {
+  trackEvent('free_trial_claim', { tier: getCurrentTier() });
+}
+function trackCrystalUnlock(type, cost) {
+  trackEvent('crystal_unlock', { type: type, cost: cost, crystalsLeft: crystalState.crystals });
+}
+function trackShare(source) {
+  trackEvent('share_for_crystal', { source: source });
+}
+function trackOfferShown() {
+  trackEvent('offer_shown', { tier: getCurrentTier() });
+}
+function trackCheckIn(streak, reward) {
+  trackEvent('checkin', { streak: streak, reward: reward });
+}
+function trackFeedback(text) {
+  trackEvent('feedback_submit', { length: text.length });
+}
+function trackAppStart() {
+  const isFirst = !safeLocalStorage.getItem('wish_island_first_open');
+  trackEvent('app_start', { isFirstOpen: isFirst, tier: getCurrentTier() });
+}
+
 function trackUsage() {
   let count = parseInt(safeLocalStorage.getItem('wish_island_usage_count', '0')) || 0;
   count++;
@@ -9399,6 +9481,20 @@ window.showOnboarding = showOnboarding;
 window.nextOnboardingStep = nextOnboardingStep;
 window.closeOnboarding = closeOnboarding;
 window.trackUsage = trackUsage;
+window.trackEvent = trackEvent;
+window.trackPageView = trackPageView;
+window.trackFeatureLock = trackFeatureLock;
+window.trackPaymentModal = trackPaymentModal;
+window.trackPaymentMethod = trackPaymentMethod;
+window.trackPaymentSuccess = trackPaymentSuccess;
+window.trackPaymentCancel = trackPaymentCancel;
+window.trackFreeTrial = trackFreeTrial;
+window.trackCrystalUnlock = trackCrystalUnlock;
+window.trackShare = trackShare;
+window.trackOfferShown = trackOfferShown;
+window.trackCheckIn = trackCheckIn;
+window.trackFeedback = trackFeedback;
+window.trackAppStart = trackAppStart;
 window.checkRetention = checkRetention;
 window.neverShowOfferAgain = neverShowOfferAgain;
 window.shouldShowOffer = shouldShowOffer;
