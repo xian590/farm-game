@@ -179,6 +179,124 @@ function sendNotification(title, body) {
   } catch(e) {}
 }
 
+/* ===== 月度回顾弹窗 v9 ===== */
+function checkMonthlyReview() {
+  const now = new Date();
+  const currentMonth = now.getFullYear() + '-' + (now.getMonth() + 1);
+  const lastReview = safeLocalStorage.getItem('wish_island_monthly_review');
+  if(lastReview === currentMonth) return; // 本月已回顾
+  // 只在月初前3天展示
+  if(now.getDate() > 3) return;
+  // 检查是否有上月数据
+  const prevMonth = new Date(); prevMonth.setMonth(prevMonth.getMonth() - 1);
+  const prevMonthStr = prevMonth.getFullYear() + '-' + (prevMonth.getMonth() + 1);
+  
+  const log = StorageUtil.get('activity_log', {});
+  let prevActiveDays = 0;
+  Object.entries(log).forEach(([date, activities]) => {
+    if(date.startsWith(prevMonthStr) && activities.length > 0) prevActiveDays++;
+  });
+  if(prevActiveDays < 3) return; // 上月数据太少，不展示
+  
+  safeLocalStorage.setItem('wish_island_monthly_review', currentMonth);
+  showMonthlyReviewModal(prevMonthStr, prevActiveDays);
+}
+function showMonthlyReviewModal(monthStr, activeDays) {
+  let modal = document.getElementById('monthly-review-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'monthly-review-modal';
+    modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.onclick = function(e) { if(e.target === this) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const monthName = monthNames[parseInt(monthStr.split('-')[1]) - 1];
+  
+  // 计算上月数据
+  const prevMood = getMonthlyMoodScore(monthStr);
+  const prevFocus = getMonthlyFocusMinutes(monthStr);
+  const prevWishes = getMonthlyWishCount(monthStr);
+  
+  const tier = getCurrentTier();
+  const isFree = tier === 'free';
+  
+  modal.innerHTML = `
+    <div class="modal-content p-6 text-center" style="max-width:340px">
+      <div class="text-3xl mb-2">📊</div>
+      <h2 class="text-lg font-title mb-1" style="color:var(--theme-text)">${monthName}成长回顾</h2>
+      <p class="text-xs mb-4" style="color:var(--text-mute)">你的${monthName}显化旅程数据</p>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="p-3 rounded-xl" style="background:rgba(212,181,199,0.1)">
+          <div class="text-xl font-title" style="color:var(--theme-primary)">${activeDays}</div>
+          <div class="text-[10px]" style="color:var(--text-mute)">活跃天数</div>
+        </div>
+        <div class="p-3 rounded-xl" style="background:rgba(212,181,199,0.1)">
+          <div class="text-xl font-title" style="color:var(--theme-primary)">${prevFocus}</div>
+          <div class="text-[10px]" style="color:var(--text-mute)">专注分钟</div>
+        </div>
+        <div class="p-3 rounded-xl" style="background:rgba(212,181,199,0.1)">
+          <div class="text-xl font-title" style="color:var(--theme-primary)">${prevWishes}</div>
+          <div class="text-[10px]" style="color:var(--text-mute)">许愿次数</div>
+        </div>
+        <div class="p-3 rounded-xl" style="background:rgba(212,181,199,0.1)">
+          <div class="text-xl font-title" style="color:var(--theme-primary)">${prevMood >= 0 ? prevMood : '--'}</div>
+          <div class="text-[10px]" style="color:var(--text-mute)">心情指数</div>
+        </div>
+      </div>
+      ${isFree ? `
+        <div class="p-3 rounded-xl mb-4 text-[10px]" style="background:linear-gradient(135deg,rgba(212,181,199,0.2),rgba(184,169,201,0.15));color:var(--theme-text)">
+          💡 基于你的使用数据，升级会员可获得更多高级功能，加速显化进程
+        </div>
+        <button onclick="document.getElementById('monthly-review-modal').classList.remove('show');showVipPlans()" class="btn-primary w-full py-3 rounded-xl mb-2">查看会员权益</button>
+      ` : ''}
+      <button onclick="document.getElementById('monthly-review-modal').classList.remove('show')" class="btn-soft w-full py-3 rounded-xl">继续旅程</button>
+    </div>
+  `;
+  modal.classList.add('show');
+  trackEvent('monthly_review_shown', { month: monthStr, activeDays: activeDays, tier: tier });
+}
+function getMonthlyMoodScore(monthStr) {
+  try {
+    const emotions = StorageUtil.get('emotion_notes', []);
+    if(!emotions.length) return -1;
+    const monthEmotions = emotions.filter(e => {
+      const d = new Date(e.date || e.time);
+      return (d.getFullYear() + '-' + (d.getMonth() + 1)) === monthStr;
+    });
+    if(!monthEmotions.length) return -1;
+    const avg = monthEmotions.reduce((a, b) => a + (b.value || b.score || 5), 0) / monthEmotions.length;
+    return Math.round(avg);
+  } catch(e) { return -1; }
+}
+function getMonthlyFocusMinutes(monthStr) {
+  try {
+    const log = StorageUtil.get('activity_log', {});
+    let total = 0;
+    Object.entries(log).forEach(([date, activities]) => {
+      if(date.startsWith(monthStr)) {
+        activities.forEach(a => {
+          if(a.type === 'timer' || a.type === 'focus' || a.type === 'sprint') {
+            total += (a.detail?.duration || a.detail?.minutes || 25);
+          }
+        });
+      }
+    });
+    return total;
+  } catch(e) { return 0; }
+}
+function getMonthlyWishCount(monthStr) {
+  try {
+    const wishes = (state.wishes || []).filter(w => {
+      const d = new Date(w.date || w.created || 0);
+      return (d.getFullYear() + '-' + (d.getMonth() + 1)) === monthStr;
+    });
+    return wishes.length;
+  } catch(e) { return 0; }
+}
+
 /* ===== 会员到期提醒 ===== */
 function checkExpiryReminder() {
   const tier = getCurrentTier();
@@ -6362,6 +6480,7 @@ function initVip() {
   // 首页每日福利更新
   updateDailyBonusCard();
   renderDailyRecommend();
+  renderGrowthDashboard();
   renderCheckIn();
   renderTasks();
   generateInviteCode();
@@ -6932,6 +7051,91 @@ function updateDailyBonusCard() {
   }
 }
 
+/* ===== 成长数据仪表盘 v9 ===== */
+function renderGrowthDashboard() {
+  const moodEl = document.getElementById('growth-mood-score');
+  const focusEl = document.getElementById('growth-focus-mins');
+  const wishEl = document.getElementById('growth-wish-count');
+  const activeEl = document.getElementById('growth-active-days');
+  const upgradeHint = document.getElementById('growth-upgrade-hint');
+  const upgradeText = document.getElementById('growth-upgrade-text');
+  
+  const moodScore = getWeeklyMoodScore();
+  const focusMins = getWeeklyFocusMinutes();
+  const wishCount = getWeeklyWishCount();
+  const activeDays = getWeeklyActiveDays();
+  
+  if(moodEl) moodEl.textContent = moodScore >= 0 ? moodScore : '--';
+  if(focusEl) focusEl.textContent = focusMins > 0 ? focusMins : '--';
+  if(wishEl) wishEl.textContent = wishCount > 0 ? wishCount : '--';
+  if(activeEl) activeEl.textContent = activeDays > 0 ? activeDays : '--';
+  
+  // 数据驱动的升级推荐
+  const tier = getCurrentTier();
+  if(tier === 'free' && upgradeHint && upgradeText) {
+    const totalUsage = (moodScore >= 0 ? 1 : 0) + (focusMins > 0 ? 1 : 0) + (wishCount > 0 ? 1 : 0) + (activeDays > 0 ? 1 : 0);
+    if(totalUsage >= 3) {
+      upgradeHint.classList.remove('hidden');
+      let msg = '';
+      if(activeDays >= 3) msg = `本周活跃 ${activeDays} 天，升级会员解锁完整功能`;
+      else if(focusMins > 0) msg = `本周专注 ${focusMins} 分钟，VIP 专注计时无限制`;
+      else if(wishCount > 0) msg = `本周许愿 ${wishCount} 次，VIP 可解锁高级许愿功能`;
+      else msg = '你正在积极使用显化工具，升级会员获得完整体验';
+      upgradeText.textContent = msg;
+    } else {
+      upgradeHint.classList.add('hidden');
+    }
+  } else if(upgradeHint) {
+    upgradeHint.classList.add('hidden');
+  }
+}
+function getWeeklyMoodScore() {
+  try {
+    const emotions = StorageUtil.get('emotion_notes', []);
+    if(!emotions.length) return -1;
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const recent = emotions.filter(e => new Date(e.date || e.time) >= weekAgo);
+    if(!recent.length) return -1;
+    const avg = recent.reduce((a, b) => a + (b.value || b.score || 5), 0) / recent.length;
+    return Math.round(avg);
+  } catch(e) { return -1; }
+}
+function getWeeklyFocusMinutes() {
+  try {
+    const log = StorageUtil.get('activity_log', {});
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    let total = 0;
+    Object.entries(log).forEach(([date, activities]) => {
+      if(new Date(date) >= weekAgo) {
+        activities.forEach(a => {
+          if(a.type === 'timer' || a.type === 'focus' || a.type === 'sprint') {
+            total += (a.detail?.duration || a.detail?.minutes || 25);
+          }
+        });
+      }
+    });
+    return total;
+  } catch(e) { return 0; }
+}
+function getWeeklyWishCount() {
+  try {
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const wishes = (state.wishes || []).filter(w => new Date(w.date || w.created || 0) >= weekAgo);
+    return wishes.length;
+  } catch(e) { return 0; }
+}
+function getWeeklyActiveDays() {
+  try {
+    const log = StorageUtil.get('activity_log', {});
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    let days = 0;
+    Object.entries(log).forEach(([date, activities]) => {
+      if(new Date(date) >= weekAgo && activities.length > 0) days++;
+    });
+    return days;
+  } catch(e) { return 0; }
+}
+
 /* ===== 每日推荐内容 ===== */
 const DAILY_RECOMMENDS = [
   { day: 0, tag: '周一 · 新起点', title: '设定本周意图', desc: '写下3个本周想要实现的小目标，启动显化能量', action: 'openModule(\'intention\')', icon: '🎯' },
@@ -6987,6 +7191,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initZodiacAndBirthday();
     checkRetention();
     requestNotificationPermission();
+    checkMonthlyReview();
     // 首次打开显示引导
     if(isFirstOpen()) {
       markFirstOpen();
@@ -9676,6 +9881,9 @@ window.checkRetention = checkRetention;
 window.neverShowOfferAgain = neverShowOfferAgain;
 window.shouldShowOffer = shouldShowOffer;
 window.updateDailyBonusCard = updateDailyBonusCard;
+window.renderGrowthDashboard = renderGrowthDashboard;
+window.checkMonthlyReview = checkMonthlyReview;
+window.showMonthlyReviewModal = showMonthlyReviewModal;
 window.renderDailyRecommend = renderDailyRecommend;
 window.openDailyRecommend = openDailyRecommend;
 window.requestNotificationPermission = requestNotificationPermission;

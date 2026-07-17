@@ -706,6 +706,57 @@
         </div>
       </div>
 
+      <!-- 今日历练快捷入口 -->
+      <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="openModule('quest')" tabindex="0">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl shrink-0">🎯</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] mb-1" style="color:var(--theme-text); opacity:0.5">今日历练 · 任务与专注</div>
+            <div class="text-sm font-title leading-relaxed" style="color:var(--theme-text)">
+              进入任务清单，开启专注计时
+            </div>
+            <div class="text-[10px] mt-1" style="color:var(--theme-text); opacity:0.6">
+              管理任务 · 番茄钟 · 周回顾 · 能力雷达
+            </div>
+          </div>
+          <div class="text-lg opacity-40 shrink-0">→</div>
+        </div>
+      </div>
+
+      <!-- 成长数据概览 v9 -->
+      <div class="glass-card p-4 mb-4" id="growth-dashboard-card">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-medium" style="color:var(--theme-text)">📊 本周成长概览</h3>
+          <span class="text-[10px]" style="color:var(--text-mute)">数据驱动你的显化</span>
+        </div>
+        <div class="grid grid-cols-4 gap-2 mb-3">
+          <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)">
+            <div class="text-lg" id="growth-mood-score">--</div>
+            <div class="text-[10px]" style="color:var(--text-mute)">心情指数</div>
+          </div>
+          <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)">
+            <div class="text-lg" id="growth-focus-mins">--</div>
+            <div class="text-[10px]" style="color:var(--text-mute)">专注分钟</div>
+          </div>
+          <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)">
+            <div class="text-lg" id="growth-wish-count">--</div>
+            <div class="text-[10px]" style="color:var(--text-mute)">本周许愿</div>
+          </div>
+          <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)">
+            <div class="text-lg" id="growth-active-days">--</div>
+            <div class="text-[10px]" style="color:var(--text-mute)">活跃天数</div>
+          </div>
+        </div>
+        <!-- 数据驱动升级推荐 -->
+        <div id="growth-upgrade-hint" class="hidden">
+          <div class="p-2.5 rounded-xl text-[10px] flex items-center gap-2 cursor-pointer card-hover" style="background:linear-gradient(135deg,rgba(212,181,199,0.2),rgba(184,169,201,0.15));color:var(--theme-text)" onclick="showVipPlans()">
+            <span class="text-base">💎</span>
+            <span class="flex-1" id="growth-upgrade-text">基于你的使用数据，升级会员可获得更多功能</span>
+            <span class="opacity-60">→</span>
+          </div>
+        </div>
+      </div>
+
       <!-- 今日运势 -->
       <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="openFortune()" id="fortune-card" tabindex="0">
         <div class="flex items-start gap-3">
