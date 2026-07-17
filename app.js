@@ -16,26 +16,52 @@ window.addEventListener('unhandledrejection', function(e) {
   window.__errorLog.push(entry);
   try { sessionStorage.setItem('__error_log', JSON.stringify(window.__errorLog.slice(-20))); } catch(_) {}
   console.warn('[ErrorMonitor] Unhandled rejection:', e.reason);
-});
+})
+
+/* ===== Safe LocalStorage Wrapper ===== */
+const safeLocalStorage = {
+  getItem: function(key, defaultVal) {
+    try { return localStorage.getItem(key) || defaultVal; } catch(e) { return defaultVal; }
+  },
+  setItem: function(key, val) {
+    try { localStorage.setItem(key, val); return true; } catch(e) { return false; }
+  },
+  removeItem: function(key) {
+    try { localStorage.removeItem(key); return true; } catch(e) { return false; }
+  },
+  clear: function() {
+    try { localStorage.clear(); return true; } catch(e) { return false; }
+  },
+  getObject: function(key, defaultVal) {
+    try { 
+      const v = localStorage.getItem(key); 
+      return v ? JSON.parse(v) : defaultVal; 
+    } catch(e) { return defaultVal; }
+  },
+  setObject: function(key, obj) {
+    try { localStorage.setItem(key, JSON.stringify(obj)); return true; } catch(e) { return false; }
+  }
+};
+;
 
 /* ===== C10: 多语言支持 ===== */
 const TRANSLATIONS = {
   zh: {
-    nav_island: '岛屿', nav_tools: '显化', nav_library: '书馆', nav_journal: '记录', nav_me: '我的',
-    app_name: '星愿花园', settings_title: '设置', settings_sound: '声音设置', settings_notification: '通知提醒',
+    nav_island: '岛屿', nav_tools: '工具', nav_library: '书馆', nav_journal: '记录', nav_me: '我的',
+    app_name: '许愿岛', settings_title: '设置', settings_sound: '声音设置', settings_notification: '通知提醒',
     settings_personalization: '个性化', settings_privacy: '隐私', settings_reminder: '提醒', settings_data: '数据',
     sound_music: '背景音乐', sound_sfx: '操作音效', bubble_tips: '气泡提示', enter_page_bubble: '进入页面气泡提示',
     white_noise: '白噪音', theme_color: '主题色', island_weather: '岛屿天气', animation: '动效', dark_mode: '深色模式',
-    password_lock: '密码锁', local_only: '仅本地保存', daily_reminder: '每日打卡提醒', meditation_reminder: '冥想提醒',
-    affirm_push: '肯定语推送', export_data: '导出所有数据', clear_cache: '清除缓存', about_app: '关于星愿花园',
-    energy_checkup: '能量体检', manifest_journey: '显化旅程', energy_cleanup: '能量清理', export_pdf_report: '导出 PDF 报告',
-    language: '语言', lang_zh: '中文', lang_en: 'English', welcome_subtitle: '用科学方法，温柔地显化你的人生 ✨',
+    password_lock: '密码锁', local_only: '仅本地保存', daily_reminder: '每日打卡提醒', meditation_reminder: '放松提醒',
+    affirm_push: '积极宣言推送', export_data: '导出所有数据', clear_cache: '清除缓存', about_app: '关于许愿岛',
+    energy_checkup: '状态体检', manifest_journey: '成长旅程', energy_cleanup: '状态梳理', export_pdf_report: '导出 PDF 报告',
+    language: '语言', lang_zh: '中文', lang_en: 'English', welcome_subtitle: '记录心情，温柔地陪伴每一天 ✨',
     welcome_desc: '7步走下来，遇见更闪耀的自己 💫', welcome_benefits_title: '你将获得',
     benefit_persona: '找到你的专属花公主人格', benefit_purify: '清理你的限制性信念卡点',
-    benefit_wish: '用BE-DO-HAVE模型清晰许愿', benefit_meditation: 'SATS冥想+情绪调频对齐状态',
+    benefit_wish: '用BE-DO-HAVE模型清晰许愿', benefit_meditation: 'SATS放松+情绪调整对齐状态',
     benefit_action: '灵感行动花田，一步步落地', start_test: '开始测试', test_info: '约3分钟 · 15题 · 解锁你的公主身份',
-    home_good_day: '今天也是你显化的好日子 ✨', fortune_title: '今日显化运势 · 点击查看详情',
-    zodiac_title: '星座运势 · 点击查看详情', affirm_title: '今日肯定语 · 点击换一句', mood_question: '今天心情怎么样？',
+    home_good_day: '今天也是美好的一天 ✨', fortune_title: '今日运势 · 点击查看详情',
+    zodiac_title: '星座运势 · 点击查看详情', affirm_title: '今日积极宣言 · 点击换一句', mood_question: '今天心情怎么样？',
     mood_not_recorded: '还没记录', mood_happy: '开心', mood_calm: '平静', mood_meh: '有点down', mood_anxious: '焦虑',
     mood_sad: '难过', mood_angry: '生气', lang_switched: '语言已切换', data_exported: '数据已导出',
     data_export_failed: '数据导出失败', yes: '是', no: '否', save: '保存', cancel: '取消', confirm: '确定', close: '关闭',
@@ -49,32 +75,32 @@ const TRANSLATIONS = {
     report: '报告', progress: '进度', completed: '已完成', uncompleted: '未完成', today: '今天', yesterday: '昨天',
     tomorrow: '明天', week: '周', month: '月', year: '年', all: '全部', none: '无', back: '返回', next: '下一页',
     prev: '上一页', submit: '提交', done: '完成', skip: '跳过', continue: '继续', retry: '重试',
-    loading_error: '加载出错，请重试', no_data: '暂无数据', coming_soon: '即将上线', enjoy_journey: '享受你的显化旅程',
+    loading_error: '加载出错，请重试', no_data: '暂无数据', coming_soon: '即将上线', enjoy_journey: '享受你的成长旅程',
     daily_checkin: '每日打卡', checkin_success: '打卡成功', checkin_streak: '连续打卡', checkin_record: '打卡记录',
-    affirmation_loop: '肯定语循环', focus_wheel: '心念转轮', one_minute_magic: '一分钟魔法', universe_wallet: '宇宙钱包',
+    affirmation_loop: '积极宣言循环', focus_wheel: '心念转轮', one_minute_magic: '一分钟方法', universe_wallet: '自然钱包',
     mood_compass: '心情罗盘', pillow_talk: '枕边蜜语', let_go_ritual: '放手仪式', old_story_rewrite: '旧故事翻篇',
-    wish_box: '心愿宝盒', gratitude_storm: '感恩风暴', treasure_box: '显化百宝箱', wish_time_machine: '愿望时光机',
-    manifest_report: '显化报告', pdf_report_title: '显化数据报告', pdf_report_generated: '报告生成时间', pdf_nickname: '昵称',
+    wish_box: '心愿宝盒', gratitude_storm: '感恩风暴', treasure_box: '工具百宝箱', wish_time_machine: '愿望时光机',
+    manifest_report: '成长报告', pdf_report_title: '成长数据报告', pdf_report_generated: '报告生成时间', pdf_nickname: '昵称',
     pdf_energy: '能量', pdf_level: '等级', pdf_badges: '徽章', pdf_wishes: '愿望', pdf_diaries: '日记',
     pdf_streak: '连续打卡', pdf_start_date: '开始日期', pdf_total_days: '总天数', pdf_persona: '人格',
     pdf_mood_history: '心情记录', pdf_habits: '习惯', pdf_affirmations: '肯定语', pdf_no_data: '暂无数据',
     print_tip: '请在打印对话框中选择"保存为 PDF"', refresh_fortune: '正在刷新运势...'
   },
   en: {
-    nav_island: 'Island', nav_tools: 'Manifest', nav_library: 'Library', nav_journal: 'Journal', nav_me: 'Me',
-    app_name: 'Star Garden', settings_title: 'Settings', settings_sound: 'Sound Settings', settings_notification: 'Notifications',
+    nav_island: 'Island', nav_tools: 'Tools', nav_library: 'Library', nav_journal: 'Journal', nav_me: 'Me',
+    app_name: 'Wish Island', settings_title: 'Settings', settings_sound: 'Sound Settings', settings_notification: 'Notifications',
     settings_personalization: 'Personalization', settings_privacy: 'Privacy', settings_reminder: 'Reminders', settings_data: 'Data',
     sound_music: 'Background Music', sound_sfx: 'Sound Effects', bubble_tips: 'Bubble Tips', enter_page_bubble: 'Enter Page Bubbles',
     white_noise: 'White Noise', theme_color: 'Theme Color', island_weather: 'Island Weather', animation: 'Animation', dark_mode: 'Dark Mode',
-    password_lock: 'Password Lock', local_only: 'Local Only', daily_reminder: 'Daily Check-in', meditation_reminder: 'Meditation Reminder',
-    affirm_push: 'Affirmation Push', export_data: 'Export All Data', clear_cache: 'Clear Cache', about_app: 'About Star Garden',
-    energy_checkup: 'Energy Checkup', manifest_journey: 'Manifest Journey', energy_cleanup: 'Energy Cleanup', export_pdf_report: 'Export PDF Report',
-    language: 'Language', lang_zh: '中文', lang_en: 'English', welcome_subtitle: 'Manifest your life gently with science ✨',
+    password_lock: 'Password Lock', local_only: 'Local Only', daily_reminder: 'Daily Check-in', meditation_reminder: 'Relaxation Reminder',
+    affirm_push: 'Positive Affirmation Push', export_data: 'Export All Data', clear_cache: 'Clear Cache', about_app: 'About Wish Island',
+    energy_checkup: 'State Checkup', manifest_journey: 'Growth Journey', energy_cleanup: 'State Cleanup', export_pdf_report: 'Export PDF Report',
+    language: 'Language', lang_zh: '中文', lang_en: 'English', welcome_subtitle: 'Record your mood, accompany every day gently ✨',
     welcome_desc: '7 steps to meet a more shining self 💫', welcome_benefits_title: 'You will get',
     benefit_persona: 'Find your exclusive flower princess persona', benefit_purify: 'Clear your limiting belief blocks',
-    benefit_wish: 'Make clear wishes with BE-DO-HAVE model', benefit_meditation: 'SATS meditation + emotional alignment',
+    benefit_wish: 'Make clear wishes with BE-DO-HAVE model', benefit_meditation: 'SATS relaxation + emotional alignment',
     benefit_action: 'Inspiration action garden, step by step', start_test: 'Start Test', test_info: 'About 3 min · 15 questions · Unlock your princess identity',
-    home_good_day: 'Today is a good day to manifest ✨', fortune_title: 'Today\'s Manifest Fortune · Click for details',
+    home_good_day: 'Today is a beautiful day ✨', fortune_title: 'Today\'s Fortune · Click for details',
     zodiac_title: 'Zodiac Fortune · Click for details', affirm_title: 'Daily Affirmation · Click to refresh', mood_question: 'How are you feeling today?',
     mood_not_recorded: 'Not recorded', mood_happy: 'Happy', mood_calm: 'Calm', mood_meh: 'Meh', mood_anxious: 'Anxious',
     mood_sad: 'Sad', mood_angry: 'Angry', lang_switched: 'Language switched', data_exported: 'Data exported',
@@ -89,9 +115,9 @@ const TRANSLATIONS = {
     report: 'Report', progress: 'Progress', completed: 'Completed', uncompleted: 'Uncompleted', today: 'Today', yesterday: 'Yesterday',
     tomorrow: 'Tomorrow', week: 'Week', month: 'Month', year: 'Year', all: 'All', none: 'None', back: 'Back', next: 'Next',
     prev: 'Prev', submit: 'Submit', done: 'Done', skip: 'Skip', continue: 'Continue', retry: 'Retry',
-    loading_error: 'Loading error, please retry', no_data: 'No data yet', coming_soon: 'Coming soon', enjoy_journey: 'Enjoy your manifest journey',
+    loading_error: 'Loading error, please retry', no_data: 'No data yet', coming_soon: 'Coming soon', enjoy_journey: 'Enjoy your growth journey',
     daily_checkin: 'Daily Check-in', checkin_success: 'Check-in success', checkin_streak: 'Check-in streak', checkin_record: 'Check-in records',
-    affirmation_loop: 'Affirmation Loop', focus_wheel: 'Focus Wheel', one_minute_magic: 'One Minute Magic', universe_wallet: 'Universe Wallet',
+    affirmation_loop: 'Positive Affirmation Loop', focus_wheel: 'Focus Wheel', one_minute_magic: 'One Minute Method', universe_wallet: 'Nature Wallet',
     mood_compass: 'Mood Compass', pillow_talk: 'Pillow Talk', let_go_ritual: 'Let Go Ritual', old_story_rewrite: 'Old Story Rewrite',
     wish_box: 'Wish Box', gratitude_storm: 'Gratitude Storm', treasure_box: 'Treasure Box', wish_time_machine: 'Wish Time Machine',
     manifest_report: 'Manifest Report', pdf_report_title: 'Manifestation Data Report', pdf_report_generated: 'Report generated at',
@@ -1481,7 +1507,7 @@ const TUTORIAL_STEPS = [
   {
     emoji: '👋',
     title: '公主你好呀~',
-    desc: '欢迎来到你的专属星愿花园！让我带你逛逛这座神奇的小岛吧 ✨',
+    desc: '欢迎来到你的专属许愿岛！让我带你逛逛这座神奇的小岛吧 ✨',
     target: null, // 居中显示
     position: 'center',
   },
@@ -2741,7 +2767,7 @@ function toggleNotificationPermission(el) {
         saveState();
         showToast('🔔 每日提醒已开启');
         scheduleDailyReminders();
-        sendNotification('✨ 星愿花园', '每日提醒已开启，我会陪伴你度过每一天～');
+        sendNotification('✨ 许愿岛', '每日提醒已开启，我会陪伴你度过每一天～');
       } else {
         showToast('需要通知权限才能开启提醒');
       }
@@ -2893,8 +2919,8 @@ function clearCache() {
   }
 }
 function showAbout() {
-  showAlert('🏝️', '关于星愿花园',
-    '星愿花园 v2.0\n\n' +
+  showAlert('🏝️', '关于许愿岛',
+    '许愿岛 v2.0\n\n' +
     '温柔显化陪伴小天地\n\n' +
     '基于内维尔假设法则、约瑟夫墨菲潜意识理论、\n' +
     '亚伯拉罕情绪刻度、CBT认知行为疗法\n\n' +
@@ -5607,7 +5633,7 @@ function closeShareCard() { const modal = document.getElementById('share-card-mo
 function getDailyAffirmation() { const all = [...(typeof WEALTH_AFFIRMATIONS !== 'undefined' ? WEALTH_AFFIRMATIONS : []), ...(typeof SP_AFFIRMATIONS !== 'undefined' ? (SP_AFFIRMATIONS.all || []) : [])]; if(all.length) return all[Math.floor(Math.random()*all.length)]; return null; }
 function downloadShareCard() { showToast('💡 提示：请截图保存这张卡片！'); const card = document.getElementById('share-card-preview'); if(card) { card.style.transform = 'scale(1.02)'; setTimeout(() => card.style.transform = 'scale(1)', 300); } }
 function copyShareText() {
-  const text = `✨ 星愿花园 · 星辰日记\n\n📅 ${new Date().toLocaleDateString('zh-CN')}\n\n${currentShareText}\n\n🏝️ 下载星愿花园，一起显化梦想！`;
+  const text = `✨ 许愿岛 · 星辰日记\n\n📅 ${new Date().toLocaleDateString('zh-CN')}\n\n${currentShareText}\n\n🏝️ 下载许愿岛，一起显化梦想！`;
   if(navigator.clipboard) { navigator.clipboard.writeText(text).then(() => showToast('分享文案已复制 ✨')).catch(err => console.warn('剪贴板复制失败:', err)); }
   else showToast(text.substring(0, 60) + '...');
 }
@@ -5782,7 +5808,7 @@ function exportAllData() {
     'cosmos_treasurebox_state', 'cosmos_timeline_state', 'cosmos_custom_affirms',
     'crystal_state', 'vip_state', 'bootcamp_state'
   ];
-  const exportData = { exportDate: new Date().toISOString(), version: '6.4', app: '星愿花园', data: {} };
+  const exportData = { exportDate: new Date().toISOString(), version: '6.4', app: '许愿岛', data: {} };
   for (const k of keys) { const v = StorageUtil.get(k, null); if (v !== null) exportData.data[k] = v; }
   const allKeys = StorageUtil.keys();
   for (const k of allKeys) {
@@ -5795,7 +5821,7 @@ function exportAllData() {
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `星愿花园备份_${new Date().toLocaleDateString('zh-CN')}.json`; a.click();
+    a.href = url; a.download = `许愿岛备份_${new Date().toLocaleDateString('zh-CN')}.json`; a.click();
     URL.revokeObjectURL(url);
     showToast('✅ 完整备份已下载（含所有模块数据）💾');
   } catch(e) {
@@ -5809,7 +5835,7 @@ function copyAllData() {
     'activity_log', 'breathe_records', 'voice_recordings', 'feedback_history',
     'cosmos_treasurebox_state', 'cosmos_timeline_state', 'cosmos_custom_affirms'
   ];
-  const exportData = { exportDate: new Date().toISOString(), version: '6.4', app: '星愿花园', data: {} };
+  const exportData = { exportDate: new Date().toISOString(), version: '6.4', app: '许愿岛', data: {} };
   for (const k of keys) { const v = StorageUtil.get(k, null); if (v !== null) exportData.data[k] = v; }
   try {
     const text = JSON.stringify(exportData);
@@ -5853,7 +5879,7 @@ function openModuleExtended(name) {
 }
 const MEMBER_TIERS = {
   free: { name: '免费体验', color: '#B8A9C9', dailyTarot: 1, dailyAI: 3, dailySats: 1, books: 2, export: false, advancedCharts: false, spFull: false, aiCoach: false, movies: false, dreams: true, stories: true },
-  member: { name: '宇宙会员', color: '#D4B5C7', dailyTarot: 3, dailyAI: 20, dailySats: 3, books: 8, export: true, advancedCharts: true, spFull: true, aiCoach: false, movies: true, dreams: true, stories: true },
+  member: { name: '自然会员', color: '#D4B5C7', dailyTarot: 3, dailyAI: 20, dailySats: 3, books: 8, export: true, advancedCharts: true, spFull: true, aiCoach: false, movies: true, dreams: true, stories: true },
   vip: { name: '星际高级会员', color: '#F59E0B', dailyTarot: 999, dailyAI: 999, dailySats: 999, books: 8, export: true, advancedCharts: true, spFull: true, aiCoach: true, movies: true, dreams: true, stories: true }
 };
 const 星光会员_PRICES = {
@@ -6049,7 +6075,7 @@ function unlockWithCrystals(type, cost) {
 function selectSubscriptionPlan(planId) {
   const plan = 星光会员_PRICES[planId];
   if(!plan) return;
-  const tierName = plan.tier === 'member' ? '宇宙会员' : '星际高级会员';
+  const tierName = plan.tier === 'member' ? '自然会员' : '星辰高级会员';
   const period = plan.period === '月' ? '月' : '年';
   const confirmMsg = `确认购买 ${tierName} ${plan.name}？\n价格：¥${plan.price}/${period}\n\n（此为演示，实际支付需接入支付系统）`;
   if(!confirm(confirmMsg)) return;
@@ -7581,14 +7607,14 @@ function initAbout() {
   el.innerHTML = `
     <div class="glass-card p-5 mb-4 text-center">
       <div class="text-4xl mb-3">🏝️</div>
-      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">星愿花园</h2>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">许愿岛</h2>
       <p class="text-sm" style="color:var(--text-soft)">Star Wish Garden — 星愿百宝箱</p>
-      <div class="mt-3 inline-block px-3 py-1 rounded-full text-xs" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">v6.1 星愿花园全面版</div>
+      <div class="mt-3 inline-block px-3 py-1 rounded-full text-xs" style="background:rgba(212,181,199,0.15);color:var(--text-soft)">v6.1 许愿岛全面版</div>
     </div>
     <div class="glass-card p-5 mb-4">
       <h3 class="text-sm font-medium mb-3" style="color:var(--theme-text)">🌟 版本历程</h3>
       <div class="space-y-2 text-xs" style="color:var(--text-soft)">
-        <div class="flex justify-between"><span>v1.0</span><span>星愿花园基础</span></div>
+        <div class="flex justify-between"><span>v1.0</span><span>许愿岛基础</span></div>
         <div class="flex justify-between"><span>v2.0</span><span>花园、星愿、日记</span></div>
         <div class="flex justify-between"><span>v3.0</span><span>智慧花园、星辰塔罗、星辰社区</span></div>
         <div class="flex justify-between"><span>v3.5</span><span>音频冥想引导系统</span></div>
@@ -7611,10 +7637,10 @@ function initAbout() {
     <div class="glass-card p-5 mb-4">
       <h3 class="text-sm font-medium mb-3" style="color:var(--theme-text)">💡 核心理念</h3>
       <p class="text-xs leading-relaxed" style="color:var(--text-soft)">
-        星愿花园基于内维尔·戈达德的"意识创造现实"理论构建。我们相信：当你能在想象中清晰感受愿望已实现的喜悦，并在睡前（State Akin to Sleep, SATS）沉浸于这种感受，你的潜意识会接受这个「已完成的版本」为真实，外在现实必将与之匹配。
+        许愿岛基于内维尔·戈达德的"意识创造现实"理论构建。我们相信：当你能在想象中清晰感受愿望已实现的喜悦，并在睡前（State Akin to Sleep, SATS）沉浸于这种感受，你的潜意识会接受这个「已完成的版本」为真实，外在现实必将与之匹配。
       </p>
     </div>
-    <div class="text-center text-xs mt-6 mb-4" style="color:var(--text-mute)">© ${year} 星愿花园 · 所有数据本地存储，保护隐私</div>
+    <div class="text-center text-xs mt-6 mb-4" style="color:var(--text-mute)">© ${year} 许愿岛 · 所有数据本地存储，保护隐私</div>
   `;
   renderAboutStats();
 }
@@ -8969,7 +8995,7 @@ function exportPDFReport() {
   }).join('、') || '暂无';
   const wishes = (state.wishes || []).map((w, i) => `<tr><td>${i+1}</td><td>${w.text || w.be || '-'}</td><td>${w.done ? '✅ 已显化' : '⏳ 进行中'}</td></tr>`).join('');
   const html = `
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>星愿花园报告 ${today}</title>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>许愿岛报告 ${today}</title>
 <style>
 body{font-family:'Noto Sans SC',sans-serif;max-width:700px;margin:40px auto;padding:20px;color:#5D4E6D;background:#FAF5F7;line-height:1.6}
 h1{color:#B8A9C9;font-size:24px;border-bottom:2px solid #E8D5E0;padding-bottom:10px}
@@ -8982,7 +9008,7 @@ th,td{padding:8px;border-bottom:1px solid #E8D5E0;text-align:left}
 th{background:#FAF5F7;color:#8B7E9C;font-weight:500}
 @media print{body{background:#fff;margin:0;padding:16px}}
 </style></head><body>
-<h1>🌸 星愿花园 · 个人报告</h1>
+<h1>🌸 许愿岛 · 个人报告</h1>
 <div class="meta">生成日期：${today} &nbsp;|&nbsp; 昵称：${state.nickname || '小公主'}</div>
 <div class="section"><h2>📊 基础数据</h2>
 <p>💎 能量：${state.energy || 0} &nbsp;|&nbsp; 等级：${getLevel()} &nbsp;|&nbsp; 徽章：${(state.badges || []).length} 个</p>
@@ -8996,7 +9022,7 @@ th{background:#FAF5F7;color:#8B7E9C;font-weight:500}
 <p>SATS 冥想：${state.satsCount || 0} 次 &nbsp;|&nbsp; 修正法：${state.revisionCount || 0} 次</p>
 <p>肯定语收藏：${(state.affirmations?.saved || []).length} 条 &nbsp;|&nbsp; 阅读文章：${state.libReadCount || 0} 篇</p>
 </div>
-<div class="meta" style="text-align:center;margin-top:30px">🌸 星愿花园为你记录每一份美好</div>
+<div class="meta" style="text-align:center;margin-top:30px">🌸 许愿岛为你记录每一份美好</div>
 </body></html>`;
   const w = window.open('', '_blank');
   if (!w) { showToast('请允许弹出窗口以导出 PDF'); return; }

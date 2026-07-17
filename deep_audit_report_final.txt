@@ -1,0 +1,43 @@
+======================================================================
+  深度代码审查报告 - 去显化术语替换 Bug
+======================================================================
+
+======================================================================
+  部分 A: 确认/高疑似 代码级 Bug
+======================================================================
+
+[library.js] 第 330 行
+  -> URL/路径被破坏: /p><p>改变你的意识，就能改变你的现实。这是所有显化法则的基础。</p>`
+  原文:     ideas.push({ title: '意识创造现实', content: `<p class="mb-3">意识是原因，现实是结果。你外在的世界，只是你内在意识的投射。不是你看到了才相信，而是你相信了才会看到。</p><p>改变你的意识，就能改变你的现实。这是所有显化法则的基础。</p>` });
+
+======================================================================
+  部分 B: 包含替换词的中文字符串内容（供人工复核）
+======================================================================
+
+共 39 行包含替换词的中文字符串。以下为部分示例：
+
+
+--- app.js (33 处) ---
+  L  31:     energy_checkup: '状态体检', manifest_journey: '成长旅程', energy_cleanup: '状态梳理', export_pdf_report: '导出 PDF 报告',
+  L  52:     loading_error: '加载出错，请重试', no_data: '暂无数据', coming_soon: '即将上线', enjoy_journey: '享受你的成长旅程',
+  L  57:     manifest_report: '成长报告', pdf_report_title: '成长数据报告', pdf_report_generated: '报告生成时间', pdf_nickname: '昵称',
+  L 878:     { text: '一起成长、并肩作战', scores: { action: 3, create: 1, empathy: 0, stable: 1, charm: 1 } },
+  L 909:     { text: '偷偷难过，等对方先低头', scores: { action: 0, create: 0, empathy: 3, stable: 0, charm: 1 } },
+  L 910:     { text: '冷战，但会用魅力让对方主动', scores: { action: 1, create: 1, empathy: 0, stable: 0, charm: 3 } },
+  L 958:     { text: '白鲸：治愈、温柔、有灵性', scores: { action: 0, create: 0, empathy: 3, stable: 1, charm: 1 } },
+  L 971:     { text: '自己消化，时间会治愈一切', scores: { action: 0, create: 0, empathy: 1, stable: 3, charm: 0 } },
+  L 979:     { text: '柔软治愈、让人想保护的女生', scores: { action: 0, create: 0, empathy: 3, stable: 0, charm: 2 } },
+  L 993:     { text: '治愈能力，能抚平所有伤痛', scores: { action: 0, create: 0, empathy: 3, stable: 1, charm: 0 } },
+  ... 还有 23 处 ...
+
+--- cloud.js (1 处) ---
+  L 223:   '我很失败': '每一次经历都是成长，我一直在进步',
+
+--- library.js (4 处) ---
+  L 775:     { key: 'selfGrowth', label: '🌱 自我成长', color: '#88C898' },
+  L 778:     { key: 'healing', label: '🧘 疗愈治愈', color: '#B8A9C9' },
+  L 853:     selfGrowth: '🌱 自我成长',
+  L 856:     healing: '🧘 疗愈治愈',
+
+--- tools.js (1 处) ---
+  L  64:   const text = `✨ 我在「星愿花园」完成了7天显化速训营！\n\n从设定意图到活在终点，我每天都在创造自己的现实。\n\n显化不是等待，而是成为。🌙\n\n🏝️ 下载星愿花园，一起显化梦想！`;

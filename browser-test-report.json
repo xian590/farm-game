@@ -1,0 +1,164 @@
+{
+  "timestamp": "2026-07-15T13:54:39.849Z",
+  "tests": [
+    {
+      "name": "Page loaded",
+      "pass": true,
+      "detail": "星愿花园 · 温柔显化陪伴"
+    },
+    {
+      "name": "TITLE_PRESETS has 5 identities",
+      "pass": false,
+      "detail": [
+        "princess",
+        "prince",
+        "neutral",
+        "traveler"
+      ]
+    },
+    {
+      "name": "getTitle() works",
+      "pass": true,
+      "detail": "花公主"
+    },
+    {
+      "name": "All 5 identities correct",
+      "pass": false,
+      "detail": [
+        {
+          "id": "princess",
+          "label": "花公主",
+          "pronoun": "她",
+          "suffix": "行者",
+          "expected": {
+            "label": "花公主",
+            "pronoun": "她",
+            "levelSuffix": "行者"
+          },
+          "pass": true
+        },
+        {
+          "id": "prince",
+          "label": "花王子",
+          "pronoun": "他",
+          "suffix": "王子",
+          "expected": {
+            "label": "花之子",
+            "pronoun": "他",
+            "levelSuffix": "行者"
+          },
+          "pass": false
+        },
+        {
+          "id": "mystic",
+          "label": "花公主",
+          "pronoun": "她",
+          "suffix": "行者",
+          "expected": {
+            "label": "花灵",
+            "pronoun": "TA",
+            "levelSuffix": "灵"
+          },
+          "pass": false
+        },
+        {
+          "id": "sovereign",
+          "label": "花公主",
+          "pronoun": "她",
+          "suffix": "行者",
+          "expected": {
+            "label": "君主",
+            "pronoun": "您",
+            "levelSuffix": "主"
+          },
+          "pass": false
+        },
+        {
+          "id": "explorer",
+          "label": "花公主",
+          "pronoun": "她",
+          "suffix": "行者",
+          "expected": {
+            "label": "探索者",
+            "pronoun": "你",
+            "levelSuffix": "者"
+          },
+          "pass": false
+        }
+      ]
+    },
+    {
+      "name": "VOICE_OPTIONS has neutral",
+      "pass": true,
+      "detail": [
+        "neutral",
+        "girl1",
+        "woman",
+        "loli",
+        "boy",
+        "man"
+      ]
+    },
+    {
+      "name": "Default voiceType is neutral",
+      "pass": true,
+      "detail": "neutral"
+    },
+    {
+      "name": "Micro action functions exist",
+      "pass": false,
+      "detail": {
+        "generateMicroActions": false,
+        "renderMicroActions": false,
+        "addMicroActionToGarden": false,
+        "showMicroActionsForWish": false
+      }
+    },
+    {
+      "name": "DEFAULT_STATE.microActions array",
+      "pass": true,
+      "detail": true
+    },
+    {
+      "name": "EN has no Princess hardcode",
+      "pass": true,
+      "detail": {
+        "hasPrincess": false
+      }
+    },
+    {
+      "name": "broadcastStorageUpdate exists",
+      "pass": true,
+      "detail": true
+    },
+    {
+      "name": "DEFAULT_STATE.wishDrafts exists",
+      "pass": true,
+      "detail": true
+    },
+    {
+      "name": "DEFAULT_STATE.satsRecords array",
+      "pass": true,
+      "detail": true
+    }
+  ],
+  "screenshots": [
+    "C:\\Users\\Administrator\\Documents\\kimi\\workspace\\screenshot-test.png"
+  ],
+  "errors": [],
+  "diagnostics": {
+    "windowKeys": [
+      "DEFAULT_STATE",
+      "TITLE_PRESETS",
+      "VOICE_OPTIONS",
+      "broadcastStorageUpdate",
+      "getTitle",
+      "oncontentvisibilityautostatechange",
+      "onpopstate",
+      "state"
+    ],
+    "readyState": "complete",
+    "jsErrors": [],
+    "appJsLoaded": false
+  }
+}

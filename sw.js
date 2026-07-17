@@ -86,7 +86,7 @@ self.addEventListener('sync', event => {
 self.addEventListener('push', event => {
   const data = event.data?.json() ?? {};
   event.waitUntil(
-    self.registration.showNotification(data.title || '星愿花园', {
+    self.registration.showNotification(data.title || '许愿岛', {
       body: data.body || '今日肯定语已准备好 ✨',
       icon: data.icon || '',
       badge: data.badge || '',
