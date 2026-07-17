@@ -4720,6 +4720,18 @@
       </div>
     </div>
 
+    <!-- 分享赚水晶 -->
+    <div class="glass-card p-5 mb-6 cursor-pointer card-hover" onclick="shareForCrystals()">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:linear-gradient(135deg,#88C898,#78B888)">🔗</div>
+        <div class="flex-1">
+          <div class="font-medium text-sm mb-0.5">分享赚水晶</div>
+          <div class="text-xs" style="color:var(--text-mute)">每天分享一次，立得 10 星光水晶</div>
+        </div>
+        <div class="text-lg opacity-40">→</div>
+      </div>
+    </div>
+
     <!-- 会员权益对比 -->
     <div class="glass-card p-5 mb-6">
       <h3 class="font-medium mb-4">📊 会员权益对比</h3>
@@ -4915,6 +4927,17 @@
   </div>
 </div>
 
+
+    <!-- 1天免费体验 -->
+    <div class="px-5 mt-6 max-w-lg mx-auto" id="free-trial-card">
+      <div class="glass-card p-5 text-center relative overflow-hidden" style="background:linear-gradient(135deg,rgba(212,181,199,0.2),rgba(245,158,11,0.1));border:1.5px solid rgba(245,158,11,0.2)">
+        <div class="text-3xl mb-2">🎁</div>
+        <h3 class="font-title text-base mb-1" style="color:var(--theme-text)">不确定是否适合？</h3>
+        <p class="text-xs mb-4" style="color:var(--text-soft)">领取 1 天 VIP 免费体验，解锁全部功能后再决定</p>
+        <button type="button" onclick="claimFreeTrial()" class="btn-primary w-full py-3 rounded-xl font-medium" aria-label="领取1天免费体验">🎉 领取 1 天 VIP 免费体验</button>
+        <p class="text-[10px] mt-2" style="color:var(--text-mute)">每个账号仅限领取一次 · 体验期间全部功能开放</p>
+      </div>
+    </div>
 <!-- ========== 功能锁定提示弹窗 ========== -->
 <div id="lock-modal" role="dialog" aria-modal="true" class="modal-backdrop" onclick="if(event.target===this)closeLockModal()">
   <div role="dialog" aria-modal="true" class="modal-content p-6 text-center" style="max-width:340px">

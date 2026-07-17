@@ -6291,6 +6291,12 @@ function showPaymentModal(planId) {
         🔒 安全支付 · 购买后自动解锁全部权益<br>
         <span style="opacity:0.7">（当前为演示模式，模拟支付流程）</span>
       </div>
+      ${planId === 'member_first_month' && !hasUsedFreeTrial() ? `
+      <div class="mb-3 p-3 rounded-xl text-center" style="background:linear-gradient(135deg,rgba(212,181,199,0.15),rgba(245,158,11,0.1));border:1px dashed rgba(212,181,199,0.3)">
+        <div class="text-xs mb-2" style="color:var(--text-mute)">不确定是否适合？先免费体验</div>
+        <button type="button" onclick="closePaymentModal();claimFreeTrial()" class="btn-soft w-full py-2.5 rounded-xl text-xs font-medium" aria-label="领取1天免费体验">🎁 领取 1 天 VIP 免费体验</button>
+      </div>
+      ` : ''}
       <button type="button" onclick="closePaymentModal()" class="text-xs" style="color:var(--text-mute);background:transparent;border:none;padding:4px 8px;" aria-label="取消">取消</button>
     </div>
   `;
@@ -6333,6 +6339,89 @@ function neverShowOfferAgain(checked) {
 }
 function shouldShowOffer() {
   return safeLocalStorage.getItem('wish_island_offer_never') !== 'true';
+}
+
+
+/* ===== 分享得水晶 ===== */
+function shareForCrystals() {
+  const shareData = {
+    title: '许愿岛 - 我的心灵成长花园',
+    text: '我在许愿岛记录成长、许愿放松，超治愈！快来一起吧 ✨',
+    url: window.location.href
+  };
+  if(navigator.share) {
+    navigator.share(shareData).then(() => {
+      // 检查今天是否已分享
+      const today = new Date().toDateString();
+      const lastShare = safeLocalStorage.getItem('wish_island_last_share');
+      if(lastShare !== today) {
+        safeLocalStorage.setItem('wish_island_last_share', today);
+        crystalState.crystals += 10;
+        saveVipState();
+        updateCrystalDisplay();
+        showToast('分享成功！奖励 10 星光水晶 💎');
+        triggerConfetti();
+      } else {
+        showToast('今天已经分享过了，明天再来吧 💎');
+      }
+    }).catch(err => {
+      if(err.name !== 'AbortError') {
+        // 复制链接替代
+        copyShareLink();
+      }
+    });
+  } else {
+    copyShareLink();
+  }
+}
+function copyShareLink() {
+  const link = window.location.href;
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(link).then(() => {
+      const today = new Date().toDateString();
+      const lastShare = safeLocalStorage.getItem('wish_island_last_share');
+      if(lastShare !== today) {
+        safeLocalStorage.setItem('wish_island_last_share', today);
+        crystalState.crystals += 10;
+        saveVipState();
+        updateCrystalDisplay();
+        showToast('链接已复制！奖励 10 星光水晶 💎');
+        triggerConfetti();
+      } else {
+        showToast('链接已复制！今天已经分享过了 💎');
+      }
+    });
+  } else {
+    showToast('请手动复制链接分享给你的朋友 💎');
+  }
+}
+
+/* ===== 1天免费体验会员 ===== */
+function claimFreeTrial() {
+  if(safeLocalStorage.getItem('wish_island_free_trial_used')) {
+    showToast('你已经领取过免费体验了 ✨');
+    return;
+  }
+  if(getCurrentTier() !== 'free') {
+    showToast('你已经是会员了，无需体验 ✨');
+    return;
+  }
+  safeLocalStorage.setItem('wish_island_free_trial_used', 'true');
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  vipState.tier = 'vip';
+  vipState.expiry = tomorrow.toISOString();
+  saveVipState();
+  showToast('🎉 成功领取 1 天 VIP 免费体验！全部功能已解锁');
+  triggerConfetti();
+  // 隐藏横幅和标识
+  const banner = document.getElementById('me-vip-banner');
+  if(banner) banner.style.display = 'none';
+  const vipBadge = document.getElementById('me-vip-badge');
+  if(vipBadge) vipBadge.style.display = 'inline-block';
+  setTimeout(() => { goHome(); }, 1500);
+}
+function hasUsedFreeTrial() {
+  return safeLocalStorage.getItem('wish_island_free_trial_used') === 'true';
 }
 
 function showLimitedOffer() {
@@ -9161,6 +9250,10 @@ window.neverShowOfferAgain = neverShowOfferAgain;
 window.shouldShowOffer = shouldShowOffer;
 window.updateDailyBonusCard = updateDailyBonusCard;
 window.unlockWithCrystals = unlockWithCrystals;
+window.shareForCrystals = shareForCrystals;
+window.copyShareLink = copyShareLink;
+window.claimFreeTrial = claimFreeTrial;
+window.hasUsedFreeTrial = hasUsedFreeTrial;
 window.selectTimerDuration = selectTimerDuration;
 window.selectTimerMode = selectTimerMode;
 window.selectVoice = selectVoice;
