@@ -89,6 +89,137 @@ function checkRetention() {
   }
 }
 
+/* ===== 会员到期提醒 ===== */
+function checkExpiryReminder() {
+  const tier = getCurrentTier();
+  if(tier === 'free') return;
+  if(!vipState.expiry) return;
+  const expiry = new Date(vipState.expiry);
+  const now = new Date();
+  const daysLeft = Math.floor((expiry - now) / (1000 * 60 * 60 * 24));
+  // 今天是否已经提醒过
+  const today = now.toDateString();
+  const lastReminder = safeLocalStorage.getItem('wish_island_expiry_remind');
+  if(lastReminder === today) return; // 今天已提醒
+  if(daysLeft <= 7 && daysLeft > 0) {
+    safeLocalStorage.setItem('wish_island_expiry_remind', today);
+    showExpiryModal(daysLeft);
+  } else if (daysLeft <= 0) {
+    // 已过期，降级回免费
+    vipState.tier = 'free';
+    vipState.expiry = null;
+    saveVipState();
+    showToast('会员已到期，已自动回退至免费体验 ✨');
+    // 显示横幅
+    const banner = document.getElementById('me-vip-banner');
+    if(banner) banner.style.display = 'block';
+    const vipBadge = document.getElementById('me-vip-badge');
+    if(vipBadge) vipBadge.style.display = 'none';
+  }
+}
+function showExpiryModal(daysLeft) {
+  let modal = document.getElementById('expiry-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'expiry-modal';
+    modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.onclick = function(e) { if(e.target === this) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  const tierName = vipState.tier === 'vip' ? '星际高级会员' : '自然会员';
+  modal.innerHTML = `
+    <div class="modal-content p-6 text-center" style="max-width:340px">
+      <div class="text-4xl mb-3">⏰</div>
+      <h3 class="font-title text-lg mb-2" style="color:var(--theme-text)">${tierName} 即将到期</h3>
+      <p class="text-sm mb-4" style="color:var(--text-soft)">你的会员还有 <span class="font-bold" style="color:var(--theme-text)">${daysLeft}</span> 天到期，续费可保留全部权益</p>
+      <div class="p-3 rounded-xl mb-4 text-xs" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(212,181,199,0.1));border:1px solid rgba(245,158,11,0.15)">
+        👥 已有 <span class="font-bold">1,200+</span> 人续费会员
+      </div>
+      <div class="space-y-2 mb-3">
+        <button type="button" onclick="document.getElementById('expiry-modal').classList.remove('show');showPage('vip-plans');" class="btn-primary w-full py-3 rounded-xl font-medium" style="background:linear-gradient(135deg,#F59E0B,#D4B5C7)" aria-label="立即续费">👑 立即续费</button>
+        <button type="button" onclick="document.getElementById('expiry-modal').classList.remove('show');" class="btn-soft w-full py-3 rounded-xl text-sm" aria-label="稍后再说">稍后再说</button>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+/* ===== App评价引导 ===== */
+let __ratingShown = false;
+function checkRatingPrompt() {
+  if(__ratingPromptShown) return;
+  const usageCount = parseInt(safeLocalStorage.getItem('wish_island_usage_count', '0')) || 0;
+  if(usageCount >= 15 && usageCount < 20) {
+    __ratingPromptShown = true;
+    setTimeout(() => showRatingModal(), 2000);
+  }
+}
+function showRatingModal() {
+  let modal = document.getElementById('rating-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'rating-modal';
+    modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.onclick = function(e) { if(e.target === this) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-content p-6 text-center" style="max-width:340px">
+      <div class="text-4xl mb-3">🌟</div>
+      <h3 class="font-title text-lg mb-2" style="color:var(--theme-text)">喜欢许愿岛吗？</h3>
+      <p class="text-sm mb-4" style="color:var(--text-soft)">你的好评能帮助我们做得更好，也能让更多人发现这个温暖的小宇宙 ✨</p>
+      <div class="flex justify-center gap-1 mb-4 text-2xl">
+        <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
+      </div>
+      <div class="space-y-2 mb-3">
+        <button type="button" onclick="document.getElementById('rating-modal').classList.remove('show');window.open('https://apps.apple.com','_blank');showToast('感谢你的支持！💫');" class="btn-primary w-full py-3 rounded-xl font-medium" aria-label="去评分">去评分 ✨</button>
+        <button type="button" onclick="document.getElementById('rating-modal').classList.remove('show');" class="btn-soft w-full py-3 rounded-xl text-sm" aria-label="下次再说">下次再说</button>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+/* ===== 帮助与支持弹窗控制 ===== */
+function showFaqModal() {
+  const m = document.getElementById('faq-modal');
+  if(m) m.classList.add('show');
+}
+function showFeedbackModal() {
+  const m = document.getElementById('feedback-modal');
+  if(m) m.classList.add('show');
+}
+function showPrivacyModal() {
+  const m = document.getElementById('privacy-modal');
+  if(m) m.classList.add('show');
+}
+function showRefundModal() {
+  const m = document.getElementById('refund-modal');
+  if(m) m.classList.add('show');
+}
+function submitFeedback() {
+  const text = document.getElementById('feedback-text');
+  if(!text) return;
+  const val = text.value.trim();
+  if(!val) { showToast('请输入反馈内容'); return; }
+  if(val.length < 5) { showToast('反馈内容至少 5 个字'); return; }
+  // 保存到本地（实际应用应发送到后端）
+  const feedbacks = safeLocalStorage.getObject('wish_island_feedback', []);
+  feedbacks.push({ text: val, date: new Date().toISOString(), version: '6.4' });
+  safeLocalStorage.setObject('wish_island_feedback', feedbacks.slice(-20));
+  text.value = '';
+  document.getElementById('feedback-modal').classList.remove('show');
+  showToast('反馈已提交，感谢你的建议！💫');
+  // 奖励少量水晶
+  crystalState.crystals += 2;
+  saveVipState();
+  updateCrystalDisplay();
+}
+
 /* ===== 首次打开检测 ===== */
 function isFirstOpen() {
   return !safeLocalStorage.getItem('wish_island_first_open');
@@ -5346,6 +5477,8 @@ function init() {
     }
     updateFortuneCard();
     checkNewBadges();
+    checkExpiryReminder();
+    checkRatingPrompt();
   } catch (initErr) {
     console.error('初始化出错:', initErr);
     showToast('初始化遇到一点小问题，请刷新页面重试');
@@ -9275,6 +9408,15 @@ window.shareForCrystals = shareForCrystals;
 window.copyShareLink = copyShareLink;
 window.claimFreeTrial = claimFreeTrial;
 window.hasUsedFreeTrial = hasUsedFreeTrial;
+window.checkExpiryReminder = checkExpiryReminder;
+window.showExpiryModal = showExpiryModal;
+window.checkRatingPrompt = checkRatingPrompt;
+window.showRatingModal = showRatingModal;
+window.showFaqModal = showFaqModal;
+window.showFeedbackModal = showFeedbackModal;
+window.showPrivacyModal = showPrivacyModal;
+window.showRefundModal = showRefundModal;
+window.submitFeedback = submitFeedback;
 window.selectTimerDuration = selectTimerDuration;
 window.selectTimerMode = selectTimerMode;
 window.selectVoice = selectVoice;

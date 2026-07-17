@@ -4579,6 +4579,15 @@
       <h3 class="font-medium mb-3">📊 数据概览</h3>
       <div id="data-overview" class="space-y-2"></div>
     </div>
+    <div class="glass-card p-5 mt-6">
+      <h3 class="font-medium mb-3">🎧 帮助与支持</h3>
+      <div class="space-y-2">
+        <button type="button" onclick="showFaqModal()" class="btn-soft w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2" aria-label="常见问题">❓ 常见问题</button>
+        <button type="button" onclick="showFeedbackModal()" class="btn-soft w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2" aria-label="意见反馈">💬 意见反馈</button>
+        <button type="button" onclick="showPrivacyModal()" class="btn-soft w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2" aria-label="隐私政策">🔒 隐私政策</button>
+        <button type="button" onclick="showRefundModal()" class="btn-soft w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2" aria-label="退款说明">💰 退款说明</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -6054,6 +6063,90 @@
       </div>
       <button type="button" onclick="closeOnboarding();showPage('test');startTest();" class="btn-primary w-full py-3 rounded-xl font-medium" aria-label="开始测试">开始测试 ✨</button>
       <button type="button" onclick="closeOnboarding()" class="text-xs mt-2" style="color:var(--text-mute);background:transparent;border:none;padding:4px 8px;">稍后再说</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========== FAQ 弹窗 ========== -->
+<div id="faq-modal" role="dialog" aria-modal="true" class="modal-backdrop" onclick="if(event.target===this)document.getElementById('faq-modal').classList.remove('show')">
+  <div role="dialog" aria-modal="true" class="modal-content p-5" style="max-width:360px;max-height:80vh;overflow-y:auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-title text-lg" style="color:var(--theme-text)">❓ 常见问题</h3>
+      <button type="button" onclick="document.getElementById('faq-modal').classList.remove('show')" class="text-xl" style="background:none;border:none;color:var(--text-mute)">✕</button>
+    </div>
+    <div class="space-y-3 text-sm" style="color:var(--text-soft)">
+      <div class="p-3 rounded-xl" style="background:rgba(212,181,199,0.08)">
+        <div class="font-medium mb-1" style="color:var(--theme-text)">会员和免费版有什么区别？</div>
+        <div>免费版每天可使用 1 次塔罗、3 次 AI 对话、1 次 SATS 放松，可阅读 2 本书。会员无限次使用全部功能，解锁 8 本书、疗愈影院、数据导出等。</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:rgba(212,181,199,0.08)">
+        <div class="font-medium mb-1" style="color:var(--theme-text)">星光水晶是什么？</div>
+        <div>星光水晶是许愿岛的虚拟货币，可通过签到、分享、邀请好友获得，也可用于单次解锁付费功能。</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:rgba(212,181,199,0.08)">
+        <div class="font-medium mb-1" style="color:var(--theme-text)">数据会丢失吗？</div>
+        <div>当前所有数据保存在你的设备本地。建议定期使用"导出所有数据"功能备份。云端同步功能即将上线。</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:rgba(212,181,199,0.08)">
+        <div class="font-medium mb-1" style="color:var(--theme-text)">如何取消自动续费？</div>
+        <div>目前为演示模式，无真实自动续费。正式上线后，可在"我的-退款说明"中查看取消方式。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 意见反馈弹窗 ========== -->
+<div id="feedback-modal" role="dialog" aria-modal="true" class="modal-backdrop" onclick="if(event.target===this)document.getElementById('feedback-modal').classList.remove('show')">
+  <div role="dialog" aria-modal="true" class="modal-content p-5" style="max-width:360px">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-title text-lg" style="color:var(--theme-text)">💬 意见反馈</h3>
+      <button type="button" onclick="document.getElementById('feedback-modal').classList.remove('show')" class="text-xl" style="background:none;border:none;color:var(--text-mute)">✕</button>
+    </div>
+    <p class="text-xs mb-3" style="color:var(--text-mute)">你的反馈对我们非常重要，我们会认真阅读每一条</p>
+    <textarea id="feedback-text" class="dream-input w-full p-3 rounded-xl text-sm mb-3" rows="4" placeholder="请描述你遇到的问题或建议..." style="resize:none"></textarea>
+    <div class="flex gap-2 mb-3">
+      <button type="button" onclick="submitFeedback()" class="btn-primary flex-1 py-2.5 rounded-xl text-sm" aria-label="提交反馈">提交反馈</button>
+      <button type="button" onclick="document.getElementById('feedback-modal').classList.remove('show')" class="btn-soft flex-1 py-2.5 rounded-xl text-sm" aria-label="取消">取消</button>
+    </div>
+    <p class="text-xs text-center" style="color:var(--text-mute)">也可发送邮件至：feedback@wishisland.app</p>
+  </div>
+</div>
+
+<!-- ========== 隐私政策弹窗 ========== -->
+<div id="privacy-modal" role="dialog" aria-modal="true" class="modal-backdrop" onclick="if(event.target===this)document.getElementById('privacy-modal').classList.remove('show')">
+  <div role="dialog" aria-modal="true" class="modal-content p-5" style="max-width:360px;max-height:80vh;overflow-y:auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-title text-lg" style="color:var(--theme-text)">🔒 隐私政策</h3>
+      <button type="button" onclick="document.getElementById('privacy-modal').classList.remove('show')" class="text-xl" style="background:none;border:none;color:var(--text-mute)">✕</button>
+    </div>
+    <div class="text-xs space-y-2" style="color:var(--text-soft);line-height:1.6">
+      <p><strong>1. 数据收集</strong><br>许愿岛仅收集你主动输入的数据（如日记、愿望、心情记录），用于提供应用功能。我们不会收集你的设备标识符、位置信息或其他个人隐私数据。</p>
+      <p><strong>2. 数据存储</strong><br>所有数据默认存储在你的设备本地（localStorage）。我们不会将数据上传到服务器，除非你主动使用"导出"功能。</p>
+      <p><strong>3. 数据使用</strong><br>你的日记、愿望等个人数据仅用于应用内展示和统计分析，不会用于任何商业目的，也不会分享给第三方。</p>
+      <p><strong>4. 数据删除</strong><br>你可以随时通过"我的-数据管理-清除所有数据"删除全部本地数据。删除后不可恢复。</p>
+      <p><strong>5. 儿童隐私</strong><br>许愿岛不面向 13 岁以下儿童。如果你未满 13 岁，请勿使用本应用。</p>
+      <p><strong>6. 政策更新</strong><br>我们可能会更新隐私政策。重大变更时，会在应用内公告。</p>
+      <p class="text-center mt-3" style="color:var(--text-mute)">最后更新：2026 年 1 月</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 退款说明弹窗 ========== -->
+<div id="refund-modal" role="dialog" aria-modal="true" class="modal-backdrop" onclick="if(event.target===this)document.getElementById('refund-modal').classList.remove('show')">
+  <div role="dialog" aria-modal="true" class="modal-content p-5" style="max-width:360px;max-height:80vh;overflow-y:auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-title text-lg" style="color:var(--theme-text)">💰 退款说明</h3>
+      <button type="button" onclick="document.getElementById('refund-modal').classList.remove('show')" class="text-xl" style="background:none;border:none;color:var(--text-mute)">✕</button>
+    </div>
+    <div class="text-xs space-y-2" style="color:var(--text-soft);line-height:1.6">
+      <p><strong>1. 退款条件</strong><br>购买会员后 7 天内，如果你未使用任何会员专属功能，可申请全额退款。</p>
+      <p><strong>2. 部分退款</strong><br>已使用会员功能但不超过 3 次，可申请扣除已使用价值后的部分退款。</p>
+      <p><strong>3. 不可退款</strong><br>使用会员功能超过 3 次，或购买超过 7 天，不支持退款。</p>
+      <p><strong>4. 退款方式</strong><br>退款将原路返回至你的支付账户（微信/支付宝），处理时间 3-7 个工作日。</p>
+      <p><strong>5. 取消自动续费</strong><br>目前为演示模式，无自动续费。正式上线后，可在"设置-订阅管理"中取消自动续费。</p>
+      <p><strong>6. 联系客服</strong><br>退款申请请发送邮件至：support@wishisland.app，注明订单号和退款原因。</p>
+      <p class="text-center mt-3 p-2 rounded-xl" style="background:rgba(212,181,199,0.1);color:var(--text-mute)">⚠️ 当前为演示模式，支付非真实扣款</p>
     </div>
   </div>
 </div>
