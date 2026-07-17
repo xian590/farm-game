@@ -68,7 +68,7 @@ const TRANSLATIONS = {
     wish: '许愿', diary: '日记', energy: '能量', level: '等级', badge: '徽章', streak_days: '连续打卡', days: '天',
     count: '数量', refresh_complete: '刷新完成', loading: '加载中', error: '错误', success: '成功', tip: '提示',
     detail: '详情', search: '搜索', add: '添加', edit: '编辑', delete: '删除', share: '分享', download: '下载',
-    upload: '上传', profile: '个人资料', nickname: '昵称', birthday: '生日', zodiac: '星座', manifest_method: '显化方法',
+    upload: '上传', profile: '个人资料', nickname: '昵称', birthday: '生日', zodiac: '星座', manifest_method: '成长方法',
     meditation: '冥想', affirmation: '肯定语', visualization: '视觉化', revision: '修正法', gratitude: '感恩',
     garden: '花园', flower: '花', tool: '工具', library: '图书馆', record: '记录', challenge: '挑战', sleep: '睡眠',
     breathe: '呼吸', timer: '计时器', tarot: '塔罗', emotion: '情绪', habit: '习惯', mood: '心情', stats: '统计',
@@ -1215,7 +1215,7 @@ const EMOTION_GUIDES = {
 };
 const MEDIA = {
   'books-media': [
-    { name: '《感觉就是秘密》', level: '入门', type: '显化经典', desc: '内维尔·戈达德最核心的著作。' },
+    { name: '《感觉就是秘密》', level: '入门', type: '成长经典', desc: '内维尔·戈达德最核心的著作。' },
     { name: '《潜意识的力量》', level: '入门', type: '潜意识', desc: '讲透了潜意识的运作方式。' },
     { name: '《有求必应》', level: '进阶', type: '情绪刻度', desc: '22级情绪刻度，一步步往上走。' },
     { name: '《思考致富》', level: '进阶', type: '财富', desc: '研究500位富豪的致富公式。' },
@@ -1225,10 +1225,10 @@ const MEDIA = {
     { name: '《当下的力量》', level: '专家', type: '灵性', desc: '活在当下的力量。' },
   ],
   movies: [
-    { name: '《秘密》纪录片', level: '入门', type: '显化入门', desc: '最经典的吸引力法则纪录片。' },
+    { name: '《秘密》纪录片', level: '入门', type: '成长入门', desc: '最经典的吸引力法则纪录片。' },
     { name: '《心灵奇旅》', level: '入门', type: '生命意义', desc: '告诉你活在当下的意义。' },
     { name: '《土拨鼠之日》', level: '进阶', type: '改变自己', desc: '当你改变了，你的世界就改变了。' },
-    { name: '《吸引力法则》', level: '入门', type: '爱情显化', desc: '用吸引力法则追到男神的故事。' },
+    { name: '《吸引力法则》', level: '入门', type: '爱情成长', desc: '用吸引力法则追到男神的故事。' },
     { name: '《失控玩家》', level: '进阶', type: '意识觉醒', desc: 'NPC觉醒的故事。' },
     { name: '《黑客帝国》', level: '专家', type: '现实本质', desc: '你看到的世界是真的吗？' },
     { name: '《瞬息全宇宙》', level: '进阶', type: '平行宇宙', desc: '每个选择都在创造一个新的宇宙。' },
@@ -1246,7 +1246,7 @@ const MEDIA = {
 const BADGES = [
   { id: 'first_test', name: '初入仙境', icon: '✨', desc: '完成第一次测试', color: '#E8B5C8' },
   { id: 'first_wish', name: '许愿少女', icon: '🌠', desc: '许下第一个愿望', color: '#C8A5D8' },
-  { id: 'first_manifest', name: '显化新手', icon: '💫', desc: '显化第一个愿望', color: '#B8A9C9' },
+  { id: 'first_manifest', name: '成长新手', icon: '💫', desc: '成长第一个愿望', color: '#B8A9C9' },
   { id: 'flower_10', name: '小花仙', icon: '🌸', desc: '种出10朵花', color: '#F0C8D8' },
   { id: 'flower_50', name: '花仙子', icon: '🌺', desc: '种出50朵花', color: '#E8A8C8' },
   { id: 'flower_100', name: '百花仙子', icon: '🌷', desc: '种出100朵花', color: '#D488B8' },
@@ -1267,8 +1267,8 @@ const BADGES = [
   { id: 'bookworm_50', name: '博学公主', icon: '📖', desc: '阅读50篇文章', color: '#A89888' },
   { id: 'diary_7', name: '日记少女', icon: '📔', desc: '连续写日记7天', color: '#D8C8B8' },
   { id: 'diary_30', name: '日记作家', icon: '✍️', desc: '连续写日记30天', color: '#B8A898' },
-  { id: 'course_complete', name: '显化毕业生', icon: '🎓', desc: '学完显化入门7课', color: '#C8D8E8' },
-  { id: 'course_master', name: '显化教授', icon: '🏆', desc: '学完所有课程', color: '#A8C8D8' },
+  { id: 'course_complete', name: '成长毕业生', icon: '🎓', desc: '学完成长入门7课', color: '#C8D8E8' },
+  { id: 'course_master', name: '成长教授', icon: '🏆', desc: '学完所有课程', color: '#A8C8D8' },
   { id: 'streak_7', name: '坚持者', icon: '🔥', desc: '连续打卡7天', color: '#E8B090' },
   { id: 'streak_30', name: '自律女王', icon: '💪', desc: '连续打卡30天', color: '#C89070' },
   { id: 'mood_30', name: '情绪观察者', icon: '🧘', desc: '记录30天心情', color: '#A8C8B0' },
@@ -1514,14 +1514,14 @@ const TUTORIAL_STEPS = [
   {
     emoji: '🏝️',
     title: '这是你的许愿岛',
-    desc: '岛上的每一座小房子都是一个显化功能哦～点一点星光水晶神殿、云端城堡、花田，试试它们都有什么魔法吧 🌸',
+    desc: '岛上的每一座小房子都是一个成长功能哦～点一点星光水晶神殿、云端城堡、花田，试试它们都有什么魔法吧 🌸',
     target: '#page-island svg',
     position: 'bottom',
   },
   {
     emoji: '🧭',
     title: '底部导航栏',
-    desc: '底部可以切换不同页面：岛屿是主界面、显化是工具合集、书馆有书和电影、记录看你的成长～想去哪里点哪里就好啦 💖',
+    desc: '底部可以切换不同页面：岛屿是主界面、成长是工具合集、书馆有书和电影、记录看你的成长～想去哪里点哪里就好啦 💖',
     target: '.bottom-nav',
     position: 'top',
   },
@@ -1655,7 +1655,7 @@ function checkBadges() {
   };
   addBadge('first_test', '初入仙境', state.testHistory.length > 0);
   addBadge('first_wish', '许愿少女', state.wishes.length > 0);
-  addBadge('first_manifest', '显化新手', state.wishes.filter(w => w.done).length > 0);
+  addBadge('first_manifest', '成长新手', state.wishes.filter(w => w.done).length > 0);
   addBadge('flower_10', '小花仙', state.garden.flowers && state.garden.flowers.filter(f => f.done).length >= 10);
   addBadge('flower_50', '花仙子', state.garden.flowers && state.garden.flowers.filter(f => f.done).length >= 50);
   addBadge('flower_100', '百花仙子', state.garden.flowers && state.garden.flowers.filter(f => f.done).length >= 100);
@@ -1676,8 +1676,8 @@ function checkBadges() {
   addBadge('bookworm_50', '博学公主', state.libReadCount >= 50);
   addBadge('diary_7', '日记少女', state.diaryStreak >= 7);
   addBadge('diary_30', '日记作家', state.diaryStreak >= 30);
-  addBadge('course_complete', '显化毕业生', state.courseProgress.length >= 7);
-  addBadge('course_master', '显化教授', state.courseProgress.length >= 20);
+  addBadge('course_complete', '成长毕业生', state.courseProgress.length >= 7);
+  addBadge('course_master', '成长教授', state.courseProgress.length >= 20);
   addBadge('streak_7', '坚持者', state.checkinStreak >= 7);
   addBadge('streak_30', '自律女王', state.checkinStreak >= 30);
   addBadge('mood_30', '情绪观察者', (state.emotionHistory || []).length >= 30);
@@ -2315,19 +2315,17 @@ function loadDataScript(src, retries = 2) {
 const __chunkCache = {};
 async function loadChunk(name, retries = 2) {
   if (__chunkCache[name]) return __chunkCache[name];
-  try {
-    const mod = await import('./js/chunks/' + name + '.js?v=' + Date.now());
-    __chunkCache[name] = mod;
-    return mod;
-  } catch(e) {
-    if (retries > 0) {
-      await new Promise(r => setTimeout(r, 800));
-      return loadChunk(name, retries - 1);
-    }
-    console.error('Chunk load failed:', name, e);
-    showChunkError(name);
-    throw e;
-  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = './js/chunks/' + name + '.js?v=' + Date.now();
+    script.onload = () => { __chunkCache[name] = true; resolve(true); };
+    script.onerror = () => {
+      if (retries > 0) {
+        setTimeout(() => loadChunk(name, retries - 1).then(resolve).catch(reject), 800);
+      } else { showChunkError(name); reject(new Error('Failed: ' + name)); }
+    };
+    document.head.appendChild(script);
+  });
 }
 function showChunkError(name) {
   const el = document.getElementById('chunk-error-modal');
@@ -2794,7 +2792,7 @@ function scheduleDailyReminders() {
   const morningDelay = morning - now;
   const eveningDelay = evening - now;
   window.__morningTimer = setTimeout(() => {
-    const affirmations = ['今天也是你显化的好日子 ✨', '你值得拥有世间一切美好', '相信自己，你可以创造任何奇迹', '宇宙正在为你安排最美好的事情'];
+    const affirmations = ['今天也是你成长的好日子 ✨', '你值得拥有世间一切美好', '相信自己，你可以创造任何奇迹', '宇宙正在为你安排最美好的事情'];
     const msg = affirmations[Math.floor(Math.random() * affirmations.length)];
     sendNotification('☀️ 早安公主', msg, 'morning');
     scheduleDailyReminders(); // 重新调度下一天
@@ -2921,7 +2919,7 @@ function clearCache() {
 function showAbout() {
   showAlert('🏝️', '关于许愿岛',
     '许愿岛 v2.0\n\n' +
-    '温柔显化陪伴小天地\n\n' +
+    '温柔成长陪伴小天地\n\n' +
     '基于内维尔假设法则、约瑟夫墨菲潜意识理论、\n' +
     '亚伯拉罕情绪刻度、CBT认知行为疗法\n\n' +
     '愿每一位公主都能遇见更闪耀的自己 ✨\n\n' +
@@ -3037,7 +3035,7 @@ function initCharts() {
       data: {
         labels,
         datasets: [{
-          label: '显化进度',
+          label: '成长进度',
           data: progressData,
           borderColor: '#B8A9C9',
           backgroundColor: 'rgba(184, 169, 201, 0.1)',
@@ -3281,8 +3279,8 @@ function checkReminders() {
   if (state.remindCheckin && timeStr === '20:00' && !state.todayDone.challengeReminded) {
     state.todayDone.challengeReminded = true;
     saveState();
-    showAlert('💪', '显化挑战打卡提醒', '今天的21天显化显化挑战还没完成，坚持就是奇迹！');
-    sendNativeNotification('💪 显化挑战打卡', '今天的21天显化显化挑战还没完成，坚持就是奇迹！');
+    showAlert('💪', '成长挑战打卡提醒', '今天的21天成长挑战还没完成，坚持就是奇迹！');
+    sendNativeNotification('💪 成长挑战打卡', '今天的21天成长挑战还没完成，坚持就是奇迹！');
     playSound('chime');
   }
 }
@@ -3342,8 +3340,8 @@ function renderTestQ() {
   const total = testState.questions.length;
   const cur = testState.current + 1;
   const titleMap = {
-    personality: '👑 显化人格测试 · 速测版',
-    personality_deep: '💎 显化人格测试 · 深度版',
+    personality: '👑 成长人格测试 · 速测版',
+    personality_deep: '💎 成长人格测试 · 深度版',
     belief: '🔍 限制性信念探测',
     emotion: '🌈 情绪刻度测试',
   };
@@ -3675,7 +3673,7 @@ function viewPersona(id) {
       </div>
       <div class="space-y-3 max-h-80 overflow-y-auto pr-1">
         <div class="p-3 rounded-xl" style="background:rgba(240,213,224,0.15)">
-          <h4 class="font-title text-sm mb-1" style="color:var(--theme-text)">💖 核心显化优势</h4>
+          <h4 class="font-title text-sm mb-1" style="color:var(--theme-text)">💖 核心成长优势</h4>
           <p class="text-xs" style="color:var(--theme-text); opacity:0.75">${p.advantage}</p>
         </div>
         <div class="p-3 rounded-xl" style="background:rgba(245,230,200,0.3)">
@@ -3683,7 +3681,7 @@ function viewPersona(id) {
           <p class="text-xs" style="color:var(--theme-text); opacity:0.75">${p.topBelief}</p>
         </div>
         <div class="p-3 rounded-xl" style="background:rgba(184,169,201,0.1)">
-          <h4 class="font-title text-sm mb-1" style="color:var(--theme-text)">🎯 专属显化节奏</h4>
+          <h4 class="font-title text-sm mb-1" style="color:var(--theme-text)">🎯 专属成长节奏</h4>
           <p class="text-xs" style="color:var(--theme-text); opacity:0.75">${p.rhythm}</p>
         </div>
         <div class="p-3 rounded-xl" style="background:linear-gradient(135deg, ${p.flowerColor1}40, ${p.flowerColor2}30)">
@@ -4309,7 +4307,7 @@ function renderHabits() {
     list.innerHTML = `<div class="text-center py-8">
       <div class="text-4xl mb-3">🌱</div>
       <p class="text-sm mb-4" style="color:var(--theme-text); opacity:0.6">还没有习惯哦～</p>
-      <p class="text-xs mb-5" style="color:var(--theme-text); opacity:0.4">添加第一个显化小习惯，每天进步一点点 ✨</p>
+      <p class="text-xs mb-5" style="color:var(--theme-text); opacity:0.4">添加第一个成长小习惯，每天进步一点点 ✨</p>
       <button onclick="openHabitModal()" class="soft-btn btn-primary px-6 py-2.5 text-sm font-title">添加第一个习惯 🌸</button>
     </div>`;
     addCls('habit-calendar-section', 'hidden');
@@ -4466,7 +4464,7 @@ const FORTUNE_DATA = {
     '慢慢来，比较快。着急的时候就深呼吸 🌬️',
     '今天发生的每件事，都是最好的安排 🌸',
     '你的每一个念头都在创造你的现实 💫',
-    '好好爱自己，是一切显化的开始 💕',
+    '好好爱自己，是一切成长的开始 💕',
     '保持好心情，好事自然来 🌈',
     '你已经做得很好了，对自己温柔一点 🌷',
   ],
@@ -4496,7 +4494,7 @@ function updateFortuneCard() {
   const summaryEl = document.getElementById('fortune-summary');
   const colorEl = document.getElementById('fortune-color');
   const numberEl = document.getElementById('fortune-number');
-  if (summaryEl) summaryEl.textContent = '今日显化指数：' + starsStr;
+  if (summaryEl) summaryEl.textContent = '今日成长指数：' + starsStr;
   if (colorEl) colorEl.textContent = '幸运色：' + f.color.name;
   if (numberEl) numberEl.textContent = '幸运数字：' + f.number;
 }
@@ -4508,12 +4506,12 @@ function openFortune() {
   contentEl.innerHTML = `
     <div class="text-center mb-4">
       <div class="text-5xl mb-2 animate-breath">🌟</div>
-      <h3 class="font-display text-lg" style="color:var(--theme-text)">今日显化运势</h3>
+      <h3 class="font-display text-lg" style="color:var(--theme-text)">今日成长运势</h3>
       <p class="text-xs mt-1" style="color:var(--theme-text); opacity:0.5">${getTodayStr()}</p>
     </div>
     <div class="space-y-3" style="color:var(--theme-text)">
       <div class="p-3 rounded-xl" style="background:rgba(245,230,200,0.25)">
-        <div class="text-xs font-medium mb-1">✨ 今日显化指数</div>
+        <div class="text-xs font-medium mb-1">✨ 今日成长指数</div>
         <div class="text-2xl">${starsStr}</div>
         <div class="text-[10px] mt-1" style="opacity:0.6">${f.stars} / 5 星</div>
       </div>
@@ -4684,7 +4682,7 @@ function checkBirthday() {
     const titleEl = document.getElementById('birthday-title');
     const msgEl = document.getElementById('birthday-message');
     if (titleEl) titleEl.textContent = age > 0 ? `🎂 ${age} 岁生日快乐！` : '生日快乐！';
-    if (msgEl) msgEl.textContent = '今天是你的生日，宇宙为你准备了特别的祝福～愿你显化的愿望都加速实现！';
+    if (msgEl) msgEl.textContent = '今天是你的生日，宇宙为你准备了特别的祝福～愿你成长的愿望都加速实现！';
     const shownKey = 'birthday_shown_' + todayYear + '_' + todayMonth + '_' + todayDay;
     if (!StorageUtil.get(shownKey, false)) {
       setTimeout(() => {
@@ -4843,7 +4841,7 @@ let timerMode = 'meditation';
 const TIMER_MODES = {
   meditation: { name: '冥想', tip: '闭上眼睛，深呼吸，感受气息的进出。思绪飘走了也没关系，温柔地把注意力带回到呼吸上就好。' },
   study: { name: '学习', tip: '关掉手机通知，专注在当下这一件事上。累了就休息，效率比时长更重要。' },
-  affirm: { name: '肯定语', tip: '在心里默念你最喜欢的肯定语，感受那句话带来的美好感觉。感觉到位了，显化就快了。' },
+  affirm: { name: '肯定语', tip: '在心里默念你最喜欢的肯定语，感受那句话带来的美好感觉。感觉到位了，成长就快了。' },
 };
 function selectTimerMode(mode) {
   timerMode = mode;
@@ -5022,7 +5020,7 @@ function renderProgress() {
   else if (vision < 30) nextStep = '去许愿星台，用BE-DO-HAVE模型写下你的愿望。';
   else if (state_pct < 30) nextStep = '试试云端冥想城堡的SATS和情绪调频，提升你的能量状态。';
   else if (action < 30) nextStep = '去灵感行动花田，跟随你的灵感种一朵花吧。';
-  else nextStep = '你做得太棒了！继续保持，显化就在眼前～ ✨';
+  else nextStep = '你做得太棒了！继续保持，成长就在眼前～ ✨';
   setText('next-step-suggestion', nextStep);
 }
 function renderPalaceFlowerGrid() {
@@ -5344,11 +5342,11 @@ function challengeCheckIn() {
   renderChallenge();
 }
 function resetChallenge() {
-  if(!confirm('确定要重置21天显化挑战吗？所有进度将清空。')) return;
+  if(!confirm('确定要重置21天成长挑战吗？所有进度将清空。')) return;
   challengeState={currentDay:1,completedDays:[],streak:0,lastCheckIn:null};
   saveChallengeState();
   renderChallenge();
-  showToast('显化挑战已重置');
+  showToast('成长挑战已重置');
 }
 let emotionNotes = [];
 function loadEmotionNotes() { try { const s = StorageUtil.get('emotion_notes', null); if (s) emotionNotes = s; } catch(e){} }
@@ -5546,22 +5544,22 @@ function renderWealthSymbols() {
   el.innerHTML = symbols.map(s => `<div class="p-3 rounded-xl text-center" style="background:rgba(255,255,255,0.5)"><div class="text-2xl mb-1">${s.s}</div><div class="text-xs font-medium" style="color:var(--theme-text)">${s.t}</div><div class="text-[10px]" style="color:var(--text-mute)">${s.d}</div></div>`).join('');
 }
 const MOVIE_PRESCRIPTIONS = [
-  {title:"《秘密》The Secret",emoji:"🔮",year:2006,theme:"吸引力法则入门",lesson:"思想创造现实的基础。看完你会明白：你的想法正在塑造你的世界。",scene:"初学者必看",mood:"想要理解显化原理"},
+  {title:"《秘密》The Secret",emoji:"🔮",year:2006,theme:"吸引力法则入门",lesson:"思想创造现实的基础。看完你会明白：你的想法正在塑造你的世界。",scene:"初学者必看",mood:"想要理解成长原理"},
   {title:"《土拨鼠之日》Groundhog Day",emoji:"🔄",year:1993,theme:"重复直到改变",lesson:"直到你学会功课，同样的情境会不断重复。改变内心，才能打破循环。",scene:"陷入循环时",mood:"觉得生活总在重复"},
-  {title:"《心灵奇旅》Soul",emoji:"🎹",year:2020,theme:"活在当下的意义",lesson:"火花不是目标，而是对生活的热情。显化不是抓取未来，而是享受当下。",scene:"焦虑未来时",mood:"迷失人生方向"},
+  {title:"《心灵奇旅》Soul",emoji:"🎹",year:2020,theme:"活在当下的意义",lesson:"火花不是目标，而是对生活的热情。成长不是抓取未来，而是享受当下。",scene:"焦虑未来时",mood:"迷失人生方向"},
   {title:"《盗梦空间》Inception",emoji:"🌀",year:2010,theme:"植入信念",lesson:"潜意识接受真实的能力。一个想法可以像病毒一样生长，直到改变整个世界。",scene:"学习肯定语时",mood:"想理解潜意识如何工作"},
   {title:"《彗星来的那一夜》Coherence",emoji:"🌌",year:2013,theme:"平行现实",lesson:"每个选择都创造一个新的现实分支。你不需要后悔，因为每个版本的你都在体验。",scene:"后悔过去时",mood:"纠结于选择"},
-  {title:"《她》Her",emoji:"💌",year:2013,theme:"意识与爱的本质",lesson:"爱是一种意识状态，不依赖于外在形式。显化SP不是操控，而是成为爱本身。",scene:"情感受伤时",mood:"对爱情失望"},
+  {title:"《她》Her",emoji:"💌",year:2013,theme:"意识与爱的本质",lesson:"爱是一种意识状态，不依赖于外在形式。成长SP不是操控，而是成为爱本身。",scene:"情感受伤时",mood:"对爱情失望"},
   {title:"《奇异博士》Dr. Strange",emoji:"🧿",year:2016,theme:"多维现实",lesson:"现实只是你感知到的那一层。改变视角，就改变现实。",scene:"扩展认知时",mood:"想要突破限制"},
-  {title:"《降临》Arrival",emoji:"🛸",year:2016,theme:"时间与自由意志",lesson:"时间是非线性的，未来影响现在。你的终点状态正在召唤你向它移动。",scene:"理解显化时间线",mood:"急着想要结果"},
+  {title:"《降临》Arrival",emoji:"🛸",year:2016,theme:"时间与自由意志",lesson:"时间是非线性的，未来影响现在。你的终点状态正在召唤你向它移动。",scene:"理解成长时间线",mood:"急着想要结果"},
   {title:"《楚门的世界》The Truman Show",emoji:"🎥",year:1998,theme:"觉醒",lesson:"你的世界是一个为你设计的体验。当你觉醒，整个舞台都会为你改变。",scene:"怀疑现实时",mood:"觉得被困住"},
-  {title:"《Eat Pray Love》",emoji:"🍝",year:2010,theme:"自我发现之旅",lesson:"通过外在旅行完成内在探索。显化不是改变地点，而是改变你携带的能量。",scene:"人生转折点",mood:"渴望改变"}
+  {title:"《Eat Pray Love》",emoji:"🍝",year:2010,theme:"自我发现之旅",lesson:"通过外在旅行完成内在探索。成长不是改变地点，而是改变你携带的能量。",scene:"人生转折点",mood:"渴望改变"}
 ];
 function initMovies() { renderMovies(); }
 function renderMovies() {
   const el = document.getElementById('movie-list');
   if(!el) return;
-  el.innerHTML = MOVIE_PRESCRIPTIONS.map((m,i) => `<div class="glass-card p-5 card-hover movie-card-item" data-idx="${i}"><div class="flex items-start gap-4"><div class="text-3xl flex-shrink-0">${m.emoji}</div><div class="flex-1"><div class="flex items-center gap-2 mb-1"><h3 class="font-medium" style="color:var(--theme-text)">${m.title}</h3><span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(212,181,199,0.2);color:var(--text-soft)">${m.year}</span></div><div class="text-xs mb-2" style="color:var(--text-mute)">🎬 ${m.theme} · 适合：${m.scene}</div><div class="text-sm p-3 rounded-xl" style="background:rgba(255,255,255,0.5);color:var(--text-soft)"><span class="font-medium" style="color:var(--theme-text)">显化 lesson：</span>${m.lesson}</div></div></div></div>`).join('');
+  el.innerHTML = MOVIE_PRESCRIPTIONS.map((m,i) => `<div class="glass-card p-5 card-hover movie-card-item" data-idx="${i}"><div class="flex items-start gap-4"><div class="text-3xl flex-shrink-0">${m.emoji}</div><div class="flex-1"><div class="flex items-center gap-2 mb-1"><h3 class="font-medium" style="color:var(--theme-text)">${m.title}</h3><span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(212,181,199,0.2);color:var(--text-soft)">${m.year}</span></div><div class="text-xs mb-2" style="color:var(--text-mute)">🎬 ${m.theme} · 适合：${m.scene}</div><div class="text-sm p-3 rounded-xl" style="background:rgba(255,255,255,0.5);color:var(--text-soft)"><span class="font-medium" style="color:var(--theme-text)">成长 lesson：</span>${m.lesson}</div></div></div></div>`).join('');
   el.querySelectorAll('.movie-card-item').forEach(item => {
     item.addEventListener('click', function() {
       const m = MOVIE_PRESCRIPTIONS[parseInt(this.dataset.idx)];
@@ -5572,10 +5570,10 @@ function renderMovies() {
 const AI_RESPONSES = {
   "今天情绪很低落": ["抱抱你 🤗 情绪低落的时候，最重要的是不要评判自己。允许自己此刻就是这种感觉。试试深呼吸5次，然后对自己说：'我允许自己感受这一切，但我知道这不是我的终点。' 你想试试看吗？💕","亲爱的，低落的时候就像阴天，太阳并没有消失，只是暂时被云遮住了。☁️→☀️ 你现在在22级情绪刻度的哪一级呢？我们可以从那里慢慢往上走。"],
   "SP不理我怎么办": ["这是3D在试图动摇你，但记住：3D只是旧意识的投影，不是真相！🚫 当SP '不理你' 的时候，其实是在给你空间去安住在你 '已经被爱' 的状态里。不要检查3D，回到你的肯定语。'TA正在想念我，准备联系我。' 重复21次，然后去睡觉。💤💕","🛡️ 启动忽略3D模式！SP 不理你 = 你正在 rearranging 这段关系。把 'TA不理我' 改成 'TA正在处理自己的情绪，准备以更成熟的方式回来'。修正法，现在就用！"],
-  "我想显化财富": ["太棒了！💰 财富显化第一步：检查你的信念。你觉得 '赚钱很难' 吗？或者 '有钱人不快乐'？如果勾选了，这些就是你要清理的障碍。然后签发一张魔法支票，填写你渴望的金额，感受已经拥有的喜悦！","你是丰盛的磁铁！现在闭上眼睛，想象你的银行账户里有一笔让你惊喜的数字。感受那种安全感、自由感和感恩。让这种感觉充满你... 这就是显化财富的秘密频率。✨"],
-  "给我一句今天的肯定语": ["✨ '我是宇宙最爱的孩子，今天发生的一切都是为了我的最高利益。' ✨ 重复21次，带着感觉说！","🌟 '我已经拥有了我想要的一切，此刻只是享受它显化的过程。' 🌟 这句适合在焦虑的时候用。","💕 '我和SP的关系充满了爱、尊重和幸福。' 💕 如果今天想显化爱情，用这句。","💰 '我是金钱的磁铁，钱从各种意想不到的渠道流向我。' 💰 这是今天的财富肯定语。"],
+  "我想成长财富": ["太棒了！💰 财富成长第一步：检查你的信念。你觉得 '赚钱很难' 吗？或者 '有钱人不快乐'？如果勾选了，这些就是你要清理的障碍。然后签发一张魔法支票，填写你渴望的金额，感受已经拥有的喜悦！","你是丰盛的磁铁！现在闭上眼睛，想象你的银行账户里有一笔让你惊喜的数字。感受那种安全感、自由感和感恩。让这种感觉充满你... 这就是成长财富的秘密频率。✨"],
+  "给我一句今天的肯定语": ["✨ '我是宇宙最爱的孩子，今天发生的一切都是为了我的最高利益。' ✨ 重复21次，带着感觉说！","🌟 '我已经拥有了我想要的一切，此刻只是享受它成长的过程。' 🌟 这句适合在焦虑的时候用。","💕 '我和SP的关系充满了爱、尊重和幸福。' 💕 如果今天想成长爱情，用这句。","💰 '我是金钱的磁铁，钱从各种意想不到的渠道流向我。' 💰 这是今天的财富肯定语。"],
   "我最近总是焦虑": ["焦虑是因为你在用想象力创造你不想要的东西。😰 每一次焦虑，你都在给那个'坏结果'浇水。试试这个：每次焦虑时，立刻做一个 '修正' —— 想象同一个场景以完美的结局展开。坚持3天，你会发现焦虑自然减少了。🌿","焦虑是情绪刻度的第7级。不需要跳到喜悦，只需要升到 '希望' 就够了。🌱 试试写下：'我允许自己焦虑，但我也相信一切都会好起来。' 然后去做一件让身体动起来的小事，比如整理房间或洗个热水澡。"],
-  default: ["我在听呢～💕 你可以多告诉我一些细节，或者试试我们的情绪导航器、21天显化挑战，这些都是为你准备的工具。","嗯嗯，我理解你的感受。显化有时候像是种花，你看不到根在生长，但它在。🌱 保持你的肯定语，不要检查3D，相信过程。","这是个很好的觉察！✨ 记录在你的星辰日记里吧，过一段时间回头看，你会发现自己走了多远。","宇宙永远站在你这边。🌙 你所渴望的，也正在渴望你。保持你的频率，不要放弃。"]
+  default: ["我在听呢～💕 你可以多告诉我一些细节，或者试试我们的情绪导航器、21天成长挑战，这些都是为你准备的工具。","嗯嗯，我理解你的感受。成长有时候像是种花，你看不到根在生长，但它在。🌱 保持你的肯定语，不要检查3D，相信过程。","这是个很好的觉察！✨ 记录在你的星辰日记里吧，过一段时间回头看，你会发现自己走了多远。","宇宙永远站在你这边。🌙 你所渴望的，也正在渴望你。保持你的频率，不要放弃。"]
 };
 let aiChatHistory = [];
 function loadAiHistory() { try { const s = StorageUtil.get('ai_chat_history', []); if (s) aiChatHistory = s; } catch(e){} }
@@ -5612,7 +5610,7 @@ function sendAiPrompt(text) {
 }
 function generateAiReply(text) {
   for(const key in AI_RESPONSES) { if(key === 'default') continue; if(text.includes(key) || key.includes(text.substring(0,6))) { const r = AI_RESPONSES[key]; return r[Math.floor(Math.random()*r.length)]; } }
-  if(text.includes('财富') || text.includes('钱') || text.includes('穷')) { const r = AI_RESPONSES['我想显化财富']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('财富') || text.includes('钱') || text.includes('穷')) { const r = AI_RESPONSES['我想成长财富']; return r[Math.floor(Math.random()*r.length)]; }
   if(text.includes('SP') || text.includes('他') || text.includes('她') || text.includes('复合') || text.includes('分手')) { const r = AI_RESPONSES['SP不理我怎么办']; return r[Math.floor(Math.random()*r.length)]; }
   if(text.includes('低落') || text.includes('难过') || text.includes('伤心') || text.includes('哭')) { const r = AI_RESPONSES['今天情绪很低落']; return r[Math.floor(Math.random()*r.length)]; }
   if(text.includes('焦虑') || text.includes('紧张') || text.includes('不安')) { const r = AI_RESPONSES['我最近总是焦虑']; return r[Math.floor(Math.random()*r.length)]; }
@@ -5621,7 +5619,7 @@ function generateAiReply(text) {
 }
 let currentShareText = '';
 function openShareCard(text) {
-  currentShareText = text || getDailyAffirmation() || '我正在显化我想要的一切 ✨';
+  currentShareText = text || getDailyAffirmation() || '我正在成长我想要的一切 ✨';
   const modal = document.getElementById('share-card-modal');
   const contentEl = document.getElementById('share-card-content');
   const dateEl = document.getElementById('share-card-date');
@@ -5633,7 +5631,7 @@ function closeShareCard() { const modal = document.getElementById('share-card-mo
 function getDailyAffirmation() { const all = [...(typeof WEALTH_AFFIRMATIONS !== 'undefined' ? WEALTH_AFFIRMATIONS : []), ...(typeof SP_AFFIRMATIONS !== 'undefined' ? (SP_AFFIRMATIONS.all || []) : [])]; if(all.length) return all[Math.floor(Math.random()*all.length)]; return null; }
 function downloadShareCard() { showToast('💡 提示：请截图保存这张卡片！'); const card = document.getElementById('share-card-preview'); if(card) { card.style.transform = 'scale(1.02)'; setTimeout(() => card.style.transform = 'scale(1)', 300); } }
 function copyShareText() {
-  const text = `✨ 许愿岛 · 星辰日记\n\n📅 ${new Date().toLocaleDateString('zh-CN')}\n\n${currentShareText}\n\n🏝️ 下载许愿岛，一起显化梦想！`;
+  const text = `✨ 许愿岛 · 星辰日记\n\n📅 ${new Date().toLocaleDateString('zh-CN')}\n\n${currentShareText}\n\n🏝️ 下载许愿岛，一起成长梦想！`;
   if(navigator.clipboard) { navigator.clipboard.writeText(text).then(() => showToast('分享文案已复制 ✨')).catch(err => console.warn('剪贴板复制失败:', err)); }
   else showToast(text.substring(0, 60) + '...');
 }
@@ -5698,10 +5696,10 @@ function renderDreamHistory() {
   el.innerHTML = dreamRecords.slice(0,10).map(d => `<div class="p-3 rounded-xl text-sm" style="background:rgba(255,255,255,0.5)"><div class="flex items-center justify-between mb-1"><span class="font-medium" style="color:var(--theme-text)">${escapeHtml(d.date)}</span><span class="text-xs" style="color:var(--text-mute)">${d.mood ? escapeHtml(d.mood) : ''} ${d.lucid ? (d.lucid==='是' ? '✨' : '') : ''}</span></div><p style="color:var(--text-soft)">${escapeHtml(d.content).substring(0,100)}${d.content.length>100?'...':''}</p></div>`).join('');
 }
 const DEFAULT_STORIES = [
-  {title:"3天显化SP复合",category:"SP复合",content:"我和SP分手2个月，每天坚持SATS和肯定语。第3天早上醒来看到TA的消息，TA说昨晚梦到我，想见我。现在我们比以前更好了！💕",date:"2025-06-15",likes:128},
+  {title:"3天成长SP复合",category:"SP复合",content:"我和SP分手2个月，每天坚持SATS和肯定语。第3天早上醒来看到TA的消息，TA说昨晚梦到我，想见我。现在我们比以前更好了！💕",date:"2025-06-15",likes:128},
   {title:"从负债到月入5万",category:"财富",content:"曾经负债累累，觉得自己不配有钱。每天做魔法支票和丰盛肯定语，2个月后意外接到一个大项目，月入5万。最重要的是心态变了！💰",date:"2025-05-20",likes:256},
   {title:"找到理想工作",category:"工作",content:"失业3个月，焦虑到失眠。开始使用情绪导航器，每天升一级情绪。面试前一天做了SATS，想象自己收到offer的样子。第二天真的收到了！🎉",date:"2025-06-01",likes:89},
-  {title:"治愈了10年的焦虑",category:"自我成长",content:"以前每天焦虑到崩溃，吃药也没用。21天显化挑战第一周做完，发现自己能平静了。第三周结束时，焦虑消失了。这不仅是显化，是重生。🌱",date:"2025-04-10",likes:312},
+  {title:"治愈了10年的焦虑",category:"自我成长",content:"以前每天焦虑到崩溃，吃药也没用。21天成长挑战第一周做完，发现自己能平静了。第三周结束时，焦虑消失了。这不仅是成长，是重生。🌱",date:"2025-04-10",likes:312},
   {title:"身体奇迹般康复",category:"健康",content:"医生说需要手术，但我选择用修正法改写诊断结果。每天视觉化自己健康的身体，3个月后复查，医生惊讶地说'不需要手术了'。🏥",date:"2025-03-22",likes:178}
 ];
 let userStories = [];
@@ -5956,7 +5954,7 @@ function initVip() {
   const upBtn = document.getElementById('vip-upgrade-btn');
   const reBtn = document.getElementById('vip-renew-btn');
   if(nameEl) { nameEl.textContent = config.name; nameEl.style.color = config.color; }
-  if(descEl) descEl.textContent = tier === 'free' ? '升级会员，解锁全部显化工具' : `有效期至 ${vipState.expiry ? new Date(vipState.expiry).toLocaleDateString('zh-CN') : '永久'}`;
+  if(descEl) descEl.textContent = tier === 'free' ? '升级会员，解锁全部成长工具' : `有效期至 ${vipState.expiry ? new Date(vipState.expiry).toLocaleDateString('zh-CN') : '永久'}`;
   if(crystalEl) crystalEl.textContent = crystalState.crystals;
   if(upBtn) upBtn.style.display = tier === 'free' ? 'block' : 'none';
   if(reBtn) reBtn.style.display = tier !== 'free' ? 'block' : 'none';
@@ -6143,11 +6141,11 @@ window.renderLibrary = function() {
   });
 };
 const originalExportAllData = window.exportAllData || function(){};
-window.exportAllData = function() { if(isFeatureLocked('export')) { showLockModal('数据导出', '导出数据是会员专属功能。升级会员即可备份所有显化记录。'); return; } originalExportAllData(); };
+window.exportAllData = function() { if(isFeatureLocked('export')) { showLockModal('数据导出', '导出数据是会员专属功能。升级会员即可备份所有成长记录。'); return; } originalExportAllData(); };
 const originalInitMovies = window.initMovies || function(){};
-window.initMovies = function() { if(isFeatureLocked('movies')) { showLockModal('疗愈影院', '疗愈影院是会员专属功能。升级会员解锁10部显化疗愈影院。'); return; } originalInitMovies(); };
+window.initMovies = function() { if(isFeatureLocked('movies')) { showLockModal('疗愈影院', '疗愈影院是会员专属功能。升级会员解锁10部成长疗愈影院。'); return; } originalInitMovies(); };
 const originalInitSp = window.initSp || function(){};
-window.initSp = function() { if(isFeatureLocked('spFull')) { showLockModal('SP显化专区', 'SP完整专区是会员专属功能。免费版可浏览基础肯定语。'); /* Still show but limited */ originalInitSp(); return; } originalInitSp(); };
+window.initSp = function() { if(isFeatureLocked('spFull')) { showLockModal('SP成长专区', 'SP完整专区是会员专属功能。免费版可浏览基础肯定语。'); /* Still show but limited */ originalInitSp(); return; } originalInitSp(); };
 const originalInitGrowth = window.renderGrowth || function(){};
 window.renderGrowth = function() { if(isFeatureLocked('advancedCharts')) { showLockModal('高级图表', '情绪趋势分析是会员专属功能。'); return; } originalInitGrowth(); };
 const originalOpenBookDetail = window.openBookDetail || function(){};
@@ -6187,7 +6185,7 @@ function addVipToMePage() {
   const vipCard = document.createElement('div');
   vipCard.className = 'glass-card p-4 mb-4 cursor-pointer card-hover';
   vipCard.setAttribute('onclick', "showPage('vip');initVip()");
-  vipCard.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">👑</div><div class="flex-1"><div class="font-medium text-sm" style="color:var(--theme-text)">会员中心</div><div class="text-xs" style="color:var(--text-mute)">升级解锁全部显化工具</div></div><div class="text-lg opacity-40">→</div></div>`;
+  vipCard.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">👑</div><div class="flex-1"><div class="font-medium text-sm" style="color:var(--theme-text)">会员中心</div><div class="text-xs" style="color:var(--text-mute)">升级解锁全部成长工具</div></div><div class="text-lg opacity-40">→</div></div>`;
   if (firstCard.parentNode === mePage) {
     mePage.insertBefore(vipCard, firstCard);
   } else if (mePage.firstElementChild) {
@@ -6231,7 +6229,7 @@ function renderAudioScenes() {
 function startAudioScene(idx) {
   if(audioGuideInterval) { clearInterval(audioGuideInterval); audioGuideInterval = null; }
   const scenes = [
-    {title:"肯定语循环",duration:1800,affirmations:["我值得一切美好","我正在显化我想要的一切","我是宇宙最爱的孩子"]},
+    {title:"肯定语循环",duration:1800,affirmations:["我值得一切美好","我正在成长我想要的一切","我是宇宙最爱的孩子"]},
     {title:"SATS 语音引导",duration:900,guide:["请找到一个舒适的位置，轻轻闭上眼睛","感受你的呼吸，每一次呼气都在释放紧张","想象你的愿望已经实现，你就在那个场景里","感受这种已经拥有的喜悦，让它充满全身","保持这种感觉，直到你自然入睡"]},
     {title:"财富丰盛冥想",duration:600,affirmations:["我是金钱的磁铁","钱从各种渠道流向我","我值得拥有丰盛"]},
     {title:"爱情修复冥想",duration:900,affirmations:["TA深深地爱着我","我们的关系充满了爱和和谐","TA正在想念我"]},
@@ -6351,13 +6349,13 @@ function pauseAudio() {
   }
 }
 const BOOTCAMP_DATA = {
-  name: '7天显化速训营',
+  name: '7天成长速训营',
   days: [
-    {title:'Day 1 · 设定意图',lesson:'显化的第一步是清晰知道你真正想要什么。写下你最渴望实现的愿望，用现在时态描述。',tasks:['写下1个核心愿望','制作简易梦想画册','设定3句核心肯定语']},
-    {title:'Day 2 · 情绪校准',lesson:'情绪是显化的指南针。使用情绪导航器，了解你当前的位置，然后选择升阶练习。',tasks:['使用情绪导航器记录','完成一次升阶练习','睡前SATS 10分钟']},
+    {title:'Day 1 · 设定意图',lesson:'成长的第一步是清晰知道你真正想要什么。写下你最渴望实现的愿望，用现在时态描述。',tasks:['写下1个核心愿望','制作简易梦想画册','设定3句核心肯定语']},
+    {title:'Day 2 · 情绪校准',lesson:'情绪是成长的指南针。使用情绪导航器，了解你当前的位置，然后选择升阶练习。',tasks:['使用情绪导航器记录','完成一次升阶练习','睡前SATS 10分钟']},
     {title:'Day 3 · 肯定语植入',lesson:'肯定语是潜意识的种子。今天开始循环朗读你的肯定语，配合音频引导。',tasks:['完成肯定语音频30分钟','记录身体感受','分享一句肯定语到星辰社区']},
-    {title:'Day 4 · 修正法',lesson:'遇到不开心的事？立刻用修正法改写结局。这是显化大师的必备技能。',tasks:['修正一件今天的小事','记录修正后的感受','做一次星辰塔罗抽牌']},
-    {title:'Day 5 · 丰盛体验',lesson:'显化丰盛的最好方式是先体验丰盛。今天做一件让你感到富足的事。',tasks:['签发一张魔法支票','完成财富信念测试','记录一笔进账']},
+    {title:'Day 4 · 修正法',lesson:'遇到不开心的事？立刻用修正法改写结局。这是成长大师的必备技能。',tasks:['修正一件今天的小事','记录修正后的感受','做一次星辰塔罗抽牌']},
+    {title:'Day 5 · 丰盛体验',lesson:'成长丰盛的最好方式是先体验丰盛。今天做一件让你感到富足的事。',tasks:['签发一张魔法支票','完成财富信念测试','记录一笔进账']},
     {title:'Day 6 · SP 专场',lesson:'如果你正在绽放SP，今天是专属练习日。忽略3D，活在终点状态。',tasks:['开启忽略3D模式','完成SP肯定语音频','写下SP复合后的场景']},
     {title:'Day 7 · 庆祝与释放',lesson:'你已经完成了7天训练！今天庆祝你的新身份，然后完全释放对结果的执着。',tasks:['完成全部打卡','写一篇星辰日记','在星辰社区分享你的体验']}
   ]
@@ -6414,7 +6412,7 @@ function renderMonthlyReport() {
     <div class="grid grid-cols-2 gap-3 mb-4">
       <div class="glass-card p-3 text-center"><div class="text-xl font-bold" style="color:var(--theme-text)">${emotions.length}</div><div class="text-xs" style="color:var(--text-mute)">情绪花园</div></div>
       <div class="glass-card p-3 text-center"><div class="text-xl font-bold" style="color:var(--theme-text)">${checkins}天</div><div class="text-xs" style="color:var(--text-mute)">连续签到</div></div>
-      <div class="glass-card p-3 text-center"><div class="text-xl font-bold" style="color:var(--theme-text)">${challenges}</div><div class="text-xs" style="color:var(--text-mute)">显化挑战完成</div></div>
+      <div class="glass-card p-3 text-center"><div class="text-xl font-bold" style="color:var(--theme-text)">${challenges}</div><div class="text-xs" style="color:var(--text-mute)">成长挑战完成</div></div>
       <div class="glass-card p-3 text-center"><div class="text-xl font-bold" style="color:var(--theme-text)">${aiCount}</div><div class="text-xs" style="color:var(--text-mute)">AI对话</div></div>
     </div>
     <div class="glass-card p-4 mb-3">
@@ -6996,14 +6994,14 @@ function getSmartRecommendations() {
   } else if (hour >= 14 && hour < 17) {
     recs.push({ type: 'breathe', title: '午后呼吸', desc: '3分钟呼吸，重新聚焦能量', action: () => { showPage('breathe'); initBreathe(); }, icon: '🌬️' });
   } else if (hour >= 20 && hour < 23) {
-    recs.push({ type: 'sleep', title: '睡前显化', desc: '在潜意识最开放的时刻显化', action: () => { showPage('sleep'); }, icon: '🌙' });
+    recs.push({ type: 'sleep', title: '睡前成长', desc: '在潜意识最开放的时刻成长', action: () => { showPage('sleep'); }, icon: '🌙' });
   }
   if (mood <= 6) {
     recs.push({ type: 'emotion', title: '情绪疗愈', desc: '你最近情绪有些低落，来释放一下吧', action: () => { showPage('emotion'); initEmotion(); }, icon: '💗' });
     recs.push({ type: 'movie', title: '疗愈影院', desc: '一部电影，一份温柔的疗愈', action: () => { showPage('movies'); initMovies(); }, icon: '🎬' });
   } else if (mood >= 14) {
-    recs.push({ type: 'challenge', title: '21天显化挑战', desc: '情绪很好，适合开启新显化挑战！', action: () => { showPage('challenge'); initChallenge(); }, icon: '💪' });
-    recs.push({ type: 'sats', title: 'SATS 冥想', desc: '趁着高能量状态，做一场显化冥想', action: () => { showPage('sats'); initSats(); }, icon: '🧘' });
+    recs.push({ type: 'challenge', title: '21天成长挑战', desc: '情绪很好，适合开启新成长挑战！', action: () => { showPage('challenge'); initChallenge(); }, icon: '💪' });
+    recs.push({ type: 'sats', title: 'SATS 冥想', desc: '趁着高能量状态，做一场成长冥想', action: () => { showPage('sats'); initSats(); }, icon: '🧘' });
   }
   const breatheRecs = StorageUtil.get('breathe_records', {});
   const breatheCount = Object.values(breatheRecs).reduce((a,b)=>a+b,0);
@@ -7531,7 +7529,7 @@ function exportSelectedData() {
 const SATS_STEPS = [
   { title: '1. 放松身体', emoji: '🫁', desc: '从头顶到脚底，逐一放松每一块肌肉。深呼吸三次，让身体沉入床中。', tip: '吸气 4秒 → 屏息 4秒 → 呼气 6秒' },
   { title: '2. 想象场景', emoji: '🎬', desc: '不是"看"画面，而是"进入"画面，成为其中的人。想象你正在体验愿望实现的场景。', tip: '用第一人称视角，像看电影主角一样' },
-  { title: '3. 感受情绪', emoji: '💖', desc: '最关键：让"已经拥有"的感觉充满全身。感受那种喜悦、满足、感恩。', tip: '情绪越强烈，显化越快' },
+  { title: '3. 感受情绪', emoji: '💖', desc: '最关键：让"已经拥有"的感觉充满全身。感受那种喜悦、满足、感恩。', tip: '情绪越强烈，成长越快' },
   { title: '4. 循环重复', emoji: '🔁', desc: '同一个场景在脑中反复播放，像循环播放一首最爱的歌。直到自然入睡。', tip: '不要改变场景，重复同一版本' },
   { title: '5. 信任过程', emoji: '✨', desc: '不需要知道"怎么做"，只需要知道"已经成"。放下控制，让宇宙接手。', tip: '带着这份感觉入睡，醒来时已在新现实' },
 ];
@@ -7582,7 +7580,7 @@ function initExportOptions() {
     { key: 'voice_recordings', label: '语音录音', emoji: '🎙️' },
     { key: 'vision_board_cards', label: '梦想画册', emoji: '🖼️' },
     { key: 'activity_log', label: '活动日志', emoji: '📊' },
-    { key: 'challenge_state', label: '显化挑战进度', emoji: '💪' },
+    { key: 'challenge_state', label: '成长挑战进度', emoji: '💪' },
     { key: 'crystalState', label: '星光水晶货币', emoji: '💎' },
     { key: 'feedback_history', label: '反馈历史', emoji: '💌' },
   ];
@@ -7618,14 +7616,14 @@ function initAbout() {
         <div class="flex justify-between"><span>v2.0</span><span>花园、星愿、日记</span></div>
         <div class="flex justify-between"><span>v3.0</span><span>智慧花园、星辰塔罗、星辰社区</span></div>
         <div class="flex justify-between"><span>v3.5</span><span>音频冥想引导系统</span></div>
-        <div class="flex justify-between"><span>v4.0</span><span>21天显化蜕变</span></div>
-        <div class="flex justify-between"><span>v5.0</span><span>PWA、显化教练系统、星光会员</span></div>
+        <div class="flex justify-between"><span>v4.0</span><span>21天成长蜕变</span></div>
+        <div class="flex justify-between"><span>v5.0</span><span>PWA、成长教练系统、星光会员</span></div>
         <div class="flex justify-between"><span>v5.1</span><span>呼吸法、语音祈愿、睡眠</span></div>
         <div class="flex justify-between"><span>v5.2</span><span>情绪图表、习惯日历</span></div>
         <div class="flex justify-between"><span>v5.3</span><span>页面转场、3D彩蛋、二维码同步</span></div>
         <div class="flex justify-between"><span>v5.4</span><span>星光徽章系统</span></div>
-        <div class="flex justify-between"><span>v5.5</span><span>能量体检完善、显化旅程、能量清理</span></div>
-        <div class="flex justify-between"><span>v6.0</span><span>369显化法、55x5显化法、宇宙回音簿、Focus Wheel</span></div>
+        <div class="flex justify-between"><span>v5.5</span><span>能量体检完善、成长旅程、能量清理</span></div>
+        <div class="flex justify-between"><span>v6.0</span><span>369成长法、55x5成长法、宇宙回音簿、Focus Wheel</span></div>
         <div class="flex justify-between"><span>v6.1</span><span>一分钟魔法、宇宙钱包、心情罗盘、枕边蜜语</span></div>
         <div class="flex justify-between"><span class="font-medium" style="color:var(--theme-text)">v6.2</span><span class="font-medium" style="color:var(--theme-text)">放手仪式、旧故事翻篇、心愿宝盒、感恩风暴</span></div>
       </div>
@@ -7741,7 +7739,7 @@ function initStats() {
   el.innerHTML = `
     <div class="glass-card p-5 mb-4 text-center">
       <div class="text-4xl mb-3">📊</div>
-      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">显化旅程</h2>
+      <h2 class="text-xl font-medium mb-1" style="font-family:'ZCOOL XiaoWei',sans-serif">成长旅程</h2>
       <p class="text-sm" style="color:var(--text-soft)">了解你的星愿练习轨迹</p>
     </div>
     <div class="glass-card p-5 mb-4">
@@ -7978,12 +7976,12 @@ function getEmoSuggestions(level) {
   if (level <= 3) {
     return [
       { title: '🛏️ 枕边蜜语', desc: '写下你的愿望放在枕下，让潜意识在睡眠中工作', action: "showPage('pillow');initPillow()" },
-      { title: '💤 睡眠故事', desc: '听一段引导睡眠的显化故事，放松身心', action: "showPage('sleep');initSleep()" },
+      { title: '💤 睡眠故事', desc: '听一段引导睡眠的成长故事，放松身心', action: "showPage('sleep');initSleep()" },
       { title: '🌬️ 静心呼吸', desc: '4-7-8呼吸法，快速平复情绪', action: "showPage('breathe');initBreathe()" }
     ];
   } else if (level <= 6) {
     return [
-      { title: '📝 五五五显化咒', desc: '5天集中书写，重建信念', action: "showPage('55x5');init55x5()" },
+      { title: '📝 五五五成长咒', desc: '5天集中书写，重建信念', action: "showPage('55x5');init55x5()" },
       { title: '🔮 修正法', desc: '在想象中修正一段不愉快的经历', action: "openModule('tower')" },
       { title: '✨ 三六九书写咒', desc: '温和而持续的肯定语练习', action: "showPage('369');init369()" }
     ];
@@ -8026,7 +8024,7 @@ function renderPillow() {
     <div class="glass-card p-6 text-center mb-4">
       <div class="text-5xl mb-4">🛏️</div>
       <h2 class="font-display text-lg mb-2" style="color:var(--theme-text)">枕边蜜语</h2>
-      <p class="text-sm mb-5" style="color:var(--theme-text); opacity:0.6">写下你的愿望或肯定语，放在枕头下入睡。让潜意识在睡眠中吸收这个意图，是最古老的显化方法之一。</p>
+      <p class="text-sm mb-5" style="color:var(--theme-text); opacity:0.6">写下你的愿望或肯定语，放在枕头下入睡。让潜意识在睡眠中吸收这个意图，是最古老的成长方法之一。</p>
       ${doneToday ? `
         <div class="p-4 rounded-xl mb-4" style="background:rgba(212,181,199,0.15)">
           <div class="text-sm mb-2" style="color:var(--theme-text)">今晚已放置</div>
@@ -8418,8 +8416,8 @@ function renderTreasureBox() {
   container.innerHTML = `
     <div class="glass-card p-6 text-center mb-4">
       <div class="text-5xl mb-4">🧚</div>
-      <h2 class="font-display text-lg mb-2" style="color:var(--theme-text)">显化百宝箱</h2>
-      <p class="text-sm mb-4" style="color:var(--theme-text); opacity:0.6">40+ 星愿方法，像选仙女裙一样挑选适合你的显化工具。每个工具都附有步骤和肯定语，让你轻松开启显化之旅。</p>
+      <h2 class="font-display text-lg mb-2" style="color:var(--theme-text)">成长百宝箱</h2>
+      <p class="text-sm mb-4" style="color:var(--theme-text); opacity:0.6">40+ 星愿方法，像选仙女裙一样挑选适合你的成长工具。每个工具都附有步骤和肯定语，让你轻松开启成长之旅。</p>
       <div class="flex items-center justify-center gap-2 mb-2">
         <div class="w-full h-2 rounded-full max-w-[200px]" style="background:rgba(212,181,199,0.15)">
           <div class="h-full rounded-full" style="width:${(triedCount/totalCount*100)}%;background:linear-gradient(90deg,#D4B5C7,#B8A9C9);transition:width 0.5s ease"></div>
@@ -8482,7 +8480,7 @@ function renderTimeline() {
     <div class="glass-card p-6 text-center mb-4">
       <div class="text-5xl mb-4">⏳</div>
       <h2 class="font-display text-lg mb-2" style="color:var(--theme-text)">愿望时光机</h2>
-      <p class="text-sm mb-4" style="color:var(--theme-text); opacity:0.6">回顾你的显化旅程，每一个愿望都是一颗星星</p>
+      <p class="text-sm mb-4" style="color:var(--theme-text); opacity:0.6">回顾你的成长旅程，每一个愿望都是一颗星星</p>
       <div class="flex justify-center gap-4">
         <div class="text-center">
           <div class="text-2xl font-medium" style="color:var(--theme-accent)">${wishes.length}</div>
@@ -8490,7 +8488,7 @@ function renderTimeline() {
         </div>
         <div class="text-center">
           <div class="text-2xl font-medium" style="color:var(--theme-accent)">${manifested.length}</div>
-          <div class="text-xs" style="color:var(--text-soft)">已显化</div>
+          <div class="text-xs" style="color:var(--text-soft)">已成长</div>
         </div>
         <div class="text-center">
           <div class="text-2xl font-medium" style="color:var(--theme-accent)">${pending.length}</div>
@@ -8536,7 +8534,7 @@ function toggleWishTimeline(index) {
   state.wishes[index].done = !state.wishes[index].done;
   saveState();
   renderTimeline();
-  showToast(state.wishes[index].done ? '⭐ 愿望已标记为显化成功！' : '已取消标记');
+  showToast(state.wishes[index].done ? '⭐ 愿望已标记为成长成功！' : '已取消标记');
   if (state.wishes[index].done) {
     logActivity('timeline', 'manifest');
     checkBadges();
@@ -8564,8 +8562,8 @@ function renderManifestReport() {
   let html = `
     <div class="glass-card p-6 text-center mb-4">
       <div class="text-5xl mb-4">📊</div>
-      <h2 class="font-display text-lg mb-2" style="color:var(--theme-text)">显化数据报告</h2>
-      <p class="text-sm" style="color:var(--theme-text); opacity:0.6">你的显化旅程数据一览</p>
+      <h2 class="font-display text-lg mb-2" style="color:var(--theme-text)">成长数据报告</h2>
+      <p class="text-sm" style="color:var(--theme-text); opacity:0.6">你的成长旅程数据一览</p>
     </div>
     <div class="glass-card p-4 mb-4">
       <h3 class="text-sm font-medium mb-3" style="color:var(--theme-text)">📈 核心数据</h3>
@@ -8576,7 +8574,7 @@ function renderManifestReport() {
         </div>
         <div class="p-3 rounded-xl text-center" style="background:rgba(212,181,199,0.08)">
           <div class="text-xl font-medium" style="color:var(--theme-accent)">${wishes.filter(w => w.done).length}</div>
-          <div class="text-xs" style="color:var(--text-soft)">已显化</div>
+          <div class="text-xs" style="color:var(--text-soft)">已成长</div>
         </div>
         <div class="p-3 rounded-xl text-center" style="background:rgba(212,181,199,0.08)">
           <div class="text-xl font-medium" style="color:var(--theme-accent)">${log.length}</div>
@@ -8993,7 +8991,7 @@ function exportPDFReport() {
     const b = BADGES.find(x => x.id === id);
     return b ? `${b.icon} ${b.name}` : id;
   }).join('、') || '暂无';
-  const wishes = (state.wishes || []).map((w, i) => `<tr><td>${i+1}</td><td>${w.text || w.be || '-'}</td><td>${w.done ? '✅ 已显化' : '⏳ 进行中'}</td></tr>`).join('');
+  const wishes = (state.wishes || []).map((w, i) => `<tr><td>${i+1}</td><td>${w.text || w.be || '-'}</td><td>${w.done ? '✅ 已成长' : '⏳ 进行中'}</td></tr>`).join('');
   const html = `
 <!DOCTYPE html><html><head><meta charset="UTF-8"><title>许愿岛报告 ${today}</title>
 <style>
@@ -9012,7 +9010,7 @@ th{background:#FAF5F7;color:#8B7E9C;font-weight:500}
 <div class="meta">生成日期：${today} &nbsp;|&nbsp; 昵称：${state.nickname || '小公主'}</div>
 <div class="section"><h2>📊 基础数据</h2>
 <p>💎 能量：${state.energy || 0} &nbsp;|&nbsp; 等级：${getLevel()} &nbsp;|&nbsp; 徽章：${(state.badges || []).length} 个</p>
-<p>📝 日记：${(state.diaries || []).length} 篇 &nbsp;|&nbsp; 愿望：${(state.wishes || []).length} 个 &nbsp;|&nbsp; 已显化：${(state.wishes || []).filter(w => w.done).length} 个</p>
+<p>📝 日记：${(state.diaries || []).length} 篇 &nbsp;|&nbsp; 愿望：${(state.wishes || []).length} 个 &nbsp;|&nbsp; 已成长：${(state.wishes || []).filter(w => w.done).length} 个</p>
 </div>
 <div class="section"><h2>🏆 徽章墙</h2><p>${badgeList}</p></div>
 <div class="section"><h2>🌠 愿望清单</h2>
