@@ -656,6 +656,11 @@
         </div>
       </div>
 
+      <!-- 限时活动横幅 v15 -->
+      <div id="event-banner" class="glass-card p-3 mb-4 cursor-pointer hidden" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(212,181,199,0.1));border:1px solid rgba(245,158,11,0.15)" onclick="showEventModal()">
+        <!-- JS动态填充 -->
+      </div>
+
       <!-- 智能推荐 v5.1 -->
       <div id="smart-recommendations"></div>
 
@@ -3314,6 +3319,18 @@
         </div>
       </div>
 
+      <!-- 邀请好友入口 v15 -->
+      <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="showInviteModal()" tabindex="0">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0" style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(212,181,199,0.1))">🎁</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium" style="color:var(--theme-text)">邀请好友赚水晶</div>
+            <div class="text-[10px] mt-0.5" style="color:var(--theme-text); opacity:0.5">邀请 <span id="invite-count" class="font-bold" style="color:var(--theme-text)">0</span> 人 · 双方各得30水晶</div>
+          </div>
+          <span class="text-sm opacity-40">→</span>
+        </div>
+      </div>
+
       <!-- 我的专属星光水晶 -->
       <div class="glass-card p-4 mb-4 card-hover cursor-pointer" onclick="openCrystalPage()" tabindex="0">
         <div class="flex items-center gap-3">
@@ -4790,7 +4807,7 @@
             <div class="text-xl">🤝</div>
             <div><div class="text-sm font-medium" style="color:var(--theme-text)">邀请好友</div><div class="text-xs" style="color:var(--text-mute)">双方各 +30 星光水晶</div></div>
           </div>
-          <button type="button" onclick="showInvitePage()" class="text-xs px-3 py-1.5 rounded-full" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white" aria-label="去邀请">去邀请</button>
+          <button type="button" onclick="showInviteModal()" class="text-xs px-3 py-1.5 rounded-full" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white" aria-label="去邀请">去邀请</button>
         </div>
       </div>
     </div>

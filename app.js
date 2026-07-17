@@ -483,6 +483,238 @@ function showLevelPage() {
   modal.classList.add('show');
 }
 
+/* ===== 邀请裂变系统与限时活动 v15 ===== */
+const INVITE_CONFIG = {
+  codeLength: 6,
+  rewards: {
+    inviter: { crystals: 30, xp: 15 },
+    invitee: { crystals: 20, xp: 10 }
+  },
+  milestones: {
+    3:  { crystals: 50,  xp: 30,  title: '播种者' },
+    5:  { crystals: 100, xp: 60,  title: '传播者' },
+    10: { crystals: 200, xp: 120, title: '星际大使' }
+  }
+};
+const ACTIVE_EVENTS = [
+  {
+    id: 'weekend_x2',
+    name: '双倍成长周末',
+    desc: '所有功能获得双倍 XP 奖励',
+    type: 'xp_double',
+    multiplier: 2,
+    // 每周末自动触发
+    isActive: () => {
+      const d = new Date();
+      return d.getDay() === 0 || d.getDay() === 6;
+    }
+  },
+  {
+    id: 'new_user_bonus',
+    name: '新人水晶雨',
+    desc: '新用户首次签到奖励翻倍',
+    type: 'checkin_bonus',
+    multiplier: 2,
+    isActive: () => true // 永久活动
+  }
+];
+function generateInviteCode() {
+  let code = safeLocalStorage.getItem('wish_island_invite_code');
+  if(code) return code;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  code = '';
+  for(let i = 0; i < INVITE_CONFIG.codeLength; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  safeLocalStorage.setItem('wish_island_invite_code', code);
+  return code;
+}
+function getInviteData() {
+  return safeLocalStorage.getObject('wish_island_invites', {
+    code: generateInviteCode(),
+    count: 0,
+    history: [],
+    milestonesClaimed: []
+  });
+}
+function saveInviteData(data) {
+  safeLocalStorage.setObject('wish_island_invites', data);
+}
+function processInviteCode(inputCode) {
+  inputCode = (inputCode || '').toUpperCase().trim();
+  if(!inputCode || inputCode.length !== INVITE_CONFIG.codeLength) {
+    return { success: false, msg: '邀请码格式错误' };
+  }
+  const myCode = generateInviteCode();
+  if(inputCode === myCode) {
+    return { success: false, msg: '不能使用自己的邀请码' };
+  }
+  const used = safeLocalStorage.getItem('wish_island_invite_used');
+  if(used) {
+    return { success: false, msg: '你已经使用过邀请码了' };
+  }
+  // 模拟验证（实际应有后端验证）
+  safeLocalStorage.setItem('wish_island_invite_used', inputCode);
+  const rewards = INVITE_CONFIG.rewards.invitee;
+  crystalState.crystals += rewards.crystals;
+  addXP('share', rewards.xp);
+  saveVipState();
+  updateCrystalDisplay();
+  trackEvent('invite_code_used', { code: inputCode, crystals: rewards.crystals });
+  return { success: true, msg: `使用成功！获得 ${rewards.crystals} 水晶 + ${rewards.xp} XP` };
+}
+function recordInviteSuccess() {
+  const data = getInviteData();
+  data.count++;
+  data.history.push({ date: new Date().toISOString() });
+  // 检查里程碑
+  const milestones = Object.keys(INVITE_CONFIG.milestones).map(Number).sort((a,b)=>a-b);
+  for(const m of milestones) {
+    if(data.count >= m && !data.milestonesClaimed.includes(m)) {
+      data.milestonesClaimed.push(m);
+      const reward = INVITE_CONFIG.milestones[m];
+      crystalState.crystals += reward.crystals;
+      addXP('share', reward.xp);
+      saveVipState();
+      updateCrystalDisplay();
+      showToast(`🎉 邀请里程碑达成 ${m} 人！获得 ${reward.crystals} 水晶 + ${reward.xp} XP`);
+      triggerConfetti();
+      trackEvent('invite_milestone', { milestone: m, reward: reward.crystals });
+    }
+  }
+  saveInviteData(data);
+  updateInviteDisplay();
+}
+function showInviteModal() {
+  const data = getInviteData();
+  const code = data.code;
+  const shareUrl = window.location.origin + window.location.pathname + '?ref=' + code;
+  let modal = document.getElementById('invite-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'invite-modal';
+    modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.onclick = function(e) { if(e.target === this) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-content p-6 text-center" style="max-width:340px">
+      <div class="text-4xl mb-3">🎁</div>
+      <h3 class="font-title text-lg mb-2" style="color:var(--theme-text)">邀请好友</h3>
+      <p class="text-xs mb-4" style="color:var(--text-soft)">邀请好友加入星愿花园，双方获得丰厚奖励</p>
+      <div class="p-3 rounded-xl mb-3" style="background:linear-gradient(135deg,rgba(212,181,199,0.15),rgba(184,169,201,0.1));border:1.5px dashed rgba(212,181,199,0.3)">
+        <div class="text-xs mb-1" style="color:var(--text-mute)">我的邀请码</div>
+        <div class="text-2xl font-bold tracking-widest mb-2" style="color:var(--theme-text);font-family:monospace" id="invite-code-display">${code}</div>
+        <button type="button" onclick="copyInviteCode()" class="btn-soft w-full py-2 rounded-xl text-xs font-medium">📋 复制邀请码</button>
+      </div>
+      <div class="text-xs mb-3" style="color:var(--text-mute)">已邀请 <span class="font-bold" style="color:var(--theme-text)">${data.count}</span> 人</div>
+      <!-- 里程碑进度 -->
+      <div class="mb-4">
+        ${Object.entries(INVITE_CONFIG.milestones).map(([m, r]) => {
+          const reached = data.count >= parseInt(m);
+          const claimed = data.milestonesClaimed.includes(parseInt(m));
+          return `
+            <div class="flex items-center justify-between p-2 rounded-lg mb-1.5 text-xs" style="background:${reached ? 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(212,181,199,0.1))' : 'rgba(212,181,199,0.05)'};border:1px solid ${reached ? 'rgba(245,158,11,0.2)' : 'transparent'}">
+              <span style="color:${reached ? 'var(--theme-text)' : 'var(--text-mute)'}">邀请 ${m} 人</span>
+              <span style="color:${claimed ? '#5A9C6A' : (reached ? '#F59E0B' : 'var(--text-mute)')}">${claimed ? '✅ 已领取' : (reached ? '🔥 可领取' : '⏳ 进行中')}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <button type="button" onclick="document.getElementById('invite-modal').classList.remove('show')" class="btn-soft w-full py-3 rounded-xl text-sm">关闭</button>
+    </div>
+  `;
+  modal.classList.add('show');
+  trackEvent('invite_modal_shown', { code: code });
+}
+function copyInviteCode() {
+  const code = getInviteData().code;
+  try {
+    navigator.clipboard.writeText(code).then(() => {
+      showToast('邀请码已复制！');
+      trackEvent('invite_code_copied', { code: code });
+    });
+  } catch(e) {
+    showToast(code);
+  }
+}
+function updateInviteDisplay() {
+  const data = getInviteData();
+  const el = document.getElementById('invite-count');
+  if(el) el.textContent = data.count;
+}
+function getActiveEvents() {
+  return ACTIVE_EVENTS.filter(e => e.isActive());
+}
+function showEventBanner() {
+  const events = getActiveEvents();
+  const container = document.getElementById('event-banner');
+  if(!container) return;
+  if(!events.length) { container.style.display = 'none'; return; }
+  const ev = events[0];
+  container.style.display = '';
+  container.innerHTML = `
+    <div class="flex items-center gap-2">
+      <span class="text-lg">🎉</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-medium" style="color:var(--theme-text)">${ev.name}</div>
+        <div class="text-[10px]" style="color:var(--text-mute)">${ev.desc}</div>
+      </div>
+    </div>
+  `;
+  container.onclick = () => showEventModal();
+}
+function showEventModal() {
+  const events = getActiveEvents();
+  let modal = document.getElementById('event-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'event-modal';
+    modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.onclick = function(e) { if(e.target === this) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-content p-6 text-center" style="max-width:340px">
+      <div class="text-4xl mb-3">🎉</div>
+      <h3 class="font-title text-lg mb-2" style="color:var(--theme-text)">限时活动</h3>
+      <div class="space-y-3 mb-4">
+        ${events.map(ev => `
+          <div class="p-3 rounded-xl text-left" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(212,181,199,0.1));border:1px solid rgba(245,158,11,0.15)">
+            <div class="text-sm font-medium mb-1" style="color:var(--theme-text)">${ev.name}</div>
+            <div class="text-xs" style="color:var(--text-soft)">${ev.desc}</div>
+          </div>
+        `).join('')}
+      </div>
+      <button type="button" onclick="document.getElementById('event-modal').classList.remove('show')" class="btn-soft w-full py-3 rounded-xl text-sm">关闭</button>
+    </div>
+  `;
+  modal.classList.add('show');
+  trackEvent('event_modal_shown', { events: events.map(e => e.id) });
+}
+function checkEventBonus(source) {
+  const events = getActiveEvents();
+  for(const ev of events) {
+    if(ev.type === 'xp_double' && source !== 'share') {
+      return ev.multiplier || 2;
+    }
+    if(ev.type === 'checkin_bonus' && source === 'checkin') {
+      return ev.multiplier || 2;
+    }
+  }
+  return 1;
+}
+// 修改 addXP 以支持活动加成
+const _originalAddXP = addXP;
+addXP = function(source, extraXP) {
+  const multiplier = checkEventBonus(source);
+  const finalXP = extraXP ? Math.floor(extraXP * multiplier) : undefined;
+  return _originalAddXP(source, finalXP);
+};
 /* ===== 推送通知 ===== */
 function requestNotificationPermission() {
   if(!('Notification' in window)) return;
@@ -2989,6 +3221,9 @@ function goHome() {
   __pageHistory = ['island'];
   updateTimeAndWeather();
   updateNavActive('home');
+  // v15: 更新活动横幅和邀请显示
+  if(typeof showEventBanner === 'function') showEventBanner();
+  if(typeof updateInviteDisplay === 'function') updateInviteDisplay();
 }
 function updateNavActive(active) {
   document.querySelectorAll('.nav-item').forEach(item => {
@@ -3028,6 +3263,8 @@ function renderMeTab() {
       personaCard.innerHTML = `<div class="text-center py-4"><div class="text-2xl mb-1">${p.flower || '👸'}</div><div class="font-medium text-sm" style="color:var(--theme-text)">${p.name || '花公主'}</div><div class="text-xs mt-1" style="color:var(--text-mute)">${p.trait || '你的专属花公主身份'}</div></div>`;
     }
   }
+  // v15: 更新邀请显示
+  if (typeof updateInviteDisplay === 'function') updateInviteDisplay();
 }
 function switchTab(tab) {
   const pageMap = {
