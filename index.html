@@ -3383,6 +3383,20 @@
             <div class="text-xs" style="color:var(--text-mute)">暂无记录</div>
           </div>
         </div>
+        <div class="glass-card p-4 mt-4">
+          <div class="text-xs font-medium mb-3" style="color:var(--theme-text)">💡 灵感藏馆</div>
+          <div class="flex gap-2 mb-2">
+            <input type="text" id="inspiration-input" placeholder="记录一个灵感..." class="flex-1 px-3 py-2 rounded-xl text-xs outline-none" style="background:rgba(255,255,255,0.6);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)">
+          </div>
+          <div class="flex gap-2 mb-2">
+            <input type="text" id="inspiration-tags" placeholder="标签，用逗号分隔..." class="flex-1 px-3 py-2 rounded-xl text-xs outline-none" style="background:rgba(255,255,255,0.6);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)">
+          </div>
+          <button type="button" onclick="const t=document.getElementById('inspiration-input').value.trim();const g=document.getElementById('inspiration-tags').value;if(t&&typeof InspirationAPI!=='undefined'){InspirationAPI.add(t,g);document.getElementById('inspiration-input').value='';document.getElementById('inspiration-tags').value='';}" class="soft-btn btn-primary w-full py-2 text-xs mb-3">保存灵感</button>
+          <div class="flex gap-2 mb-2">
+            <input type="text" id="inspiration-search" placeholder="搜索灵感..." oninput="if(typeof InspirationAPI!=='undefined')InspirationAPI.search(this.value)" class="flex-1 px-3 py-2 rounded-xl text-xs outline-none" style="background:rgba(255,255,255,0.6);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)">
+          </div>
+          <div id="inspiration-list"></div>
+        </div>
       </div>
     </section>
 </main>

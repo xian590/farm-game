@@ -232,8 +232,54 @@
     }
   }
 
+  // ===== 灵感库（线索藏馆）=====
+  const INSPIRATION_KEY = 'wish_island_inspiration_v1';
+  let inspirations = [];
+  function loadInspirations() { inspirations = safeGet(INSPIRATION_KEY, []); }
+  function saveInspirations() { safeSet(INSPIRATION_KEY, inspirations); }
+  window.InspirationAPI = {
+    add: function(text, tags) {
+      if (!text.trim()) return;
+      const item = { id: uid(), text: text.trim(), tags: (tags || '').split(/[,，\s]+/).filter(t => t), createdAt: Date.now() };
+      inspirations.unshift(item);
+      saveInspirations();
+      renderInspirations();
+      return item;
+    },
+    remove: function(id) {
+      inspirations = inspirations.filter(i => i.id !== id);
+      saveInspirations();
+      renderInspirations();
+    },
+    search: function(q) {
+      renderInspirations(q);
+    }
+  };
+  function renderInspirations(query) {
+    const container = document.getElementById('inspiration-list');
+    if (!container) return;
+    let list = inspirations;
+    if (query) {
+      const q = query.toLowerCase();
+      list = list.filter(i => i.text.toLowerCase().includes(q) || i.tags.some(t => t.toLowerCase().includes(q)));
+    }
+    if (list.length === 0) {
+      container.innerHTML = '<div class="text-center py-4 text-xs" style="color:var(--text-mute)">还没有灵感记录，捕获第一个想法吧 💡</div>';
+      return;
+    }
+    container.innerHTML = list.map(i => `<div class="glass-card p-3 mb-2">
+      <div class="text-xs leading-relaxed mb-2" style="color:var(--theme-text)">${escapeHtml(i.text)}</div>
+      <div class="flex items-center justify-between">
+        <div class="flex gap-1 flex-wrap">${i.tags.map(t => `<span class="text-[10px] px-1.5 py-0.5 rounded-full" style="background:rgba(184,169,201,0.12);color:var(--text-mute)">${escapeHtml(t)}</span>`).join('')}</div>
+        <button onclick="InspirationAPI.remove('${i.id}')" class="text-xs px-2 py-1 rounded-lg" style="color:var(--text-mute)">✕</button>
+      </div>
+    </div>`).join('');
+  }
+  function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
   // ===== 初始化 =====
   loadState();
+  loadInspirations();
 
   // Expose init function for app.js to call after loadChunk
   window.initQuestModule = function() {
@@ -242,6 +288,7 @@
     renderStats();
     loadSprint();
     loadRadar();
+    renderInspirations();
     // Populate task selector in timer
     const sel = document.getElementById('timer-task-select');
     if (sel) {

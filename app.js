@@ -5595,6 +5595,15 @@ const AI_RESPONSES = {
   "我想成长财富": ["太棒了！💰 财富成长第一步：检查你的信念。你觉得 '赚钱很难' 吗？或者 '有钱人不快乐'？如果勾选了，这些就是你要清理的障碍。然后签发一张魔法支票，填写你渴望的金额，感受已经拥有的喜悦！","你是丰盛的磁铁！现在闭上眼睛，想象你的银行账户里有一笔让你惊喜的数字。感受那种安全感、自由感和感恩。让这种感觉充满你... 这就是成长财富的秘密频率。✨"],
   "给我一句今天的肯定语": ["✨ '我是宇宙最爱的孩子，今天发生的一切都是为了我的最高利益。' ✨ 重复21次，带着感觉说！","🌟 '我已经拥有了我想要的一切，此刻只是享受它成长的过程。' 🌟 这句适合在焦虑的时候用。","💕 '我和SP的关系充满了爱、尊重和幸福。' 💕 如果今天想成长爱情，用这句。","💰 '我是金钱的磁铁，钱从各种意想不到的渠道流向我。' 💰 这是今天的财富肯定语。"],
   "我最近总是焦虑": ["焦虑是因为你在用想象力创造你不想要的东西。😰 每一次焦虑，你都在给那个'坏结果'浇水。试试这个：每次焦虑时，立刻做一个 '修正' —— 想象同一个场景以完美的结局展开。坚持3天，你会发现焦虑自然减少了。🌿","焦虑是情绪刻度的第7级。不需要跳到喜悦，只需要升到 '希望' 就够了。🌱 试试写下：'我允许自己焦虑，但我也相信一切都会好起来。' 然后去做一件让身体动起来的小事，比如整理房间或洗个热水澡。"],
+  "如何情绪净化": ["🌊 情绪净化三步法：\n1️⃣ 承认：'我现在感到___，这是可以的。'\n2️⃣ 释放：深呼吸5次，想象负面情绪随着呼气离开身体\n3️⃣ 替换：用一个积极画面替换——想象你想要的结果已经实现\n每天坚持一次，7天后你会发现自己的情绪容器干净多了。","💧 试试 '情绪冲洗法'：准备一杯温水，双手捧着，对着水说出你现在的感受，然后把水慢慢喝掉。象征性地让情绪流动并被转化。听起来有点神秘，但很多人反馈很有效哦～"],
+  "我的命运": ["🔮 命运不是写好的剧本，而是你每一个念头的累积。你现在的想法、情绪和行动，正在编织明天的故事。想改变命运？从改变下一个念头开始。","🌙 你的命运之轮正在转动。过去的选择造就了现在，现在的选择创造未来。好消息是：每一个当下，你都有重新选择的权力。这就是自由意志的魔法。"],
+  default: ["我在听呢～💕 你可以多告诉我一些细节，或者试试我们的情绪导航器、21天成长挑战，这些都是为你准备的工具。","嗯嗯，我理解你的感受。成长有时候像是种花，你看不到根在生长，但它在。🌱 保持你的肯定语，不要检查3D，相信过程。","这是个很好的觉察！✨ 记录在你的星辰日记里吧，过一段时间回头看，你会发现自己走了多远。","宇宙永远站在你这边。🌙 你所渴望的，也正在渴望你。保持你的频率，不要放弃。","需要力量的时候，去历练页面看看你的任务完成率和专注时长吧。数据不会撒谎，你在悄悄变强 💪"]
+};
+  "今天情绪很低落": ["抱抱你 🤗 情绪低落的时候，最重要的是不要评判自己。允许自己此刻就是这种感觉。试试深呼吸5次，然后对自己说：'我允许自己感受这一切，但我知道这不是我的终点。' 你想试试看吗？💕","亲爱的，低落的时候就像阴天，太阳并没有消失，只是暂时被云遮住了。☁️→☀️ 你现在在22级情绪刻度的哪一级呢？我们可以从那里慢慢往上走。"],
+  "SP不理我怎么办": ["这是3D在试图动摇你，但记住：3D只是旧意识的投影，不是真相！🚫 当SP '不理你' 的时候，其实是在给你空间去安住在你 '已经被爱' 的状态里。不要检查3D，回到你的肯定语。'TA正在想念我，准备联系我。' 重复21次，然后去睡觉。💤💕","🛡️ 启动忽略3D模式！SP 不理你 = 你正在 rearranging 这段关系。把 'TA不理我' 改成 'TA正在处理自己的情绪，准备以更成熟的方式回来'。修正法，现在就用！"],
+  "我想成长财富": ["太棒了！💰 财富成长第一步：检查你的信念。你觉得 '赚钱很难' 吗？或者 '有钱人不快乐'？如果勾选了，这些就是你要清理的障碍。然后签发一张魔法支票，填写你渴望的金额，感受已经拥有的喜悦！","你是丰盛的磁铁！现在闭上眼睛，想象你的银行账户里有一笔让你惊喜的数字。感受那种安全感、自由感和感恩。让这种感觉充满你... 这就是成长财富的秘密频率。✨"],
+  "给我一句今天的肯定语": ["✨ '我是宇宙最爱的孩子，今天发生的一切都是为了我的最高利益。' ✨ 重复21次，带着感觉说！","🌟 '我已经拥有了我想要的一切，此刻只是享受它成长的过程。' 🌟 这句适合在焦虑的时候用。","💕 '我和SP的关系充满了爱、尊重和幸福。' 💕 如果今天想成长爱情，用这句。","💰 '我是金钱的磁铁，钱从各种意想不到的渠道流向我。' 💰 这是今天的财富肯定语。"],
+  "我最近总是焦虑": ["焦虑是因为你在用想象力创造你不想要的东西。😰 每一次焦虑，你都在给那个'坏结果'浇水。试试这个：每次焦虑时，立刻做一个 '修正' —— 想象同一个场景以完美的结局展开。坚持3天，你会发现焦虑自然减少了。🌿","焦虑是情绪刻度的第7级。不需要跳到喜悦，只需要升到 '希望' 就够了。🌱 试试写下：'我允许自己焦虑，但我也相信一切都会好起来。' 然后去做一件让身体动起来的小事，比如整理房间或洗个热水澡。"],
   default: ["我在听呢～💕 你可以多告诉我一些细节，或者试试我们的情绪导航器、21天成长挑战，这些都是为你准备的工具。","嗯嗯，我理解你的感受。成长有时候像是种花，你看不到根在生长，但它在。🌱 保持你的肯定语，不要检查3D，相信过程。","这是个很好的觉察！✨ 记录在你的星辰日记里吧，过一段时间回头看，你会发现自己走了多远。","宇宙永远站在你这边。🌙 你所渴望的，也正在渴望你。保持你的频率，不要放弃。"]
 };
 let aiChatHistory = [];
@@ -5631,6 +5640,49 @@ function sendAiPrompt(text) {
   sendAiMessage();
 }
 function generateAiReply(text) {
+  // Data-driven: check if user is asking about their data/stats
+  const dataQuestions = ['我做得怎么样', '我的数据', '我本周', '我本周表现', '我的任务', '我完成了多少', '我的专注', '我的成长'];
+  if (dataQuestions.some(q => text.includes(q))) {
+    return generateFateLensReply();
+  }
+  for(const key in AI_RESPONSES) { if(key === 'default') continue; if(text.includes(key) || key.includes(text.substring(0,6))) { const r = AI_RESPONSES[key]; return r[Math.floor(Math.random()*r.length)]; } }
+  if(text.includes('财富') || text.includes('钱') || text.includes('穷')) { const r = AI_RESPONSES['我想成长财富']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('SP') || text.includes('他') || text.includes('她') || text.includes('复合') || text.includes('分手')) { const r = AI_RESPONSES['SP不理我怎么办']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('低落') || text.includes('难过') || text.includes('伤心') || text.includes('哭')) { const r = AI_RESPONSES['今天情绪很低落']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('焦虑') || text.includes('紧张') || text.includes('不安')) { const r = AI_RESPONSES['我最近总是焦虑']; return r[Math.floor(Math.random()*r.length)]; }
+  if(text.includes('肯定语')) { const r = AI_RESPONSES['给我一句今天的肯定语']; return r[Math.floor(Math.random()*r.length)]; }
+  const d = AI_RESPONSES['default']; return d[Math.floor(Math.random()*d.length)];
+}
+function generateFateLensReply() {
+  try {
+    const questState = safeLocalStorage.getObject('wish_island_quest_v1', {});
+    const sessions = safeLocalStorage.getObject('wish_island_sessions_v1', []);
+    const radar = safeLocalStorage.getObject('wish_island_radar_v1', {});
+    const quests = questState.quests || [];
+    const total = quests.length;
+    const done = quests.filter(q => q.status === 'done').length;
+    const rate = total > 0 ? Math.round(done / total * 100) : 0;
+    const today = new Date().toISOString().slice(0, 10);
+    const todaySec = sessions.filter(s => s.date === today).reduce((a, s) => a + (s.duration || 0), 0);
+    const todayMin = Math.round(todaySec / 60);
+    let reply = '📡 命运透镜为你扫描中...\n\n';
+    reply += `✅ 任务完成率：${done}/${total}（${rate}%）\n`;
+    reply += `⏱️ 今日专注：${todayMin} 分钟\n`;
+    if (radar.action) {
+      const topDim = Object.entries(radar).sort((a, b) => b[1] - a[1])[0];
+      const dimNames = { action: '行动力', create: '创造力', empathy: '共情力', stable: '稳定力', charm: '魅力' };
+      reply += `🌟 最强维度：${dimNames[topDim[0]] || topDim[0]}（${topDim[1]}/10）\n`;
+    }
+    reply += '\n💫 ';
+    if (rate >= 80) reply += '你本周的状态非常棒！保持这个节奏，成果正在路上。';
+    else if (rate >= 50) reply += '进度不错，但还有提升空间。试试把大任务拆成更小的步骤。';
+    else if (total > 0) reply += '别灰心，开始行动就是最大的胜利。从一个小任务开始吧！';
+    else reply += '还没有任务记录？去历练页面添加你的第一个成长小目标吧 🌱';
+    return reply;
+  } catch(e) {
+    return '📡 命运透镜暂时无法读取你的数据，先去历练页面记录一些成长轨迹吧～';
+  }
+}
   for(const key in AI_RESPONSES) { if(key === 'default') continue; if(text.includes(key) || key.includes(text.substring(0,6))) { const r = AI_RESPONSES[key]; return r[Math.floor(Math.random()*r.length)]; } }
   if(text.includes('财富') || text.includes('钱') || text.includes('穷')) { const r = AI_RESPONSES['我想成长财富']; return r[Math.floor(Math.random()*r.length)]; }
   if(text.includes('SP') || text.includes('他') || text.includes('她') || text.includes('复合') || text.includes('分手')) { const r = AI_RESPONSES['SP不理我怎么办']; return r[Math.floor(Math.random()*r.length)]; }
