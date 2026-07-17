@@ -139,6 +139,90 @@ function checkActiveStreak() {
   if(streak === 100) { showToast('连续 100 天！百炼成钢，你是最闪耀的星 ⭐'); triggerConfetti(); }
 }
 
+/* ===== 用户分层与个性化运营 v12 ===== */
+function getUserSegment() {
+  const activeStreak = parseInt(safeLocalStorage.getItem('wish_island_active_streak') || '0');
+  const firstOpen = safeLocalStorage.getItem('wish_island_first_open');
+  const daysSinceFirst = firstOpen ? Math.floor((new Date() - new Date(firstOpen)) / (1000 * 60 * 60 * 24)) : 0;
+  const log = StorageUtil.get('activity_log', {});
+  const totalActiveDays = Object.keys(log).length;
+  const tier = getCurrentTier();
+  
+  // 分层逻辑
+  if(!firstOpen || daysSinceFirst <= 3) return { type: 'new', label: '新用户', days: daysSinceFirst };
+  if(activeStreak >= 30 && tier !== 'free') return { type: 'vip_loyal', label: 'VIP铁杆用户', streak: activeStreak };
+  if(activeStreak >= 30) return { type: 'loyal', label: '铁杆用户', streak: activeStreak };
+  if(activeStreak >= 7) return { type: 'active', label: '活跃用户', streak: activeStreak };
+  if(totalActiveDays >= 10) return { type: 'engaged', label: '参与用户', days: totalActiveDays };
+  return { type: 'casual', label: ' casual用户', days: totalActiveDays };
+}
+function checkUserSegmentPromotions() {
+  const segment = getUserSegment();
+  const today = new Date().toDateString();
+  const lastSegmentPromo = safeLocalStorage.getItem('wish_island_segment_promo');
+  if(lastSegmentPromo === today) return; // 今天已展示
+  
+  if(segment.type === 'new' && segment.days === 2) {
+    // 新用户第3天：推送专属优惠
+    safeLocalStorage.setItem('wish_island_segment_promo', today);
+    showToast('新用户专属：首月仅需 ¥6，开启你的显化之旅 ✨');
+    setTimeout(() => showVipPlans(), 1500);
+    trackEvent('segment_promo', { segment: 'new', day: 3, action: 'first_month_offer' });
+  }
+  else if(segment.type === 'loyal' && segment.streak === 30) {
+    // 铁杆用户30天里程碑：赠送专属福利
+    safeLocalStorage.setItem('wish_island_segment_promo', today);
+    crystalState.crystals += 88;
+    saveVipState();
+    updateCrystalDisplay();
+    showToast('连续30天里程碑！送你 88 星光水晶 + 1天VIP体验 🎁');
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    if(getCurrentTier() === 'free') {
+      vipState.tier = 'member'; vipState.expiry = tomorrow.toISOString();
+      saveVipState();
+    }
+    triggerConfetti();
+    trackEvent('segment_promo', { segment: 'loyal', streak: 30, action: 'milestone_reward' });
+  }
+  else if(segment.type === 'casual') {
+    // casual用户：尝试唤醒
+    const lastVisit = safeLocalStorage.getItem('wish_island_last_visit');
+    if(lastVisit) {
+      const daysSince = Math.floor((new Date() - new Date(lastVisit)) / (1000 * 60 * 60 * 24));
+      if(daysSince >= 3 && daysSince < 7) {
+        safeLocalStorage.setItem('wish_island_segment_promo', today);
+        showToast('你已连续 3 天未使用，回来继续你的显化之旅吧 ✨');
+        trackEvent('segment_promo', { segment: 'casual', daysSince: daysSince, action: 're_engagement' });
+      }
+    }
+  }
+}
+function personalizeHomepage() {
+  const segment = getUserSegment();
+  const recommendTag = document.getElementById('daily-recommend-tag');
+  const recommendTitle = document.getElementById('daily-recommend-title');
+  const recommendDesc = document.getElementById('daily-recommend-desc');
+  
+  if(!recommendTag || !recommendTitle) return;
+  
+  // 基于用户分层个性化推荐文案
+  if(segment.type === 'new') {
+    recommendTag.textContent = '新手指南 · 专属推荐';
+    recommendTitle.textContent = '完成人格测试，解锁你的专属花公主';
+    recommendDesc.textContent = '3分钟测试，获得个性化成长建议';
+  }
+  else if(segment.type === 'loyal' || segment.type === 'vip_loyal') {
+    recommendTag.textContent = '忠诚用户 · 专属推荐';
+    recommendTitle.textContent = '你已经坚持了 ' + segment.streak + ' 天！';
+    recommendDesc.textContent = '继续保持，你的显化能量正在积累中';
+  }
+  else if(segment.type === 'casual') {
+    recommendTag.textContent = '回归推荐 · 轻松开始';
+    recommendTitle.textContent = '从5分钟冥想开始，重新连接你的显化能量';
+    recommendDesc.textContent = '不需要太多时间，从小步骤开始';
+  }
+}
+
 /* ===== 推送通知 ===== */
 function requestNotificationPermission() {
   if(!('Notification' in window)) return;
@@ -7201,6 +7285,8 @@ document.addEventListener('DOMContentLoaded', function() {
     checkRetention();
     requestNotificationPermission();
     checkMonthlyReview();
+    checkUserSegmentPromotions();
+    personalizeHomepage();
     // 首次打开显示引导
     if(isFirstOpen()) {
       markFirstOpen();
@@ -9893,6 +9979,9 @@ window.updateDailyBonusCard = updateDailyBonusCard;
 window.renderGrowthDashboard = renderGrowthDashboard;
 window.checkMonthlyReview = checkMonthlyReview;
 window.showMonthlyReviewModal = showMonthlyReviewModal;
+window.getUserSegment = getUserSegment;
+window.checkUserSegmentPromotions = checkUserSegmentPromotions;
+window.personalizeHomepage = personalizeHomepage;
 window.renderDailyRecommend = renderDailyRecommend;
 window.openDailyRecommend = openDailyRecommend;
 window.requestNotificationPermission = requestNotificationPermission;
