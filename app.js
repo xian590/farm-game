@@ -223,6 +223,63 @@ function personalizeHomepage() {
   }
 }
 
+/* ===== A/B测试与转化率优化 v13 ===== */
+const AB_TESTS = {
+  payment_modal: {
+    name: '支付弹窗文案测试',
+    variants: [
+      { id: 'a', title: '升级会员，解锁全部功能', subtitle: '¥18/月 · 1200+人已选择', cta: '立即升级', badge: '🔥 最受欢迎' },
+      { id: 'b', title: '开启你的显化加速之旅', subtitle: '首月仅需 ¥6，随时可取消', cta: '开始加速', badge: '✨ 限时优惠' },
+      { id: 'c', title: '会员专属：无限次许愿+AI助手', subtitle: '¥128/年，立省 ¥88', cta: '立即开通', badge: '💰 最划算' }
+    ]
+  },
+  lock_modal: {
+    name: '功能锁定弹窗文案测试',
+    variants: [
+      { id: 'a', title: '✨ 升级会员解锁此功能', subtitle: '会员专享：无限使用，无广告干扰', cta: '升级会员', secondary: '用 💎 解锁一次' },
+      { id: 'b', title: '🌟 VIP用户正在使用此功能', subtitle: '加入1200+会员，开启完整体验', cta: '加入VIP', secondary: '💎 单次解锁' },
+      { id: 'c', title: '🔒 此功能需要会员权限', subtitle: '升级后可永久使用，无需额外付费', cta: '永久解锁', secondary: '或 💎 体验一次' }
+    ]
+  }
+};
+function getABVariant(testName) {
+  const key = 'ab_test_' + testName;
+  let variant = safeLocalStorage.getItem(key);
+  if(!variant) {
+    const test = AB_TESTS[testName];
+    const idx = Math.floor(Math.random() * test.variants.length);
+    variant = test.variants[idx].id;
+    safeLocalStorage.setItem(key, variant);
+    trackEvent('ab_test_assign', { test: testName, variant: variant });
+  }
+  return variant;
+}
+function getABVariantData(testName) {
+  const variantId = getABVariant(testName);
+  const test = AB_TESTS[testName];
+  return test.variants.find(v => v.id === variantId) || test.variants[0];
+}
+function trackABConversion(testName, action) {
+  const variantId = getABVariant(testName);
+  const events = safeLocalStorage.getObject('ab_test_events', []);
+  events.push({ test: testName, variant: variantId, action: action, timestamp: Date.now() });
+  if(events.length > 500) events.shift();
+  safeLocalStorage.setObject('ab_test_events', events);
+  trackEvent('ab_test_conversion', { test: testName, variant: variantId, action: action });
+}
+function getABTestReport() {
+  const events = safeLocalStorage.getObject('ab_test_events', []);
+  const report = {};
+  events.forEach(e => {
+    const key = e.test + '_' + e.variant;
+    if(!report[key]) report[key] = { test: e.test, variant: e.variant, impressions: 0, clicks: 0, conversions: 0 };
+    if(e.action === 'shown') report[key].impressions++;
+    if(e.action === 'click') report[key].clicks++;
+    if(e.action === 'convert') report[key].conversions++;
+  });
+  return report;
+}
+
 /* ===== 推送通知 ===== */
 function requestNotificationPermission() {
   if(!('Notification' in window)) return;
@@ -6519,17 +6576,19 @@ function showQuotaLock(name, limit, crystalCost, crystalType) {
   showLockModal(`今日${name}次数已用完`, `免费用户每天可使用 ${limit} 次。升级会员获得更多次数，或用星光水晶解锁额外使用。`, crystalCost ? { crystalCost, crystalType } : null);
 }
 function showLockModal(title, desc, options) {
+  // A/B测试：应用变体文案
+  const ab = getABVariantData('lock_modal');
   const t = document.getElementById('lock-title');
   const d = document.getElementById('lock-desc');
   const m = document.getElementById('lock-modal');
-  if(t) t.textContent = title || '功能锁定';
-  if(d) d.textContent = desc || '升级会员即可解锁此功能';
+  if(t) t.textContent = ab.title;
+  if(d) d.textContent = ab.subtitle;
   // 动态水晶解锁按钮
   const crystalBtn = document.getElementById('lock-crystal-btn');
   if(crystalBtn) {
     if(options && options.crystalCost && options.crystalType) {
       crystalBtn.style.display = 'block';
-      crystalBtn.textContent = `💎 ${options.crystalCost} 水晶解锁本次`;
+      crystalBtn.textContent = `💎 ${options.crystalCost} ${ab.secondary || '水晶解锁本次'}`;
       crystalBtn.onclick = function() {
         closeLockModal();
         unlockWithCrystals(options.crystalType, options.crystalCost);
@@ -6538,7 +6597,11 @@ function showLockModal(title, desc, options) {
       crystalBtn.style.display = 'none';
     }
   }
+  // 更新升级按钮文案
+  const upgradeBtn = document.getElementById('lock-upgrade-btn');
+  if(upgradeBtn) upgradeBtn.textContent = ab.cta || '升级会员';
   if(m) m.classList.add('show');
+  trackABConversion('lock_modal', 'shown');
 }
 function closeLockModal() { const m = document.getElementById('lock-modal'); if(m) m.classList.remove('show'); }
 function initVip() {
@@ -6761,6 +6824,8 @@ function showPaymentModal(planId) {
   const plan = 星光会员_PRICES[planId];
   if(!plan) return;
   trackPaymentModal(planId);
+  // A/B测试：应用变体文案
+  const ab = getABVariantData('payment_modal');
   const tierName = plan.tier === 'member' ? '自然会员' : '星际高级会员';
   // 模拟社交证明数字
   const socialProof = 1200 + Math.floor(Math.random() * 300);
@@ -6778,7 +6843,7 @@ function showPaymentModal(planId) {
   modal.innerHTML = `
     <div class="modal-content p-6 text-center" style="max-width:360px">
       <div class="text-4xl mb-3">💳</div>
-      <h3 class="font-title text-lg mb-1" style="color:var(--theme-text)">确认购买</h3>
+      <h3 class="font-title text-lg mb-1" style="color:var(--theme-text)">${ab.title}</h3>
       <div class="mb-4">
         <div class="text-sm font-medium mb-1">${tierName} · ${plan.name}</div>
         <div class="text-2xl font-bold" style="color:var(--theme-text)">¥${plan.price}<span class="text-sm font-normal" style="color:var(--text-mute)">/${plan.period}</span></div>
@@ -6787,14 +6852,14 @@ function showPaymentModal(planId) {
       <!-- 社交证明 + 倒计时 -->
       <div class="mb-3 p-3 rounded-xl text-center" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(212,181,199,0.1));border:1px solid rgba(245,158,11,0.15)">
         <div class="text-xs mb-1" style="color:var(--text-mute)">👥 已有 <span class="font-bold" style="color:var(--theme-text)">${socialProof}</span> 人升级会员</div>
-        ${plan.limited ? `<div class="text-xs font-medium" style="color:#F59E0B">⏰ 限时特惠 · 剩余 <span id="payment-countdown">05:00</span></div>` : ''}
+        ${plan.limited ? `<div class="text-xs font-medium" style="color:#F59E0B">⏰ ${ab.badge} · 剩余 <span id="payment-countdown">05:00</span></div>` : ''}
       </div>
       <div class="space-y-2 mb-4">
-        <button type="button" onclick="trackPaymentMethod('${planId}', 'wechat');processPayment('${planId}', 'wechat')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#07C160" aria-label="微信支付">
-          <span>💚</span> 微信支付
+        <button type="button" onclick="trackPaymentMethod('${planId}', 'wechat');trackABConversion('payment_modal','click');processPayment('${planId}', 'wechat')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#07C160" aria-label="微信支付">
+          <span>💚</span> ${ab.cta}
         </button>
-        <button type="button" onclick="trackPaymentMethod('${planId}', 'alipay');processPayment('${planId}', 'alipay')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#1677FF" aria-label="支付宝">
-          <span>💙</span> 支付宝
+        <button type="button" onclick="trackPaymentMethod('${planId}', 'alipay');trackABConversion('payment_modal','click');processPayment('${planId}', 'alipay')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#1677FF" aria-label="支付宝">
+          <span>💙</span> ${ab.cta}
         </button>
       </div>
       <div class="text-xs mb-3 p-3 rounded-xl" style="background:rgba(212,181,199,0.1);color:var(--text-mute)">
@@ -6811,6 +6876,7 @@ function showPaymentModal(planId) {
     </div>
   `;
   modal.classList.add('show');
+  trackABConversion('payment_modal', 'shown');
   // 限时倒计时
   if(plan.limited) {
     let seconds = 300;
@@ -9980,7 +10046,13 @@ window.renderGrowthDashboard = renderGrowthDashboard;
 window.checkMonthlyReview = checkMonthlyReview;
 window.showMonthlyReviewModal = showMonthlyReviewModal;
 window.getUserSegment = getUserSegment;
+window.getABVariant = getABVariant;
+window.getABVariantData = getABVariantData;
+window.trackABConversion = trackABConversion;
+window.getABTestReport = getABTestReport;
 window.checkUserSegmentPromotions = checkUserSegmentPromotions;
+window.personalizeHomepage = personalizeHomepage;
+window.updateDailyBonusCard = updateDailyBonusCard;
 window.personalizeHomepage = personalizeHomepage;
 window.renderDailyRecommend = renderDailyRecommend;
 window.openDailyRecommend = openDailyRecommend;
