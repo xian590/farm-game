@@ -655,6 +655,23 @@
         <div id="habit-heatmap"></div>
       </div>
 
+      <!-- 每日推荐内容 -->
+      <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="openDailyRecommend()" tabindex="0" id="daily-recommend-card">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl shrink-0">✨</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] mb-1" style="color:var(--theme-text); opacity:0.5" id="daily-recommend-tag">今日推荐 · 每日更新</div>
+            <div class="text-sm font-title leading-relaxed" style="color:var(--theme-text)" id="daily-recommend-title">
+              加载中...
+            </div>
+            <div class="text-[10px] mt-1" style="color:var(--theme-text); opacity:0.6" id="daily-recommend-desc">
+              点击探索今日专属内容
+            </div>
+          </div>
+          <div class="text-lg opacity-40 shrink-0">→</div>
+        </div>
+      </div>
+
       <!-- 每日福利/任务卡片 -->
       <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="showPage('vip');initVip()" tabindex="0" id="daily-bonus-card">
         <div class="flex items-start gap-3">
@@ -4634,6 +4651,18 @@
         <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-6"><div class="text-xs" style="color:var(--text-mute)">六</div><div class="text-lg">💎</div><div class="text-[10px]" style="color:var(--text-mute)">+10</div></div>
         <div class="text-center p-2 rounded-xl" style="background:rgba(255,255,255,0.5)" id="checkin-d-7"><div class="text-xs" style="color:var(--text-mute)">日</div><div class="text-lg">🎁</div><div class="text-[10px]" style="color:var(--text-mute)">+20</div></div>
       </div>
+      <!-- 30天进度条 -->
+      <div class="mb-3 px-1">
+        <div class="flex items-center justify-between text-[10px] mb-1" style="color:var(--text-mute)">
+          <span>月度进度</span>
+          <span id="checkin-month-label">0/30 天</span>
+        </div>
+        <div class="w-full rounded-full h-1.5" style="background:rgba(212,181,199,0.15)">
+          <div id="checkin-month-progress" class="h-1.5 rounded-full transition-all duration-500" style="background:linear-gradient(90deg,#D4B5C7,#B8A9C9);width:0%"></div>
+        </div>
+      </div>
+      <!-- 漏签警告 -->
+      <div id="checkin-streak-warning" class="text-[10px] text-center py-1.5 mb-2 rounded-lg hidden" style="background:rgba(232,176,144,0.15);color:var(--theme-primary)"></div>
       <button type="button" id="checkin-btn" onclick="doCheckIn()" class="btn-primary w-full py-3 rounded-xl" aria-label="今日签到">今日签到</button>
       <button type="button" id="checkin-done" class="btn-soft w-full py-3 rounded-xl hidden" disabled aria-label="已签到 ✓">已签到 ✓</button>
     </div>

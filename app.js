@@ -78,15 +78,105 @@ function checkRetention() {
   if(!lastVisit) return;
   const lastDate = new Date(lastVisit);
   const daysDiff = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
-  if(daysDiff >= 3 && daysDiff < 30) {
-    // 回归奖励
-    const reward = Math.min(50, daysDiff * 5);
+  if(daysDiff < 2) return; // 正常连续访问，不触发
+  
+  // 分档回归奖励
+  let reward = 0;
+  let msg = '';
+  if(daysDiff >= 3 && daysDiff < 7) {
+    reward = 20;
+    msg = `欢迎回来！失踪 ${daysDiff} 天，送你 ${reward} 星光水晶 💎`;
+  } else if(daysDiff >= 7 && daysDiff < 14) {
+    reward = 50;
+    msg = `好久不见！${daysDiff} 天未登录，回归奖励 ${reward} 星光水晶 💎✨`;
+  } else if(daysDiff >= 14 && daysDiff < 30) {
+    reward = 100;
+    msg = `你终于回来了！${daysDiff} 天未见，送你 ${reward} 星光水晶 + 1 次免费解锁 🎁`;
+    // 赠送免费解锁
+    crystalState.tarotUnlocks = (crystalState.tarotUnlocks || 0) + 1;
+  } else if(daysDiff >= 30) {
+    reward = 200;
+    msg = `哇！${daysDiff} 天未见，超级回归奖励 ${reward} 星光水晶 + 3 次免费解锁 🌟🌟🌟`;
+    crystalState.tarotUnlocks = (crystalState.tarotUnlocks || 0) + 3;
+  }
+  
+  if(reward > 0) {
     crystalState.crystals += reward;
     saveVipState();
     updateCrystalDisplay();
-    showToast(`欢迎回来！失踪 ${daysDiff} 天奖励 ${reward} 星光水晶 💎`);
+    showToast(msg);
     triggerConfetti();
+    trackEvent('retention_return', { daysAway: daysDiff, reward: reward });
   }
+  
+  // 检查连续活跃天数（用于活跃度提醒）
+  checkActiveStreak();
+}
+
+/* ===== 连续活跃提醒 ===== */
+function checkActiveStreak() {
+  const today = new Date().toDateString();
+  const lastActive = safeLocalStorage.getItem('wish_island_active_date');
+  if(lastActive === today) return;
+  
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yestStr = yesterday.toDateString();
+  
+  let streak = parseInt(safeLocalStorage.getItem('wish_island_active_streak') || '0');
+  if(lastActive === yestStr) {
+    streak++;
+  } else {
+    streak = 1;
+  }
+  safeLocalStorage.setItem('wish_island_active_streak', String(streak));
+  safeLocalStorage.setItem('wish_island_active_date', today);
+  
+  // 里程碑提醒
+  if(streak === 3) showToast('连续 3 天使用！保持这个势头 ✨');
+  if(streak === 7) { showToast('连续 7 天！你已经养成了成长习惯 🔥'); triggerConfetti(); }
+  if(streak === 21) { showToast('连续 21 天！你是真正的显化践行者 💪'); triggerConfetti(); }
+  if(streak === 30) { showToast('连续 30 天！你已建立强大的成长习惯 🏆'); triggerConfetti(); }
+  if(streak === 100) { showToast('连续 100 天！百炼成钢，你是最闪耀的星 ⭐'); triggerConfetti(); }
+}
+
+/* ===== 推送通知 ===== */
+function requestNotificationPermission() {
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default') {
+    setTimeout(() => {
+      Notification.requestPermission().then(permission => {
+        if(permission === 'granted') {
+          trackEvent('notification_permission', { granted: true });
+          scheduleDailyNotifications();
+        }
+      });
+    }, 30000); // 30秒后请求，不打扰首次体验
+  }
+}
+function scheduleDailyNotifications() {
+  if(Notification.permission !== 'granted') return;
+  // 每天9:00和21:00提醒
+  const now = new Date();
+  const morning = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0);
+  const evening = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 0, 0);
+  if(morning <= now) morning.setDate(morning.getDate()+1);
+  if(evening <= now) evening.setDate(evening.getDate()+1);
+  
+  const morningDelay = morning - now;
+  const eveningDelay = evening - now;
+  
+  setTimeout(() => {
+    sendNotification('早安☀️', '新的一天，新的显化能量。来许个愿吧！');
+  }, morningDelay);
+  setTimeout(() => {
+    sendNotification('晚安🌙', '睡前回顾今天的小确幸，感恩今天拥有的一切。');
+  }, eveningDelay);
+}
+function sendNotification(title, body) {
+  if(Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, { body, icon: '/icon-192.png', badge: '/icon-192.png', tag: 'wish-island-daily' });
+  } catch(e) {}
 }
 
 /* ===== 会员到期提醒 ===== */
@@ -6271,6 +6361,7 @@ function initVip() {
   if(vipBadge) vipBadge.style.display = tier !== 'free' ? 'inline-block' : 'none';
   // 首页每日福利更新
   updateDailyBonusCard();
+  renderDailyRecommend();
   renderCheckIn();
   renderTasks();
   generateInviteCode();
@@ -6285,13 +6376,45 @@ function renderCheckIn() {
   const doneBtn = document.getElementById('checkin-done');
   if(btn) btn.style.display = done ? 'none' : 'block';
   if(doneBtn) doneBtn.style.display = done ? 'block' : 'none';
+  
+  // 漏签检测和提示
+  if(!done && crystalState.dailyCheckIn.streak > 0) {
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yestStr = yesterday.toLocaleDateString('zh-CN');
+    if(crystalState.dailyCheckIn.date !== yestStr) {
+      // 漏签警告 - 在按钮下方显示
+      const streakWarn = document.getElementById('checkin-streak-warning');
+      if(streakWarn) {
+        streakWarn.style.display = 'block';
+        streakWarn.innerHTML = `⚠️ 连续打卡即将中断！当前连续 ${crystalState.dailyCheckIn.streak} 天，今日签到即可保持`;
+      }
+    } else {
+      const streakWarn = document.getElementById('checkin-streak-warning');
+      if(streakWarn) streakWarn.style.display = 'none';
+    }
+  }
+  
   for(let i=1;i<=7;i++){
     const el = document.getElementById('checkin-d-'+i);
     if(!el) continue;
     if(i <= (crystalState.dailyCheckIn.streak || 0)) {
       el.style.background = 'linear-gradient(135deg,#D4B5C7,#B8A9C9)';
       el.querySelectorAll('div').forEach(d => d.style.color = 'white');
+    } else {
+      el.style.background = 'rgba(255,255,255,0.5)';
+      el.querySelectorAll('div').forEach(d => d.style.color = '');
     }
+  }
+  
+  // 30天进度条
+  const monthProgress = document.getElementById('checkin-month-progress');
+  if(monthProgress) {
+    const streak = crystalState.dailyCheckIn.streak || 0;
+    const daysInMonth = streak % 30;
+    const pct = Math.round((daysInMonth / 30) * 100);
+    monthProgress.style.width = pct + '%';
+    const monthLabel = document.getElementById('checkin-month-label');
+    if(monthLabel) monthLabel.textContent = `${daysInMonth}/30 天`;
   }
 }
 function doCheckIn() {
@@ -6302,19 +6425,45 @@ function doCheckIn() {
   const yestStr = yesterday.toLocaleDateString('zh-CN');
   if(crystalState.dailyCheckIn.date === yestStr) streak++; else streak = 1;
   crystalState.dailyCheckIn = { date: today, streak };
+  
+  // 基础奖励
   let reward = 5;
   if(streak >= 7) reward = 20;
   if(streak >= 21) reward = 50;
   if(streak >= 30) reward = 100;
-  crystalState.crystals += reward;
+  
+  // VIP双倍奖励
+  const tier = getCurrentTier();
+  if(tier !== 'free') {
+    reward = Math.floor(reward * 1.5);
+  }
+  
+  // 里程碑额外奖励
+  let milestoneBonus = 0;
+  let milestoneMsg = '';
+  if(streak === 7) { milestoneBonus = 30; milestoneMsg = '连续7天里程碑！额外奖励30水晶 🎉'; }
+  if(streak === 14) { milestoneBonus = 50; milestoneMsg = '连续14天！半月的坚持，额外奖励50水晶 🔥'; }
+  if(streak === 21) { milestoneBonus = 80; milestoneMsg = '连续21天！习惯已养成，额外奖励80水晶 💪'; }
+  if(streak === 30) { milestoneBonus = 150; milestoneMsg = '连续30天！满月成就，额外奖励150水晶 🏆'; }
+  if(streak === 60) { milestoneBonus = 300; milestoneMsg = '连续60天！双月成就，额外奖励300水晶 ⭐⭐'; }
+  if(streak === 100) { milestoneBonus = 500; milestoneMsg = '连续100天！百日筑基，额外奖励500水晶 🌟🌟🌟'; }
+  
+  const totalReward = reward + milestoneBonus;
+  crystalState.crystals += totalReward;
   crystalState.tasksToday.checkin = true;
   saveVipState();
   renderCheckIn();
   renderTasks();
   updateCrystalDisplay();
-  trackCheckIn(streak, reward);
-  showToast(`签到成功！连续 ${streak} 天，获得 ${reward} 星光水晶 ✨`);
+  trackCheckIn(streak, totalReward);
+  
+  let toastMsg = `签到成功！连续 ${streak} 天`;
+  if(tier !== 'free') toastMsg += ` (VIP×1.5)`;
+  toastMsg += `，获得 ${totalReward} 星光水晶 ✨`;
+  if(milestoneBonus > 0) toastMsg += ` ${milestoneMsg}`;
+  showToast(toastMsg);
   triggerConfetti();
+  if(milestoneBonus > 0) setTimeout(triggerConfetti, 500);
 }
 function renderTasks() {
   const t = crystalState.tasksToday;
@@ -6782,6 +6931,35 @@ function updateDailyBonusCard() {
     textEl.textContent = done ? '今日已签到，明日再来 ✨' : '签到领取星光水晶，兑换专属功能';
   }
 }
+
+/* ===== 每日推荐内容 ===== */
+const DAILY_RECOMMENDS = [
+  { day: 0, tag: '周一 · 新起点', title: '设定本周意图', desc: '写下3个本周想要实现的小目标，启动显化能量', action: 'openModule(\'intention\')', icon: '🎯' },
+  { day: 1, tag: '周二 · 感恩日', title: '感恩风暴练习', desc: '快速列出10件今天值得感恩的事，提升振动频率', action: 'openModule(\'gratitude\')', icon: '💝' },
+  { day: 2, tag: '周三 · 释放日', title: '旧故事翻篇', desc: '写下想要放旧的信念，进行释放仪式', action: 'openModule(\'rewrite\')', icon: '📜' },
+  { day: 3, tag: '周四 · 聚焦日', title: '心念转轮练习', desc: '用聚焦轮可视化你的愿望，感受已实现的状态', action: 'openModule(\'focuswheel\')', icon: '🎡' },
+  { day: 4, tag: '周五 · 财富日', title: '自然钱包充值', desc: '写下你值得拥有的财富，感受富足的能量', action: 'openModule(\'wallet\')', icon: '💰' },
+  { day: 5, tag: '周六 · 自我日', title: '情绪花园记录', desc: '记录今天的心情，绘制你的情绪花园', action: 'showPage(\'mood-report\')', icon: '🌸' },
+  { day: 6, tag: '周日 · 回顾日', title: '本周成长回顾', desc: '回顾本周的成长轨迹，为下周蓄能', action: 'showPage(\'weekly-review\')', icon: '📊' }
+];
+function renderDailyRecommend() {
+  const day = new Date().getDay();
+  const rec = DAILY_RECOMMENDS[day];
+  const tagEl = document.getElementById('daily-recommend-tag');
+  const titleEl = document.getElementById('daily-recommend-title');
+  const descEl = document.getElementById('daily-recommend-desc');
+  const card = document.getElementById('daily-recommend-card');
+  if(tagEl) tagEl.textContent = rec.tag;
+  if(titleEl) titleEl.textContent = rec.title;
+  if(descEl) descEl.textContent = rec.desc;
+  if(card) card.setAttribute('onclick', rec.action);
+}
+function openDailyRecommend() {
+  const day = new Date().getDay();
+  const rec = DAILY_RECOMMENDS[day];
+  try { eval(rec.action); } catch(e) { showToast('功能即将上线'); }
+  trackEvent('daily_recommend_click', { day: day, title: rec.title });
+}
 document.addEventListener('DOMContentLoaded', function() {
   // P1-6: Keyboard scroll handling for mobile inputs
   if ('visualViewport' in window) {
@@ -6808,6 +6986,7 @@ document.addEventListener('DOMContentLoaded', function() {
     autoDarkMode();
     initZodiacAndBirthday();
     checkRetention();
+    requestNotificationPermission();
     // 首次打开显示引导
     if(isFirstOpen()) {
       markFirstOpen();
@@ -9497,6 +9676,11 @@ window.checkRetention = checkRetention;
 window.neverShowOfferAgain = neverShowOfferAgain;
 window.shouldShowOffer = shouldShowOffer;
 window.updateDailyBonusCard = updateDailyBonusCard;
+window.renderDailyRecommend = renderDailyRecommend;
+window.openDailyRecommend = openDailyRecommend;
+window.requestNotificationPermission = requestNotificationPermission;
+window.scheduleDailyNotifications = scheduleDailyNotifications;
+window.sendNotification = sendNotification;
 window.unlockWithCrystals = unlockWithCrystals;
 window.shareForCrystals = shareForCrystals;
 window.copyShareLink = copyShareLink;
