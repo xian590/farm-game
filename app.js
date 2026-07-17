@@ -1904,6 +1904,12 @@ function showBadgeUnlock(name) {
     if (modal.querySelector('.badge-unlock-bg')) {
       modal.querySelector('.badge-unlock-bg').style.background = badge.color || '#E8B5C8';
     }
+    // 重要徽章显示会员专属提示
+    const memberPrompt = modal.querySelector('#badge-unlock-member');
+    if(memberPrompt) {
+      const isImportant = ['坚持者', '自律女王', '日记少女', '日记作家', '情绪大师', '成长毕业生'].includes(name);
+      memberPrompt.style.display = (isImportant && getCurrentTier() === 'free') ? 'block' : 'none';
+    }
     showModal('badge-unlock-modal');
   } else {
     showToast(`🏆 获得徽章：${name}！`);
@@ -3764,6 +3770,25 @@ function finishTest() {
           <div class="text-xs font-medium mb-1" style="color:#B8955A">💡 你的核心卡点信念</div>
           <div class="text-xs" style="color:var(--theme-text); opacity:0.75">${p.topBelief}</div>
           <div class="text-[10px] mt-1" style="color:var(--theme-text); opacity:0.5">建议先去信念净化塔清理这个卡点哦</div>
+        </div>
+        <!-- 完整人格报告 - 会员专属 -->
+        <div class="p-3 rounded-xl mb-3" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(212,181,199,0.08));border:1px solid rgba(245,158,11,0.15)">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">📋</span>
+            <div class="flex-1">
+              <div class="text-xs font-medium" style="color:var(--theme-text)">完整人格成长报告</div>
+              <div class="text-[10px]" style="color:var(--text-mute)">包含深度分析 + 成长建议 + 专属肯定语</div>
+            </div>
+          </div>
+          ${getCurrentTier() === 'free' ? `
+          <button onclick="hideModal('test-modal');showPage('vip-plans')" class="w-full py-2.5 rounded-xl text-xs font-medium" style="background:linear-gradient(135deg,#F59E0B,#FDE68A);color:white">
+            👑 升级会员解锁完整报告
+          </button>
+          ` : `
+          <button onclick="generatePersonaReport('${pid}')" class="w-full py-2.5 rounded-xl text-xs font-medium" style="background:linear-gradient(135deg,#F59E0B,#FDE68A);color:white">
+            📥 生成完整报告 PDF
+          </button>
+          `}
         </div>
         <button onclick="enterIslandFromTest('${pid}')" class="soft-btn btn-primary w-full py-3.5 text-base font-title mb-2">
           🏝️ 进入我的岛屿
@@ -6215,9 +6240,9 @@ function checkQuota(feature, action) {
     showToast(`消耗 1 次水晶解锁的${feature === 'ai' ? 'AI对话' : feature === 'tarot' ? '塔罗占卜' : 'SATS放松'} 💎`);
     return true;
   }
-  if (feature === 'tarot') { if (todayUsage.tarot >= tier.dailyTarot) { showQuotaLock('星辰塔罗', tier.dailyTarot, 3, 'tarot_once'); return false; } todayUsage.tarot++; saveVipState(); return true; }
-  if (feature === 'ai') { if (todayUsage.ai >= tier.dailyAI) { showQuotaLock('AI 对话', tier.dailyAI, 5, 'ai_once'); return false; } todayUsage.ai++; saveVipState(); return true; }
-  if (feature === 'sats') { if (todayUsage.sats >= tier.dailySats) { showQuotaLock('SATS 冥想', tier.dailySats, 3, 'sats_once'); return false; } todayUsage.sats++; saveVipState(); return true; }
+  if (feature === 'tarot') { if (todayUsage.tarot >= tier.dailyTarot) { showQuotaLock('星辰塔罗', tier.dailyTarot, 5, 'tarot_once'); return false; } todayUsage.tarot++; saveVipState(); return true; }
+  if (feature === 'ai') { if (todayUsage.ai >= tier.dailyAI) { showQuotaLock('AI 对话', tier.dailyAI, 10, 'ai_once'); return false; } todayUsage.ai++; saveVipState(); return true; }
+  if (feature === 'sats') { if (todayUsage.sats >= tier.dailySats) { showQuotaLock('SATS 冥想', tier.dailySats, 5, 'sats_once'); return false; } todayUsage.sats++; saveVipState(); return true; }
   if (feature === 'books') { return true; } // book lock handled by book count
   return true;
 }
@@ -6727,7 +6752,7 @@ window.renderLibrary = function() {
 const originalExportAllData = window.exportAllData || function(){};
 window.exportAllData = function() { if(isFeatureLocked('export')) { showLockModal('数据导出', '导出数据是会员专属功能。升级会员即可备份所有成长记录。'); return; } originalExportAllData(); };
 const originalInitMovies = window.initMovies || function(){};
-window.initMovies = function() { if(isFeatureLocked('movies')) { showLockModal('疗愈影院', '疗愈影院是会员专属功能。升级会员解锁10部成长疗愈影院。', { crystalCost: 5, crystalType: 'movie_once' }); return; } originalInitMovies(); };
+window.initMovies = function() { if(isFeatureLocked('movies')) { showLockModal('疗愈影院', '疗愈影院是会员专属功能。升级会员解锁10部成长疗愈影院。', { crystalCost: 10, crystalType: 'movie_once' }); return; } originalInitMovies(); };
 const originalInitSp = window.initSp || function(){};
 window.initSp = function() { if(isFeatureLocked('spFull')) { showLockModal('SP成长专区', 'SP完整专区是会员专属功能。免费版可浏览基础肯定语。'); /* Still show but limited */ originalInitSp(); return; } originalInitSp(); };
 const originalInitGrowth = window.renderGrowth || function(){};
@@ -6738,7 +6763,7 @@ window.openBookDetail = function(id, type) {
   const bookIds = Object.keys(typeof BOOK_DETAILS !== 'undefined' ? BOOK_DETAILS : {});
   const idx = bookIds.indexOf(id);
   if(idx >= 0 && idx >= tier.books && getCurrentTier() === 'free') {
-    showLockModal('书籍解锁', `你已解锁 ${tier.books} 本书。升级会员解锁全部 8 本经典。或用星光水晶单独解锁。`, { crystalCost: 10, crystalType: 'book' });
+    showLockModal('书籍解锁', `你已解锁 ${tier.books} 本书。升级会员解锁全部 8 本经典。或用星光水晶单独解锁。`, { crystalCost: 15, crystalType: 'book' });
     return;
   }
   originalOpenBookDetail(id, type);
@@ -9504,8 +9529,77 @@ window.shareForCrystals = shareForCrystals;
 window.copyShareLink = copyShareLink;
 window.claimFreeTrial = claimFreeTrial;
 window.hasUsedFreeTrial = hasUsedFreeTrial;
+
+/* ===== 生成人格报告 PDF ===== */
+function generatePersonaReport(personaId) {
+  const p = PERSONAS && PERSONAS.length > 0 ? (PERSONAS.find(x => x.id === personaId) || PERSONAS[0]) : null;
+  if(!p) { showToast('人格数据加载失败'); return; }
+  const scores = testState.scores || {};
+  const { action=0, create=0, empathy=0, stable=0, charm=0 } = scores;
+  const total = action + create + empathy + stable + charm;
+  const safeTotal = total > 0 ? total : 1;
+  
+  const reportHTML = `
+    <html><head><meta charset="utf-8"><title>许愿岛 - 人格成长报告</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #FAF5F7; color: #5D4E6D; }
+      .header { text-align: center; padding: 30px; background: linear-gradient(135deg, ${p.flowerColor1}, ${p.flowerColor2}); border-radius: 20px; margin-bottom: 30px; color: white; }
+      .section { background: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+      h1 { margin: 0; font-size: 24px; }
+      h2 { color: ${p.color}; font-size: 18px; margin-top: 0; }
+      .trait-bar { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+      .trait-label { width: 60px; font-size: 14px; }
+      .trait-track { flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+      .trait-fill { height: 100%; border-radius: 4px; }
+      .affirmation { background: linear-gradient(135deg, rgba(212,181,199,0.1), rgba(245,158,11,0.05)); padding: 15px; border-radius: 12px; font-style: italic; border-left: 3px solid ${p.color}; }
+    </style></head><body>
+    <div class="header">
+      <div style="font-size: 48px; margin-bottom: 10px;">🌸</div>
+      <h1>${p.name} · 人格成长报告</h1>
+      <p style="opacity: 0.9; margin: 5px 0 0;">${p.flower} · ${p.animal} · ${p.trait}主导</p>
+    </div>
+    <div class="section">
+      <h2>✨ 你的核心特质</h2>
+      <p style="line-height: 1.6;">${p.desc}</p>
+      <p style="line-height: 1.6; margin-top: 10px;"><strong>天赋优势：</strong>${p.talent}</p>
+      <p style="line-height: 1.6;"><strong>成长建议：</strong>${p.growth}</p>
+    </div>
+    <div class="section">
+      <h2>📊 五特质分析</h2>
+      <div class="trait-bar"><span class="trait-label">🔥 行动</span><div class="trait-track"><div class="trait-fill" style="width:${Math.round(action/safeTotal*100)}%; background:#D4A5B8"></div></div><span>${Math.round(action/safeTotal*100)}%</span></div>
+      <div class="trait-bar"><span class="trait-label">🎨 创造</span><div class="trait-track"><div class="trait-fill" style="width:${Math.round(create/safeTotal*100)}%; background:#B8A9C9"></div></div><span>${Math.round(create/safeTotal*100)}%</span></div>
+      <div class="trait-bar"><span class="trait-label">💗 共情</span><div class="trait-track"><div class="trait-fill" style="width:${Math.round(empathy/safeTotal*100)}%; background:#F0D5E0"></div></div><span>${Math.round(empathy/safeTotal*100)}%</span></div>
+      <div class="trait-bar"><span class="trait-label">🌿 稳定</span><div class="trait-track"><div class="trait-fill" style="width:${Math.round(stable/safeTotal*100)}%; background:#88C898"></div></div><span>${Math.round(stable/safeTotal*100)}%</span></div>
+      <div class="trait-bar"><span class="trait-label">✨ 魅力</span><div class="trait-track"><div class="trait-fill" style="width:${Math.round(charm/safeTotal*100)}%; background:#E8C87A"></div></div><span>${Math.round(charm/safeTotal*100)}%</span></div>
+    </div>
+    <div class="section">
+      <h2>🎯 核心卡点</h2>
+      <p style="line-height: 1.6;">${p.topBelief}</p>
+    </div>
+    <div class="section">
+      <h2>💎 专属肯定语</h2>
+      <div class="affirmation">${p.affirmation}</div>
+    </div>
+    <div style="text-align: center; font-size: 12px; color: #aaa; margin-top: 30px;">
+      生成于许愿岛 · ${new Date().toLocaleDateString('zh-CN')}<br>
+      此报告为会员专属内容
+    </div>
+    </body></html>
+  `;
+  
+  const w = window.open('', '_blank');
+  if(w) {
+    w.document.write(reportHTML);
+    w.document.close();
+    setTimeout(() => { w.print(); }, 500);
+    showToast('报告已生成，请使用"保存为 PDF" 💫');
+  } else {
+    showToast('弹窗被拦截，请允许弹窗后重试');
+  }
+}
 window.checkExpiryReminder = checkExpiryReminder;
 window.showExpiryModal = showExpiryModal;
+window.generatePersonaReport = generatePersonaReport;
 window.checkRatingPrompt = checkRatingPrompt;
 window.showRatingModal = showRatingModal;
 window.showFaqModal = showFaqModal;
