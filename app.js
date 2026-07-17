@@ -6259,6 +6259,8 @@ function showPaymentModal(planId) {
   const plan = 星光会员_PRICES[planId];
   if(!plan) return;
   const tierName = plan.tier === 'member' ? '自然会员' : '星际高级会员';
+  // 模拟社交证明数字
+  const socialProof = 1200 + Math.floor(Math.random() * 300);
   // 创建或复用支付弹窗
   let modal = document.getElementById('payment-modal');
   if(!modal) {
@@ -6278,6 +6280,11 @@ function showPaymentModal(planId) {
         <div class="text-sm font-medium mb-1">${tierName} · ${plan.name}</div>
         <div class="text-2xl font-bold" style="color:var(--theme-text)">¥${plan.price}<span class="text-sm font-normal" style="color:var(--text-mute)">/${plan.period}</span></div>
         ${plan.bonus ? `<div class="text-xs mt-1" style="color:var(--text-mute)">额外赠送 ${plan.bonus} 星光水晶 💎</div>` : ''}
+      </div>
+      <!-- 社交证明 + 倒计时 -->
+      <div class="mb-3 p-3 rounded-xl text-center" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(212,181,199,0.1));border:1px solid rgba(245,158,11,0.15)">
+        <div class="text-xs mb-1" style="color:var(--text-mute)">👥 已有 <span class="font-bold" style="color:var(--theme-text)">${socialProof}</span> 人升级会员</div>
+        ${plan.limited ? `<div class="text-xs font-medium" style="color:#F59E0B">⏰ 限时特惠 · 剩余 <span id="payment-countdown">05:00</span></div>` : ''}
       </div>
       <div class="space-y-2 mb-4">
         <button type="button" onclick="processPayment('${planId}', 'wechat')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#07C160" aria-label="微信支付">
@@ -6301,6 +6308,20 @@ function showPaymentModal(planId) {
     </div>
   `;
   modal.classList.add('show');
+  // 限时倒计时
+  if(plan.limited) {
+    let seconds = 300;
+    const el = document.getElementById('payment-countdown');
+    if(el) {
+      const timer = setInterval(() => {
+        if(seconds <= 0 || !document.getElementById('payment-modal')?.classList.contains('show')) { clearInterval(timer); return; }
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        el.textContent = `${m}:${s}`;
+        seconds--;
+      }, 1000);
+    }
+  }
 }
 function closePaymentModal() {
   const m = document.getElementById('payment-modal');
@@ -6491,7 +6512,7 @@ window.renderLibrary = function() {
 const originalExportAllData = window.exportAllData || function(){};
 window.exportAllData = function() { if(isFeatureLocked('export')) { showLockModal('数据导出', '导出数据是会员专属功能。升级会员即可备份所有成长记录。'); return; } originalExportAllData(); };
 const originalInitMovies = window.initMovies || function(){};
-window.initMovies = function() { if(isFeatureLocked('movies')) { showLockModal('疗愈影院', '疗愈影院是会员专属功能。升级会员解锁10部成长疗愈影院。'); return; } originalInitMovies(); };
+window.initMovies = function() { if(isFeatureLocked('movies')) { showLockModal('疗愈影院', '疗愈影院是会员专属功能。升级会员解锁10部成长疗愈影院。', { crystalCost: 5, crystalType: 'movie_once' }); return; } originalInitMovies(); };
 const originalInitSp = window.initSp || function(){};
 window.initSp = function() { if(isFeatureLocked('spFull')) { showLockModal('SP成长专区', 'SP完整专区是会员专属功能。免费版可浏览基础肯定语。'); /* Still show but limited */ originalInitSp(); return; } originalInitSp(); };
 const originalInitGrowth = window.renderGrowth || function(){};
@@ -6502,7 +6523,7 @@ window.openBookDetail = function(id, type) {
   const bookIds = Object.keys(typeof BOOK_DETAILS !== 'undefined' ? BOOK_DETAILS : {});
   const idx = bookIds.indexOf(id);
   if(idx >= 0 && idx >= tier.books && getCurrentTier() === 'free') {
-    showLockModal('书籍解锁', `你已解锁 ${tier.books} 本书。升级会员解锁全部 8 本经典。或用星光水晶单独解锁。`);
+    showLockModal('书籍解锁', `你已解锁 ${tier.books} 本书。升级会员解锁全部 8 本经典。或用星光水晶单独解锁。`, { crystalCost: 10, crystalType: 'book' });
     return;
   }
   originalOpenBookDetail(id, type);
