@@ -2212,7 +2212,6 @@ function showPage(name, direction) {
       if (p.focus) p.focus({ preventScroll: true });
     }, 100);
     __pageHistory.push(name);
-    __pageHistory.push(name);
     if (__pageHistory.length > 50) __pageHistory = __pageHistory.slice(-30); // 防止历史记录无限增长
   }
   document.querySelectorAll('.modal-backdrop.show').forEach(m => m.classList.remove('show'));
@@ -2407,7 +2406,7 @@ function openModule(name) {
   if (name === 'creationbox') { showPage('creationbox'); initCreationBox(); return; }
   if (name === 'rampage') { showPage('rampage'); initRampage(); return; }
   if (name === 'treasurebox') { loadDataScript('data/treasure_tools.js').then(() => { showPage('treasurebox'); initTreasureBox(); }); return; }
-  if (name === 'quest') { loadChunk('quest').then(() => { if (typeof initQuestModule === 'function') initQuestModule(); }); return; }
+  if (name === 'quest') { loadChunk('quest').then(() => { showPage('quest'); if (typeof initQuestModule === 'function') initQuestModule(); }); return; }
   if (name === 'timeline') { showPage('timeline'); initTimeline(); return; }
   if (name === 'manifest-report') { showPage('manifest-report'); initManifestReport(); return; }
   if (name === 'affirm-loop') { showPage('affirm-loop'); initAffirmLoop(); return; }

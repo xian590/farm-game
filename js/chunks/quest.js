@@ -403,16 +403,3 @@
   }
 
 })();
-  window.initQuestModule = function() {
-    renderQuests();
-    renderTimer();
-    renderStats();
-    // Populate task selector in timer
-    const sel = document.getElementById('timer-task-select');
-    if (sel) {
-      sel.innerHTML = '<option value="">选择关联任务</option>' + state.quests.filter(q => q.status !== 'done').map(q => `<option value="${q.id}">${q.title}</option>`).join('');
-      sel.value = state.timer.taskId || '';
-    }
-  };
-
-})();
