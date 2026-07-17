@@ -2295,7 +2295,7 @@ function switchTab(tab) {
   if (window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function switchQuestTab(tab) {
-  const panels = ['tasks', 'timer', 'stats'];
+  const panels = ['tasks', 'timer', 'sprint', 'stats'];
   panels.forEach(p => {
     const panel = document.getElementById('quest-panel-' + p);
     const btn = document.getElementById('quest-tab-' + p);
@@ -2310,6 +2310,7 @@ function switchQuestTab(tab) {
       }
     }
   });
+  if (tab === 'sprint' && typeof updateRadar === 'function') updateRadar();
 }
 
 function loadDataScript(src, retries = 2) {

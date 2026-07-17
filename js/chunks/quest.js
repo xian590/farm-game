@@ -240,6 +240,126 @@
     renderQuests();
     renderTimer();
     renderStats();
+    loadSprint();
+    loadRadar();
+    // Populate task selector in timer
+    const sel = document.getElementById('timer-task-select');
+    if (sel) {
+      sel.innerHTML = '<option value="">选择关联任务</option>' + state.quests.filter(q => q.status !== 'done').map(q => `<option value="${q.id}">${q.title}</option>`).join('');
+      sel.value = state.timer.taskId || '';
+    }
+  };
+
+  // ===== SPRINT 周回顾 =====
+  const SPRINT_KEY = 'wish_island_sprint_v1';
+  window.saveSprint = function() {
+    const data = {
+      scan: document.getElementById('sprint-scan')?.value || '',
+      prioritize: document.getElementById('sprint-prioritize')?.value || '',
+      iterate: document.getElementById('sprint-iterate')?.value || '',
+      nurture: document.getElementById('sprint-nurture')?.value || '',
+      transform: document.getElementById('sprint-transform')?.value || '',
+      date: new Date().toISOString().slice(0, 10)
+    };
+    safeSet(SPRINT_KEY, data);
+    if (typeof showToast === 'function') showToast('✅ 周回顾已保存');
+  };
+  function loadSprint() {
+    const data = safeGet(SPRINT_KEY, {});
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    setVal('sprint-scan', data.scan);
+    setVal('sprint-prioritize', data.prioritize);
+    setVal('sprint-iterate', data.iterate);
+    setVal('sprint-nurture', data.nurture);
+    setVal('sprint-transform', data.transform);
+  }
+
+  // ===== 能力雷达 =====
+  const RADAR_KEY = 'wish_island_radar_v1';
+  const RADAR_DIMS = ['action', 'create', 'empathy', 'stable', 'charm'];
+  const RADAR_LABELS = { action: '行动力', create: '创造力', empathy: '共情力', stable: '稳定力', charm: '魅力' };
+  const RADAR_COLORS = { action: '#E8B5C8', create: '#B8A9C9', empathy: '#A8D5B0', stable: '#C9D8E8', charm: '#F5E6C8' };
+
+  function renderRadarChart(values) {
+    const container = document.getElementById('radar-chart');
+    if (!container) return;
+    const size = 180, cx = size / 2, cy = size / 2, maxR = size * 0.38;
+    const dims = RADAR_DIMS;
+    const count = dims.length;
+    let points = '';
+    dims.forEach((d, i) => {
+      const angle = (Math.PI * 2 / count) * i - Math.PI / 2;
+      const r = (values[d] || 5) / 10 * maxR;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      points += `${x},${y} `;
+    });
+    // Grid lines (levels 2,4,6,8,10)
+    let grid = '';
+    [2, 4, 6, 8, 10].forEach(level => {
+      let pts = '';
+      dims.forEach((d, i) => {
+        const angle = (Math.PI * 2 / count) * i - Math.PI / 2;
+        const r = level / 10 * maxR;
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        pts += `${x},${y} `;
+      });
+      grid += `<polygon points="${pts}" fill="none" stroke="rgba(184,169,201,0.2)" stroke-width="0.5"/>`;
+    });
+    // Axis lines
+    let axes = '';
+    dims.forEach((d, i) => {
+      const angle = (Math.PI * 2 / count) * i - Math.PI / 2;
+      const x = cx + Math.cos(angle) * maxR;
+      const y = cy + Math.sin(angle) * maxR;
+      axes += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(184,169,201,0.2)" stroke-width="0.5"/>`;
+      const lx = cx + Math.cos(angle) * (maxR + 14);
+      const ly = cy + Math.sin(angle) * (maxR + 14);
+      axes += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#8B7E9C" font-size="9">${RADAR_LABELS[d]}</text>`;
+    });
+    container.innerHTML = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${grid}${axes}<polygon points="${points}" fill="rgba(184,169,201,0.15)" stroke="#B8A9C9" stroke-width="1.5"/></svg>`;
+  }
+
+  window.updateRadar = function() {
+    const vals = {};
+    RADAR_DIMS.forEach(d => {
+      const el = document.getElementById('radar-' + d);
+      const valEl = document.getElementById('radar-' + d + '-val');
+      const v = el ? parseInt(el.value) : 5;
+      vals[d] = v;
+      if (valEl) valEl.textContent = v;
+    });
+    renderRadarChart(vals);
+  };
+
+  window.saveRadar = function() {
+    const vals = {};
+    RADAR_DIMS.forEach(d => {
+      const el = document.getElementById('radar-' + d);
+      vals[d] = el ? parseInt(el.value) : 5;
+    });
+    safeSet(RADAR_KEY, vals);
+    if (typeof showToast === 'function') showToast('✅ 能力评分已保存');
+  };
+
+  function loadRadar() {
+    const vals = safeGet(RADAR_KEY, {});
+    RADAR_DIMS.forEach(d => {
+      const el = document.getElementById('radar-' + d);
+      const valEl = document.getElementById('radar-' + d + '-val');
+      const v = vals[d] || 5;
+      if (el) el.value = v;
+      if (valEl) valEl.textContent = v;
+    });
+    renderRadarChart(vals);
+  }
+
+})();
+  window.initQuestModule = function() {
+    renderQuests();
+    renderTimer();
+    renderStats();
     // Populate task selector in timer
     const sel = document.getElementById('timer-task-select');
     if (sel) {

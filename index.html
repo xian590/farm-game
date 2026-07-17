@@ -3266,6 +3266,7 @@
       <div class="flex gap-2 mb-4">
         <button type="button" id="quest-tab-tasks" onclick="switchQuestTab('tasks')" class="flex-1 py-2 rounded-xl text-xs font-medium" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8);color:white">任务</button>
         <button type="button" id="quest-tab-timer" onclick="switchQuestTab('timer')" class="flex-1 py-2 rounded-xl text-xs font-medium" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">计时</button>
+        <button type="button" id="quest-tab-sprint" onclick="switchQuestTab('sprint')" class="flex-1 py-2 rounded-xl text-xs font-medium" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">飞轮</button>
         <button type="button" id="quest-tab-stats" onclick="switchQuestTab('stats')" class="flex-1 py-2 rounded-xl text-xs font-medium" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">统计</button>
       </div>
 
@@ -3323,6 +3324,48 @@
             <button type="button" onclick="if(typeof TimerAPI!=='undefined')TimerAPI.setMode('countdown');TimerAPI.setDuration(45);" class="text-[10px] px-2 py-1 rounded-lg" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">⏳ 45分</button>
             <button type="button" onclick="if(typeof TimerAPI!=='undefined')TimerAPI.setMode('stopwatch');" class="text-[10px] px-2 py-1 rounded-lg" style="background:rgba(184,169,201,0.12);color:var(--theme-text)">⏱️ 正计时</button>
           </div>
+        </div>
+      </div>
+
+      <!-- 统计面板 -->
+      <div id="quest-panel-sprint" class="hidden">
+        <div class="glass-card p-4 mb-4">
+          <div class="text-xs font-medium mb-3" style="color:var(--theme-text)">🌀 SPRINT 周回顾</div>
+          <div class="space-y-3">
+            <div>
+              <div class="text-[10px] mb-1" style="color:var(--text-mute)">🔍 Scan · 本周最有印象的一件事？</div>
+              <textarea id="sprint-scan" rows="2" class="w-full p-2.5 rounded-xl text-xs resize-none outline-none" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)" placeholder="本周发生了什么值得记录的事..."></textarea>
+            </div>
+            <div>
+              <div class="text-[10px] mb-1" style="color:var(--text-mute)">🎯 Prioritize · 本周最重要的目标进展？</div>
+              <textarea id="sprint-prioritize" rows="2" class="w-full p-2.5 rounded-xl text-xs resize-none outline-none" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)" placeholder="最重要的目标推进了多少..."></textarea>
+            </div>
+            <div>
+              <div class="text-[10px] mb-1" style="color:var(--text-mute)">🔄 Iterate · 哪些方法有效/无效？</div>
+              <textarea id="sprint-iterate" rows="2" class="w-full p-2.5 rounded-xl text-xs resize-none outline-none" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)" placeholder="复盘方法，哪些要继续，哪些要停止..."></textarea>
+            </div>
+            <div>
+              <div class="text-[10px] mb-1" style="color:var(--text-mute)">💝 Nurture · 这周如何照顾了自己？</div>
+              <textarea id="sprint-nurture" rows="2" class="w-full p-2.5 rounded-xl text-xs resize-none outline-none" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)" placeholder="休息、运动、社交、放松..."></textarea>
+            </div>
+            <div>
+              <div class="text-[10px] mb-1" style="color:var(--text-mute)">🚀 Transform · 下周想改变什么？</div>
+              <textarea id="sprint-transform" rows="2" class="w-full p-2.5 rounded-xl text-xs resize-none outline-none" style="background:rgba(255,255,255,0.5);border:1px solid rgba(184,169,201,0.2);color:var(--theme-text)" placeholder="下周的一个具体转变..."></textarea>
+            </div>
+          </div>
+          <button type="button" onclick="if(typeof saveSprint==='function')saveSprint()" class="soft-btn btn-primary w-full py-2.5 text-xs mt-3">保存本周回顾</button>
+        </div>
+        <div class="glass-card p-4">
+          <div class="text-xs font-medium mb-3" style="color:var(--theme-text)">📡 能力雷达</div>
+          <div id="radar-chart" class="flex justify-center mb-3"></div>
+          <div class="space-y-2" id="radar-sliders">
+            <div class="flex items-center gap-2"><div class="text-[10px] w-12">行动力</div><input type="range" min="1" max="10" value="5" id="radar-action" onchange="if(typeof updateRadar==='function')updateRadar()" class="flex-1 accent-[#B8A9C9]"><div class="text-[10px] w-4" id="radar-action-val">5</div></div>
+            <div class="flex items-center gap-2"><div class="text-[10px] w-12">创造力</div><input type="range" min="1" max="10" value="5" id="radar-create" onchange="if(typeof updateRadar==='function')updateRadar()" class="flex-1 accent-[#B8A9C9]"><div class="text-[10px] w-4" id="radar-create-val">5</div></div>
+            <div class="flex items-center gap-2"><div class="text-[10px] w-12">共情力</div><input type="range" min="1" max="10" value="5" id="radar-empathy" onchange="if(typeof updateRadar==='function')updateRadar()" class="flex-1 accent-[#B8A9C9]"><div class="text-[10px] w-4" id="radar-empathy-val">5</div></div>
+            <div class="flex items-center gap-2"><div class="text-[10px] w-12">稳定力</div><input type="range" min="1" max="10" value="5" id="radar-stable" onchange="if(typeof updateRadar==='function')updateRadar()" class="flex-1 accent-[#B8A9C9]"><div class="text-[10px] w-4" id="radar-stable-val">5</div></div>
+            <div class="flex items-center gap-2"><div class="text-[10px] w-12">魅力</div><input type="range" min="1" max="10" value="5" id="radar-charm" onchange="if(typeof updateRadar==='function')updateRadar()" class="flex-1 accent-[#B8A9C9]"><div class="text-[10px] w-4" id="radar-charm-val">5</div></div>
+          </div>
+          <button type="button" onclick="if(typeof saveRadar==='function')saveRadar()" class="soft-btn btn-primary w-full py-2.5 text-xs mt-3">保存能力评分</button>
         </div>
       </div>
 
