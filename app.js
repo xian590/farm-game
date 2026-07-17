@@ -42,6 +42,61 @@ const safeLocalStorage = {
     try { localStorage.setItem(key, JSON.stringify(obj)); return true; } catch(e) { return false; }
   }
 };
+
+/* ===== 新用户引导 ===== */
+function showOnboarding() {
+  if(safeLocalStorage.getItem('wish_island_onboarding_done')) return;
+  const modal = document.getElementById('onboarding-modal');
+  if(modal) modal.classList.add('show');
+}
+function nextOnboardingStep(step) {
+  const s1 = document.getElementById('onboarding-step-1');
+  const s2 = document.getElementById('onboarding-step-2');
+  if(s1) s1.style.display = 'none';
+  if(s2) s2.style.display = 'none';
+  if(step === 2 && s2) s2.style.display = '';
+}
+function closeOnboarding() {
+  const modal = document.getElementById('onboarding-modal');
+  if(modal) modal.classList.remove('show');
+  safeLocalStorage.setItem('wish_island_onboarding_done', 'true');
+  // 首次完成引导，送水晶奖励
+  if(!safeLocalStorage.getItem('wish_island_onboarding_reward')) {
+    safeLocalStorage.setItem('wish_island_onboarding_reward', 'true');
+    crystalState.crystals += 10;
+    saveVipState();
+    updateCrystalDisplay();
+    setTimeout(() => showToast('完成引导奖励 10 星光水晶 ✨'), 500);
+  }
+}
+
+/* ===== 留存回归奖励 ===== */
+function checkRetention() {
+  const lastVisit = safeLocalStorage.getItem('wish_island_last_visit');
+  const today = new Date().toDateString();
+  safeLocalStorage.setItem('wish_island_last_visit', today);
+  if(!lastVisit) return;
+  const lastDate = new Date(lastVisit);
+  const daysDiff = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
+  if(daysDiff >= 3 && daysDiff < 30) {
+    // 回归奖励
+    const reward = Math.min(50, daysDiff * 5);
+    crystalState.crystals += reward;
+    saveVipState();
+    updateCrystalDisplay();
+    showToast(`欢迎回来！失踪 ${daysDiff} 天奖励 ${reward} 星光水晶 💎`);
+    triggerConfetti();
+  }
+}
+
+/* ===== 首次打开检测 ===== */
+function isFirstOpen() {
+  return !safeLocalStorage.getItem('wish_island_first_open');
+}
+function markFirstOpen() {
+  safeLocalStorage.setItem('wish_island_first_open', new Date().toISOString());
+}
+
 ;
 
 /* ===== C10: 多语言支持 ===== */
@@ -2193,6 +2248,8 @@ function setTheme(theme, btn) {
 }
 let __pageHistory = [];
 function showPage(name, direction) {
+  // 追踪使用次数，用于触发付费转化
+  if (typeof trackUsage === 'function') trackUsage();
   // 页面别名映射（统一路由名称）
   const pageAlias = { dream: 'dreams', checkin: 'habit' };
   if (pageAlias[name]) name = pageAlias[name];
@@ -6044,6 +6101,9 @@ function initVip() {
   if(crystalEl) crystalEl.textContent = crystalState.crystals;
   if(upBtn) upBtn.style.display = tier === 'free' ? 'block' : 'none';
   if(reBtn) reBtn.style.display = tier !== 'free' ? 'block' : 'none';
+  // 控制"我的"页面VIP横幅
+  const banner = document.getElementById('me-vip-banner');
+  if(banner) banner.style.display = tier === 'free' ? 'block' : 'none';
   renderCheckIn();
   renderTasks();
   generateInviteCode();
@@ -6159,20 +6219,76 @@ function unlockWithCrystals(type, cost) {
 function selectSubscriptionPlan(planId) {
   const plan = 星光会员_PRICES[planId];
   if(!plan) return;
-  const tierName = plan.tier === 'member' ? '自然会员' : '星辰高级会员';
-  const period = plan.period === '月' ? '月' : '年';
-  const confirmMsg = `确认购买 ${tierName} ${plan.name}？\n价格：¥${plan.price}/${period}\n\n（此为演示，实际支付需接入支付系统）`;
-  if(!confirm(confirmMsg)) return;
-  const duration = plan.period === '月' ? 30 : 365;
-  const expiry = new Date(); expiry.setDate(expiry.getDate() + duration);
-  vipState.tier = plan.tier;
-  vipState.expiry = expiry.toISOString();
-  crystalState.purchaseHistory.push({ plan: planId, date: new Date().toISOString(), price: plan.price });
-  if(plan.bonus) { crystalState.crystals += plan.bonus; showToast(`额外赠送 ${plan.bonus} 星光水晶！`); }
-  saveVipState();
-  showToast(`🎉 购买成功！已升级为 ${tierName}`);
-  triggerConfetti();
-  setTimeout(() => { goHome(); }, 1500);
+  showPaymentModal(planId);
+}
+
+function showPaymentModal(planId) {
+  const plan = 星光会员_PRICES[planId];
+  if(!plan) return;
+  const tierName = plan.tier === 'member' ? '自然会员' : '星际高级会员';
+  // 创建或复用支付弹窗
+  let modal = document.getElementById('payment-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'payment-modal';
+    modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.onclick = function(e) { if(e.target === this) closePaymentModal(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-content p-6 text-center" style="max-width:360px">
+      <div class="text-4xl mb-3">💳</div>
+      <h3 class="font-title text-lg mb-1" style="color:var(--theme-text)">确认购买</h3>
+      <div class="mb-4">
+        <div class="text-sm font-medium mb-1">${tierName} · ${plan.name}</div>
+        <div class="text-2xl font-bold" style="color:var(--theme-text)">¥${plan.price}<span class="text-sm font-normal" style="color:var(--text-mute)">/${plan.period}</span></div>
+        ${plan.bonus ? `<div class="text-xs mt-1" style="color:var(--text-mute)">额外赠送 ${plan.bonus} 星光水晶 💎</div>` : ''}
+      </div>
+      <div class="space-y-2 mb-4">
+        <button type="button" onclick="processPayment('${planId}', 'wechat')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#07C160" aria-label="微信支付">
+          <span>💚</span> 微信支付
+        </button>
+        <button type="button" onclick="processPayment('${planId}', 'alipay')" class="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2" style="background:#1677FF" aria-label="支付宝">
+          <span>💙</span> 支付宝
+        </button>
+      </div>
+      <div class="text-xs mb-3 p-3 rounded-xl" style="background:rgba(212,181,199,0.1);color:var(--text-mute)">
+        🔒 安全支付 · 购买后自动解锁全部权益<br>
+        <span style="opacity:0.7">（当前为演示模式，模拟支付流程）</span>
+      </div>
+      <button type="button" onclick="closePaymentModal()" class="text-xs" style="color:var(--text-mute);background:transparent;border:none;padding:4px 8px;" aria-label="取消">取消</button>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+function closePaymentModal() {
+  const m = document.getElementById('payment-modal');
+  if(m) m.classList.remove('show');
+}
+function processPayment(planId, method) {
+  const plan = 星光会员_PRICES[planId];
+  if(!plan) return;
+  const tierName = plan.tier === 'member' ? '自然会员' : '星际高级会员';
+  // 模拟支付处理
+  showToast(`正在调起${method === 'wechat' ? '微信支付' : '支付宝'}...`);
+  setTimeout(() => {
+    const duration = plan.period === '月' ? 30 : 365;
+    const expiry = new Date(); expiry.setDate(expiry.getDate() + duration);
+    vipState.tier = plan.tier;
+    vipState.expiry = expiry.toISOString();
+    crystalState.purchaseHistory.push({ plan: planId, date: new Date().toISOString(), price: plan.price, method: method });
+    if(plan.bonus) { crystalState.crystals += plan.bonus; showToast(`额外赠送 ${plan.bonus} 星光水晶！`); }
+    saveVipState();
+    closePaymentModal();
+    showToast(`🎉 支付成功！已升级为 ${tierName}`);
+    triggerConfetti();
+    // 隐藏"我的"页面VIP横幅
+    const banner = document.getElementById('me-vip-banner');
+    if(banner) banner.style.display = 'none';
+    setTimeout(() => { goHome(); }, 1500);
+  }, 1500);
 }
 function showLimitedOffer() {
   const m = document.getElementById('limited-offer-modal');
@@ -6197,11 +6313,22 @@ function checkAutoPromotions() {
   loadVipState();
   if(getCurrentTier() !== 'free') return;
   const firstUse = new Date(vipState.firstUseDate || new Date());
-  const daysSince = Math.floor((new Date() - firstUse) / (1000 * 60 * 60 * 24));
-  if(daysSince >= 1 && !vipState.offerShown) {
+  const hoursSince = Math.floor((new Date() - firstUse) / (1000 * 60 * 60));
+  // 30分钟后或第3次使用时触发限时优惠
+  const usageCount = parseInt(safeLocalStorage.getItem('wish_island_usage_count', '0')) || 0;
+  if((hoursSince >= 0 && !vipState.offerShown && usageCount >= 3) || (hoursSince >= 24 && !vipState.offerShown)) {
     vipState.offerShown = true;
     saveVipState();
-    setTimeout(() => showLimitedOffer(), 3000);
+    setTimeout(() => showLimitedOffer(), 2000);
+  }
+}
+function trackUsage() {
+  let count = parseInt(safeLocalStorage.getItem('wish_island_usage_count', '0')) || 0;
+  count++;
+  safeLocalStorage.setItem('wish_island_usage_count', String(count));
+  // 第3次使用且未付费，触发限时优惠
+  if(count === 3 && getCurrentTier() === 'free') {
+    setTimeout(() => checkAutoPromotions(), 1000);
   }
 }
 const originalRenderTarot = window.renderTarot || function(){};
@@ -6264,20 +6391,10 @@ function addVipNavEntry() {
   }
 }
 function addVipToMePage() {
-  const mePage = document.getElementById('page-me');
-  if(!mePage) return;
-  const firstCard = mePage.querySelector('.glass-card');
-  if(!firstCard) return;
-  const vipCard = document.createElement('div');
-  vipCard.className = 'glass-card p-4 mb-4 cursor-pointer card-hover';
-  vipCard.setAttribute('onclick', "showPage('vip');initVip()");
-  vipCard.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg" style="background:linear-gradient(135deg,#E8B5C8,#C8A5D8)">👑</div><div class="flex-1"><div class="font-medium text-sm" style="color:var(--theme-text)">会员中心</div><div class="text-xs" style="color:var(--text-mute)">升级解锁全部成长工具</div></div><div class="text-lg opacity-40">→</div></div>`;
-  if (firstCard.parentNode === mePage) {
-    mePage.insertBefore(vipCard, firstCard);
-  } else if (mePage.firstElementChild) {
-    mePage.insertBefore(vipCard, mePage.firstElementChild);
-  } else {
-    mePage.appendChild(vipCard);
+  const banner = document.getElementById('me-vip-banner');
+  if(banner) {
+    const tier = getCurrentTier();
+    banner.style.display = tier === 'free' ? 'block' : 'none';
   }
 }
 document.addEventListener('DOMContentLoaded', function() {
@@ -6305,6 +6422,12 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDarkMode();
     autoDarkMode();
     initZodiacAndBirthday();
+    checkRetention();
+    // 首次打开显示引导
+    if(isFirstOpen()) {
+      markFirstOpen();
+      setTimeout(() => showOnboarding(), 800);
+    }
   }, 2000);
 });
   setTimeout(() => {
@@ -6315,6 +6438,12 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDarkMode();
     autoDarkMode();
     initZodiacAndBirthday();
+    checkRetention();
+    // 首次打开显示引导
+    if(isFirstOpen()) {
+      markFirstOpen();
+      setTimeout(() => showOnboarding(), 800);
+    }
   }, 2000);
 });
 let currentAudioCtx = null;
@@ -8974,6 +9103,14 @@ window.selectHabitCat = selectHabitCat;
 window.selectHabitFreq = selectHabitFreq;
 window.selectPlan = selectPlan;
 window.selectSubscriptionPlan = selectSubscriptionPlan;
+window.showPaymentModal = showPaymentModal;
+window.closePaymentModal = closePaymentModal;
+window.processPayment = processPayment;
+window.showOnboarding = showOnboarding;
+window.nextOnboardingStep = nextOnboardingStep;
+window.closeOnboarding = closeOnboarding;
+window.trackUsage = trackUsage;
+window.checkRetention = checkRetention;
 window.selectTimerDuration = selectTimerDuration;
 window.selectTimerMode = selectTimerMode;
 window.selectVoice = selectVoice;

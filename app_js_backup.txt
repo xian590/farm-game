@@ -1,0 +1,24 @@
+'use strict';
+
+/* ===== D13: 全局错误监控 ===== */
+window.__errorLog = [];
+window.__errorCount = 0;
+window.addEventListener('error', function(e) {
+  window.__errorCount++;
+  const entry = { t: Date.now(), msg: e.message, file: e.filename, line: e.lineno, type: 'error' };
+  window.__errorLog.push(entry);
+  try { sessionStorage.setItem('__error_log', JSON.stringify(window.__errorLog.slice(-20))); } catch(_) {}
+  console.warn('[ErrorMonitor]', e.message, 'at', e.filename + ':' + e.lineno);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  window.__errorCount++;
+  const entry = { t: Date.now(), msg: String(e.reason), type: 'promise' };
+  window.__errorLog.push(entry);
+  try { sessionStorage.setItem('__error_log', JSON.stringify(window.__errorLog.slice(-20))); } catch(_) {}
+  console.warn('[ErrorMonitor] Unhandled rejection:', e.reason);
+})
+
+/* ===== Safe LocalStorage Wrapper ===== */
+const safeLocalStorage = {
+  getItem: function(key, defaultVal) {
+    try { return localStorage.g
