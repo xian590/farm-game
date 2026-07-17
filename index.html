@@ -2341,11 +2341,29 @@
 
       <div class="flex gap-2 mb-5 overflow-x-auto pb-1">
         <button type="button" class="tab-pill whitespace-nowrap active" onclick="switchLibTab('course', this)" aria-label="🎓 入门课">🎓 入门课</button>
+        <button type="button" class="tab-pill whitespace-nowrap" onclick="switchLibTab('premium', this)" aria-label="💎 进阶课">💎 进阶课</button>
         <button type="button" class="tab-pill whitespace-nowrap" onclick="switchLibTab('books', this)" aria-label="📖 经典拆解">📖 经典拆解</button>
         <button type="button" class="tab-pill whitespace-nowrap" onclick="switchLibTab('methods', this)" aria-label="💡 方法大全">💡 方法大全</button>
         <button type="button" class="tab-pill whitespace-nowrap" onclick="switchLibTab('guide', this)" aria-label="🎯 场景指南">🎯 场景指南</button>
         <button type="button" class="tab-pill whitespace-nowrap" onclick="switchLibTab('plans', this)" aria-label="📋 成长计划">📋 成长计划</button>
         <button type="button" class="tab-pill whitespace-nowrap" onclick="switchLibTab('media', this)" aria-label="🎬 书影音">🎬 书影音</button>
+      </div>
+
+      <div id="lib-premium" class="hidden space-y-4">
+        <div class="glass-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-title text-lg" style="color:var(--theme-text)">💎 进阶成长课程</h3>
+            <span class="text-[10px] px-2 py-1 rounded-full" style="background:linear-gradient(135deg,rgba(245,213,185,0.3),rgba(212,181,199,0.2));color:var(--theme-primary)">会员专享</span>
+          </div>
+          <p class="text-xs mb-4" style="color:var(--text-mute)">深度系统化课程，解锁高级显化方法，加速愿望实现</p>
+          <div class="space-y-3" id="premium-course-list"></div>
+        </div>
+        <div class="glass-card p-4 text-center" style="background:linear-gradient(135deg,rgba(212,181,199,0.1),rgba(184,169,201,0.05))">
+          <div class="text-2xl mb-2">🌟</div>
+          <p class="text-sm font-medium mb-1" style="color:var(--theme-text)">解锁全部进阶课程</p>
+          <p class="text-xs mb-3" style="color:var(--text-mute)">年度会员可免费学习所有进阶课程</p>
+          <button type="button" onclick="showVipPlans()" class="btn-primary py-2 px-6 rounded-full text-sm">查看会员权益</button>
+        </div>
       </div>
 
       <div id="lib-course" class="space-y-4">

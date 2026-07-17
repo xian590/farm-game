@@ -6654,6 +6654,15 @@ function unlockWithCrystals(type, cost) {
   if(type === 'tarot_once') { crystalState.tarotUnlocks = (crystalState.tarotUnlocks || 0) + 1; showToast('已解锁 1 次塔罗占卜！🔮'); }
   if(type === 'sats_once') { crystalState.satsUnlocks = (crystalState.satsUnlocks || 0) + 1; showToast('已解锁 1 次 SATS 放松！🧘'); }
   if(type === 'movie_once') { crystalState.movieUnlocks = (crystalState.movieUnlocks || 0) + 1; showToast('已解锁 1 次观影！🎬'); }
+  // 进阶课程解锁
+  if(type.startsWith('premium_')) {
+    const courseId = type.replace('premium_', '');
+    const unlocked = StorageUtil.get('premium_courses_unlocked', {});
+    unlocked[courseId] = true;
+    StorageUtil.set('premium_courses_unlocked', unlocked);
+    showToast('已解锁进阶课程！🎓');
+    if(typeof renderPremiumCourses === 'function') renderPremiumCourses();
+  }
   saveVipState();
   updateCrystalDisplay();
   triggerConfetti();

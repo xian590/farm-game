@@ -7,8 +7,17 @@
 let currentLibTab = 'course';
 let currentMediaTab = 'movies';
 
+// 付费进阶课程
+const PREMIUM_COURSES = [
+  { id: 'p1', title: '深度显化加速器', summary: '7天密集训练，掌握高级显化技巧', lessons: 7, freePreview: 1, crystalCost: 50, content: '<p>Day 1: 清理深层限制性信念<br>Day 2: 构建多维愿望图景<br>Day 3: 高级SATS状态像似睡眠<br>Day 4: 情绪调频与振动提升<br>Day 5: 平行现实跳跃技术<br>Day 6: 持续显化的维持机制<br>Day 7: 个人显化系统整合</p>' },
+  { id: 'p2', title: 'SP关系修复课', summary: '用显化法则重建健康关系', lessons: 5, freePreview: 1, crystalCost: 40, content: '<p>Lesson 1: 理解关系显化的底层逻辑<br>Lesson 2: 释放对SP的执念和抓取感<br>Lesson 3: 构建理想关系的内在图景<br>Lesson 4: 自我概念重塑与自信建立<br>Lesson 5: 关系显化的日常维护与校准</p>' },
+  { id: 'p3', title: '财富丰盛显化课', summary: '从匮乏到丰盛的完整转化路径', lessons: 6, freePreview: 1, crystalCost: 45, content: '<p>Module 1: 识别并清除金钱限制性信念<br>Module 2: 建立丰盛的自我概念<br>Module 3: 财富视觉化与情感对齐<br>Module 4: 行动灵感与机会识别<br>Module 5: 接收与感恩的练习<br>Module 6: 持续丰盛的长期策略</p>' },
+  { id: 'p4', title: '21天自我概念重塑', summary: '每天15分钟，彻底重塑你的自我形象', lessons: 21, freePreview: 3, crystalCost: 60, content: '<p>Week 1: 觉察期 - 识别旧自我概念<br>Week 2: 重塑期 - 安装新自我概念<br>Week 3: 巩固期 - 新身份自动化<br>每天配套：肯定语 + 视觉化 + 日记</p>' }
+];
+
 function renderLibrary() {
   renderCourses();
+  renderPremiumCourses();
   renderBookshelf();
   renderMethodsList();
   renderGuides();
@@ -21,9 +30,11 @@ function switchLibTab(tab, btn) {
   if (btn) btn.classList.add('active');
   currentLibTab = tab;
   const courseEl = document.getElementById('lib-course');
+  const premiumEl = document.getElementById('lib-premium');
   const booksEl = document.getElementById('lib-books');
   const methodsEl = document.getElementById('lib-methods');
   if (courseEl) courseEl.classList.toggle('hidden', tab !== 'course');
+  if (premiumEl) premiumEl.classList.toggle('hidden', tab !== 'premium');
   if (booksEl) booksEl.classList.toggle('hidden', tab !== 'books');
   if (methodsEl) methodsEl.classList.toggle('hidden', tab !== 'methods');
   const guideEl = document.getElementById('lib-guide');
@@ -96,6 +107,67 @@ function markCourseDone(i) {
     checkBadges();
   }
   closeCourseModal();
+}
+
+/* ===== 付费进阶课程 v11 ===== */
+function renderPremiumCourses() {
+  const el = document.getElementById('premium-course-list');
+  if (!el) return;
+  const tier = getCurrentTier();
+  const isMember = tier !== 'free';
+  const unlocked = StorageUtil.get('premium_courses_unlocked', {});
+  
+  el.innerHTML = PREMIUM_COURSES.map((c, i) => {
+    const isUnlocked = isMember || unlocked[c.id];
+    const isPreview = !isUnlocked && c.freePreview > 0;
+    return `
+      <div class="p-4 rounded-xl cursor-pointer card-hover relative overflow-hidden" style="background:linear-gradient(135deg,rgba(212,181,199,0.08),rgba(245,213,185,0.05));border:1px solid rgba(212,181,199,0.15)" onclick="openPremiumCourse(${i})">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-title shrink-0" style="background:linear-gradient(135deg, #F5D5B9, #D4B5C7); color:white">💎</div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-title text-sm truncate" style="color:var(--theme-text)">${c.title}</h4>
+            <p class="text-xs truncate" style="color:var(--text-mute)">${c.summary}</p>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-[10px]" style="color:var(--text-mute)">${c.lessons} 节课</span>
+              ${isUnlocked ? '<span class="text-[10px] px-1.5 py-0.5 rounded-full" style="background:rgba(136,200,152,0.15);color:#5B8C5A">已解锁</span>' : ''}
+              ${isPreview ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full" style="background:rgba(212,181,199,0.15);color:var(--theme-primary)">免费试学 ${c.freePreview} 节</span>` : ''}
+              ${!isUnlocked && !isPreview ? `<span class="text-[10px] px-1.5 py-0.5 rounded-full" style="background:rgba(245,213,185,0.25);color:var(--theme-primary)">💎 ${c.crystalCost} 解锁</span>` : ''}
+            </div>
+          </div>
+          <div class="text-lg">${isUnlocked ? '▶️' : '🔒'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+function openPremiumCourse(i) {
+  const c = PREMIUM_COURSES[i];
+  const tier = getCurrentTier();
+  const isMember = tier !== 'free';
+  const unlocked = StorageUtil.get('premium_courses_unlocked', {});
+  
+  if (!isMember && !unlocked[c.id]) {
+    // 未解锁，显示解锁弹窗
+    showLockModal(c.title, `「${c.title}」是进阶课程。免费用户可试学 ${c.freePreview} 节课。解锁全部 ${c.lessons} 节课需 ${c.crystalCost} 星光水晶，或升级会员免费学习。`, { crystalCost: c.crystalCost, crystalType: 'premium_' + c.id });
+    return;
+  }
+  
+  setHTML('course-detail-content', `
+    <div class="mb-4">
+      <div class="text-xs mb-1" style="color:var(--theme-text); opacity:0.5">💎 进阶课程 / ${c.title}</div>
+      <h3 class="font-display text-lg" style="color:var(--theme-text)">${c.title}</h3>
+      <p class="text-xs mt-1" style="color:var(--text-mute)">${c.lessons} 节课 · ${c.summary}</p>
+    </div>
+    <div class="max-h-[60vh] overflow-y-auto pr-1" style="color:var(--theme-text)">
+      ${c.content}
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeCourseModal()" class="soft-btn btn-primary flex-1 py-2 text-sm font-title">✨ 开始学习</button>
+    </div>
+  `);
+  showModal('course-modal');
+  playSound('page');
+  trackEvent('premium_course_open', { courseId: c.id, tier: tier });
 }
 
 function renderBookshelf() {
@@ -940,6 +1012,8 @@ window.renderLibrary = renderLibrary;
 window.switchLibTab = switchLibTab;
 window.renderCourses = renderCourses;
 window.openCourse = openCourse;
+window.renderPremiumCourses = renderPremiumCourses;
+window.openPremiumCourse = openPremiumCourse;
 window.closeCourseModal = closeCourseModal;
 window.prevCourse = prevCourse;
 window.nextCourse = nextCourse;
