@@ -2211,12 +2211,25 @@ function showPage(name, direction) {
       if (p.getAttribute('tabindex') !== '-1') p.setAttribute('tabindex', '-1');
       if (p.focus) p.focus({ preventScroll: true });
     }, 100);
-    __pageHistory.push(name);
-    if (__pageHistory.length > 50) __pageHistory = __pageHistory.slice(-30); // 防止历史记录无限增长
+    if (!direction) {
+      // 避免连续重复压栈（Tab切换时）
+      if (__pageHistory.length === 0 || __pageHistory[__pageHistory.length - 1] !== name) {
+        __pageHistory.push(name);
+        if (__pageHistory.length > 50) __pageHistory = __pageHistory.slice(-30); // 防止历史记录无限增长
+      }
+    }
   }
   document.querySelectorAll('.modal-backdrop.show').forEach(m => m.classList.remove('show'));
 }
 function goBack() {
+  if (__pageHistory.length > 1) {
+    __pageHistory.pop(); // remove current
+    const prev = __pageHistory[__pageHistory.length - 1]; // peek, don't pop
+    if (prev) showPage(prev, 'back');
+  } else {
+    goHome();
+  }
+}
   if (__pageHistory.length > 1) {
     __pageHistory.pop(); // remove current
     const prev = __pageHistory.pop(); // get previous
@@ -6268,6 +6281,32 @@ function addVipToMePage() {
   }
 }
 document.addEventListener('DOMContentLoaded', function() {
+  // P1-6: Keyboard scroll handling for mobile inputs
+  if ('visualViewport' in window) {
+    const inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(el => {
+      el.addEventListener('focus', () => {
+        setTimeout(() => {
+          const rect = el.getBoundingClientRect();
+          const vvHeight = window.visualViewport.height;
+          if (rect.bottom > vvHeight - 80) {
+            const offset = rect.bottom - vvHeight + 80;
+            window.scrollBy({ top: offset, behavior: 'smooth' });
+          }
+        }, 300);
+      });
+    });
+  }
+  setTimeout(() => {
+    loadVipState();
+    addVipNavEntry();
+    addVipToMePage();
+    checkAutoPromotions();
+    loadDarkMode();
+    autoDarkMode();
+    initZodiacAndBirthday();
+  }, 2000);
+});
   setTimeout(() => {
     loadVipState();
     addVipNavEntry();

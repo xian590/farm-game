@@ -302,6 +302,73 @@
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.5);
     }
+
+    /* iPhone safe area support */
+    .bottom-nav {
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    main {
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    .page {
+      padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    }
+    /* Toast styles */
+    .toast {
+      position: fixed;
+      bottom: calc(80px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(93, 78, 109, 0.9);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      max-width: 90vw;
+      text-align: center;
+      word-break: break-word;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    /* Timer pulse animation */
+    @keyframes pulse-timing {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .timer-pulse {
+      animation: pulse-timing 1.5s ease-in-out infinite;
+      color: #E8B5C8;
+    }
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .page, .card-hover, .soft-btn, .glass-card, .animate-breath, .animate-float, .animate-twinkle {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+    /* Dark mode glass-card border enhancement */
+    body.dark .glass-card {
+      border-color: rgba(184, 169, 201, 0.3);
+    }
+    /* Radar chart responsive container */
+    #radar-chart {
+      width: 100%;
+      max-width: 240px;
+      margin: 0 auto;
+    }
+    #radar-chart svg {
+      width: 100%;
+      height: auto;
+    }
+    
     </style>
   <script src="https://cdn.tailwindcss.com" onerror="console.warn('Tailwind CDN 加载失败'); window.__tailwindFailed = true;"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -586,6 +653,23 @@
       <div id="habit-heatmap-wrapper" class="glass-card p-4 mb-4 hidden">
         <h3 class="text-sm font-medium mb-3" style="color:var(--theme-text)">🔥 能量打卡</h3>
         <div id="habit-heatmap"></div>
+      </div>
+
+      <!-- 今日历练快捷入口 -->
+      <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="openModule('quest')" tabindex="0">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl shrink-0">🎯</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] mb-1" style="color:var(--theme-text); opacity:0.5">今日历练 · 任务与专注</div>
+            <div class="text-sm font-title leading-relaxed" style="color:var(--theme-text)">
+              进入任务清单，开启专注计时
+            </div>
+            <div class="text-[10px] mt-1" style="color:var(--theme-text); opacity:0.6">
+              管理任务 · 番茄钟 · 周回顾 · 能力雷达
+            </div>
+          </div>
+          <div class="text-lg opacity-40 shrink-0">→</div>
+        </div>
       </div>
 
       <!-- 今日运势 -->
@@ -3418,7 +3502,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2 L15 8 L22 9 L17 14 L18 21 L12 18 L6 21 L7 14 L2 9 L9 8 Z"/>
       </svg>
-      <span>成长</span>
+      <span>工具</span>
     </div>
     <div class="nav-item" onclick="switchTab('library')" id="nav-library" tabindex="0">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

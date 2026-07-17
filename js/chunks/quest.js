@@ -59,6 +59,8 @@
       if (q) { q.status = q.status === 'done' ? 'active' : 'done'; q.completedAt = q.status === 'done' ? Date.now() : null; saveState(); renderQuests(); }
     },
     remove: function(id) {
+      const q = state.quests.find(x => x.id === id);
+      if (q && !confirm('确定要删除任务「' + q.title + '」吗？')) return;
       state.quests = state.quests.filter(x => x.id !== id);
       saveState();
       renderQuests();
@@ -77,7 +79,7 @@
     if (filter === 'done') list = list.filter(q => q.status === 'done');
 
     if (list.length === 0) {
-      container.innerHTML = '<div class="text-center py-8 text-xs" style="color:var(--text-mute)">还没有任务，添加第一个成长小目标吧 🌱</div>';
+      container.innerHTML = '<div class="text-center py-8"><div class="text-2xl mb-2" aria-hidden="true">🌱</div><div class="text-xs mb-3" style="color:var(--text-mute)">还没有任务，添加第一个成长小目标吧</div><button onclick="document.getElementById(\'quest-input\').focus()" class="soft-btn btn-primary px-4 py-2 text-xs rounded-full">➕ 添加任务</button></div>';
       return;
     }
 
@@ -120,6 +122,8 @@
       tick();
       timerInterval = setInterval(tick, 1000);
       renderTimer();
+      const display = document.getElementById('timer-display');
+      if (display) display.classList.add('timer-pulse');
     },
     pause: function() {
       if (!state.timer.running) return;
@@ -131,6 +135,8 @@
       clearInterval(timerInterval);
       saveState();
       renderTimer();
+      const display = document.getElementById('timer-display');
+      if (display) display.classList.remove('timer-pulse');
     },
     reset: function() {
       state.timer.running = false;
@@ -139,6 +145,8 @@
       clearInterval(timerInterval);
       saveState();
       renderTimer();
+      const display = document.getElementById('timer-display');
+      if (display) display.classList.remove('timer-pulse');
     },
     finish: function() {
       const totalSec = state.timer.accumulated + (state.timer.startTime ? Math.floor((Date.now() - state.timer.startTime) / 1000) : 0);
@@ -295,6 +303,33 @@
       sel.innerHTML = '<option value="">选择关联任务</option>' + state.quests.filter(q => q.status !== 'done').map(q => `<option value="${q.id}">${q.title}</option>`).join('');
       sel.value = state.timer.taskId || '';
     }
+    // P2-9: Sprint textarea auto-save
+    let sprintAutoSaveTimer;
+    ['sprint-scan','sprint-prioritize','sprint-iterate','sprint-nurture','sprint-transform'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        clearTimeout(sprintAutoSaveTimer);
+        sprintAutoSaveTimer = setTimeout(() => {
+          saveSprint();
+          if (typeof showToast === 'function') showToast('💾 已自动保存');
+        }, 2000);
+      });
+    });
+  };
+  window.initQuestModule = function() {
+    renderQuests();
+    renderTimer();
+    renderStats();
+    loadSprint();
+    loadRadar();
+    renderInspirations();
+    // Populate task selector in timer
+    const sel = document.getElementById('timer-task-select');
+    if (sel) {
+      sel.innerHTML = '<option value="">选择关联任务</option>' + state.quests.filter(q => q.status !== 'done').map(q => `<option value="${q.id}">${q.title}</option>`).join('');
+      sel.value = state.timer.taskId || '';
+    }
   };
 
   // ===== SPRINT 周回顾 =====
@@ -330,7 +365,9 @@
   function renderRadarChart(values) {
     const container = document.getElementById('radar-chart');
     if (!container) return;
-    const size = 180, cx = size / 2, cy = size / 2, maxR = size * 0.38;
+    const containerWidth = container.clientWidth || 320;
+    const size = Math.min(200, containerWidth - 32);
+    const cx = size / 2, cy = size / 2, maxR = size * 0.38;
     const dims = RADAR_DIMS;
     const count = dims.length;
     let points = '';
