@@ -279,6 +279,209 @@ function getABTestReport() {
   });
   return report;
 }
+/* ===== 游戏化等级成长体系 v14 ===== */
+const LEVEL_CONFIG = {
+  maxLevel: 20,
+  titles: [
+    '新手', '探索者', '见习者', '践行者', '显化者',
+    '创造者', '高级显化者', '星际使者', '宇宙公主', '显化大师',
+    '灵魂导师', '星际女王', '宇宙之光', '命运编织者', '维度旅者',
+    '永恒显化者', '无限创造者', '宇宙源头', '全知全能', '终极公主'
+  ],
+  // 每级所需XP (递增)
+  xpReqs: [0, 50, 120, 220, 360, 540, 760, 1020, 1340, 1720, 2160, 2660, 3220, 3860, 4580, 5400, 6320, 7360, 8520, 9820, 11300],
+  rewards: {
+    2:  { crystals: 20, title: '探索者', badge: 'first_step' },
+    3:  { crystals: 30, title: '见习者', badge: 'learner' },
+    5:  { crystals: 50, title: '显化者', badge: 'manifester' },
+    7:  { crystals: 80, title: '高级显化者', badge: 'advanced' },
+    10: { crystals: 150, title: '显化大师', badge: 'master' },
+    15: { crystals: 300, title: '命运编织者', badge: 'weaver' },
+    20: { crystals: 500, title: '终极公主', badge: 'ultimate' }
+  }
+};
+const XP_SOURCES = {
+  checkin: { xp: 10, label: '每日打卡', dailyLimit: 1 },
+  wish: { xp: 5, label: '许愿', dailyLimit: 5 },
+  mood: { xp: 5, label: '记录心情', dailyLimit: 3 },
+  diary: { xp: 8, label: '写日记', dailyLimit: 3 },
+  timer: { xp: 20, label: '完成专注', dailyLimit: 5 },
+  tool: { xp: 15, label: '使用工具', dailyLimit: 5 },
+  tarot: { xp: 5, label: '塔罗占卜', dailyLimit: 3 },
+  affirm: { xp: 3, label: '肯定语', dailyLimit: 10 },
+  test: { xp: 25, label: '完成测试', dailyLimit: 1 },
+  share: { xp: 10, label: '分享', dailyLimit: 3 },
+  streak3: { xp: 15, label: '连续3天', dailyLimit: 0 },
+  streak7: { xp: 35, label: '连续7天', dailyLimit: 0 },
+  streak30: { xp: 100, label: '连续30天', dailyLimit: 0 }
+};
+function getLevelState() {
+  return safeLocalStorage.getObject('wish_island_level', { xp: 0, level: 1, daily: {}, history: [] });
+}
+function saveLevelState(state) {
+  safeLocalStorage.setObject('wish_island_level', state);
+}
+function getLevel() {
+  const st = getLevelState();
+  let lvl = 1;
+  for(let i = 1; i <= LEVEL_CONFIG.maxLevel; i++) {
+    if(st.xp >= LEVEL_CONFIG.xpReqs[i]) lvl = i;
+    else break;
+  }
+  return lvl;
+}
+function getLevelData() {
+  const st = getLevelState();
+  const level = getLevel();
+  const nextXp = LEVEL_CONFIG.xpReqs[level + 1] || LEVEL_CONFIG.xpReqs[LEVEL_CONFIG.maxLevel];
+  const prevXp = LEVEL_CONFIG.xpReqs[level];
+  const need = nextXp - prevXp;
+  const have = st.xp - prevXp;
+  return { xp: st.xp, level, title: LEVEL_CONFIG.titles[level - 1] || '新手', progress: Math.max(0, Math.min(1, need > 0 ? have / need : 1)), need, have, nextXp };
+}
+function addXP(source, extra) {
+  const cfg = XP_SOURCES[source];
+  if(!cfg) return;
+  const today = new Date().toDateString();
+  let st = getLevelState();
+  if(!st.daily) st.daily = {};
+  if(!st.daily[today]) st.daily[today] = {};
+  const dailyCount = st.daily[today][source] || 0;
+  if(cfg.dailyLimit > 0 && dailyCount >= cfg.dailyLimit) return;
+  
+  const xp = (extra || cfg.xp);
+  st.xp += xp;
+  st.daily[today][source] = dailyCount + 1;
+  st.history.push({ source, xp, time: Date.now() });
+  if(st.history.length > 200) st.history = st.history.slice(-200);
+  saveLevelState(st);
+  
+  const oldLevel = getLevelState().level || 1;
+  const newLevel = getLevel();
+  if(newLevel > oldLevel) {
+    st.level = newLevel;
+    saveLevelState(st);
+    showLevelUpModal(newLevel);
+    // 发放等级奖励
+    const reward = LEVEL_CONFIG.rewards[newLevel];
+    if(reward) {
+      if(reward.crystals) {
+        crystalState.crystals += reward.crystals;
+        saveVipState();
+        updateCrystalDisplay();
+      }
+      if(reward.badge) addBadge(reward.badge, reward.title);
+    }
+    trackEvent('level_up', { level: newLevel, xp: st.xp, source: source });
+  }
+  updateLevelDisplay();
+  trackEvent('xp_gain', { source: source, xp: xp, total: st.xp });
+}
+function showLevelUpModal(newLevel) {
+  const title = LEVEL_CONFIG.titles[newLevel - 1] || '新手';
+  const reward = LEVEL_CONFIG.rewards[newLevel];
+  let modal = document.getElementById('levelup-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'levelup-modal';
+    modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.onclick = function(e) { if(e.target === this) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-content p-6 text-center" style="max-width:320px; animation: bounceSoft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)">
+      <div class="text-5xl mb-3">🎉</div>
+      <h3 class="font-title text-xl mb-1" style="color:var(--theme-text)">等级提升！</h3>
+      <div class="text-3xl font-bold mb-2" style="background:linear-gradient(135deg,#D4A5B8,#B8A9C9); -webkit-background-clip:text; -webkit-text-fill-color:transparent">Lv.${newLevel}</div>
+      <div class="text-sm font-medium mb-3" style="color:var(--theme-text)">${title}</div>
+      ${reward ? `
+        <div class="p-3 rounded-xl mb-4 text-xs" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(212,181,199,0.1));border:1px solid rgba(245,158,11,0.15)">
+          <div class="font-bold mb-1">🎁 升级奖励</div>
+          ${reward.crystals ? `<div>💎 ${reward.crystals} 星光水晶</div>` : ''}
+          ${reward.badge ? `<div>🏅 解锁徽章「${reward.title}」</div>` : ''}
+        </div>
+      ` : ''}
+      <button type="button" onclick="document.getElementById('levelup-modal').classList.remove('show')" class="btn-primary w-full py-3 rounded-xl font-medium">继续成长 ✨</button>
+    </div>
+  `;
+  modal.classList.add('show');
+  triggerConfetti();
+}
+function updateLevelDisplay() {
+  const data = getLevelData();
+  const levelEl = document.getElementById('stat-level');
+  if(levelEl) levelEl.textContent = data.title;
+  const meLevel = document.getElementById('me-level');
+  if(meLevel) meLevel.textContent = `Lv.${data.level} ${data.title}`;
+  // 更新进度条
+  const bar = document.getElementById('level-progress-bar');
+  if(bar) bar.style.width = (data.progress * 100) + '%';
+  const text = document.getElementById('level-progress-text');
+  if(text) text.textContent = `${data.have}/${data.need} XP`;
+}
+function getLevelPrivileges() {
+  const lvl = getLevel();
+  const privs = [];
+  if(lvl >= 3) privs.push('每日签到水晶+5');
+  if(lvl >= 5) privs.push('解锁高级肯定语库');
+  if(lvl >= 7) privs.push('专属头像框');
+  if(lvl >= 10) privs.push('会员折扣9折');
+  if(lvl >= 15) privs.push('专属主题色');
+  if(lvl >= 20) privs.push('终极公主称号+终身荣誉');
+  return privs;
+}
+function showLevelPage() {
+  const data = getLevelData();
+  const privs = getLevelPrivileges();
+  let modal = document.getElementById('level-page-modal');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'level-page-modal';
+    modal.className = 'modal-backdrop';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.onclick = function(e) { if(e.target === this) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-content p-6" style="max-width:340px">
+      <div class="text-center mb-4">
+        <div class="text-4xl mb-2">👑</div>
+        <div class="text-2xl font-bold" style="background:linear-gradient(135deg,#D4A5B8,#B8A9C9); -webkit-background-clip:text; -webkit-text-fill-color:transparent">Lv.${data.level}</div>
+        <div class="text-sm font-medium" style="color:var(--theme-text)">${data.title}</div>
+      </div>
+      <div class="mb-4">
+        <div class="flex justify-between text-xs mb-1" style="color:var(--text-mute)">
+          <span>升级进度</span>
+          <span id="level-page-progress">${data.have}/${data.need} XP</span>
+        </div>
+        <div class="h-2.5 rounded-full overflow-hidden" style="background:rgba(212,181,199,0.15)">
+          <div class="h-full rounded-full" style="width:${data.progress * 100}%; background:linear-gradient(135deg,#D4A5B8,#B8A9C9); transition:width 0.5s ease"></div>
+        </div>
+      </div>
+      <div class="text-xs mb-3" style="color:var(--text-mute)">当前总 XP: ${data.xp}</div>
+      <div class="mb-4">
+        <div class="text-xs font-medium mb-2" style="color:var(--theme-text)">✨ 等级特权</div>
+        ${privs.length ? privs.map(p => `<div class="text-xs mb-1" style="color:var(--text-soft)">· ${p}</div>`).join('') : '<div class="text-xs" style="color:var(--text-mute)">继续升级解锁特权...</div>'}
+      </div>
+      <div class="mb-4">
+        <div class="text-xs font-medium mb-2" style="color:var(--theme-text)">📈 获取 XP 途径</div>
+        <div class="grid grid-cols-2 gap-2 text-[10px]" style="color:var(--text-soft)">
+          <div class="p-2 rounded-lg" style="background:rgba(212,181,199,0.08)">打卡 +10</div>
+          <div class="p-2 rounded-lg" style="background:rgba(212,181,199,0.08)">许愿 +5</div>
+          <div class="p-2 rounded-lg" style="background:rgba(212,181,199,0.08)">专注 +20</div>
+          <div class="p-2 rounded-lg" style="background:rgba(212,181,199,0.08)">工具 +15</div>
+          <div class="p-2 rounded-lg" style="background:rgba(212,181,199,0.08)">心情 +5</div>
+          <div class="p-2 rounded-lg" style="background:rgba(212,181,199,0.08)">日记 +8</div>
+        </div>
+      </div>
+      <button type="button" onclick="document.getElementById('level-page-modal').classList.remove('show')" class="btn-soft w-full py-3 rounded-xl text-sm">关闭</button>
+    </div>
+  `;
+  modal.classList.add('show');
+}
 
 /* ===== 推送通知 ===== */
 function requestNotificationPermission() {
@@ -563,6 +766,7 @@ function submitFeedback() {
   trackFeedback(val);
   text.value = '';
   document.getElementById('feedback-modal').classList.remove('show');
+  addXP('share');
   showToast('反馈已提交，感谢你的建议！💫');
   // 奖励少量水晶
   crystalState.crystals += 2;
@@ -6714,6 +6918,11 @@ function doCheckIn() {
   if(streak === 60) { milestoneBonus = 300; milestoneMsg = '连续60天！双月成就，额外奖励300水晶 ⭐⭐'; }
   if(streak === 100) { milestoneBonus = 500; milestoneMsg = '连续100天！百日筑基，额外奖励500水晶 🌟🌟🌟'; }
   
+  // 等级经验值
+  addXP('checkin');
+  if(streak === 3) addXP('streak3');
+  if(streak === 7) addXP('streak7');
+  if(streak === 30) addXP('streak30');
   const totalReward = reward + milestoneBonus;
   crystalState.crystals += totalReward;
   crystalState.tasksToday.checkin = true;
@@ -9904,7 +10113,8 @@ function addWish(text, type, fields) {
   if (starsPage && starsPage.classList.contains('active')) renderStars();
   if (wishwallPage && wishwallPage.classList.contains('active')) renderWishWall();
 }
-function addDiary() { return newDiaryPrompt.apply(this, arguments); }
+function addDiary() {
+  addXP('diary'); return newDiaryPrompt.apply(this, arguments); }
 function logEmotion() { return recordMood.apply(this, arguments); }
 function addTask(name) { return addPlacematTask('my', name); }
 function closePage() { return goBack(); }
