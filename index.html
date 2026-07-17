@@ -655,6 +655,23 @@
         <div id="habit-heatmap"></div>
       </div>
 
+      <!-- 每日福利/任务卡片 -->
+      <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="showPage('vip');initVip()" tabindex="0" id="daily-bonus-card">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl shrink-0">🎁</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] mb-1" style="color:var(--theme-text); opacity:0.5">每日福利 · 签到赚水晶</div>
+            <div class="text-sm font-title leading-relaxed" style="color:var(--theme-text)" id="daily-bonus-text">
+              签到领取星光水晶，兑换专属功能
+            </div>
+            <div class="text-[10px] mt-1" style="color:var(--theme-text); opacity:0.6">
+              <span id="daily-bonus-streak">连续 0 天</span> · 💎 <span id="daily-bonus-crystals">0</span> 水晶
+            </div>
+          </div>
+          <div class="text-lg opacity-40 shrink-0">→</div>
+        </div>
+      </div>
+
       <!-- 今日历练快捷入口 -->
       <div class="glass-card p-4 mb-4 cursor-pointer card-hover" onclick="openModule('quest')" tabindex="0">
         <div class="flex items-start gap-3">
@@ -3177,6 +3194,7 @@
             <div class="flex items-center gap-2 mt-1">
               <span class="level-badge" id="me-level">新手</span>
               <span class="text-xs" style="color:var(--theme-text); opacity:0.5" id="me-persona-name">待解锁</span>
+              <span id="me-vip-badge" class="text-xs px-2 py-0.5 rounded-full font-medium" style="display:none;background:linear-gradient(135deg,#F59E0B,#D4B5C7);color:white">👑 VIP</span>
             </div>
           </div>
         </div>
@@ -4888,6 +4906,12 @@
     </div>
     <button type="button" onclick="selectSubscriptionPlan('member_first_month');closeLimitedOffer()" class="btn-primary w-full py-3 rounded-xl mb-2" aria-label="立即抢购">立即抢购</button>
     <button type="button" onclick="closeLimitedOffer()" class="text-xs" style="color:var(--text-mute)" aria-label="稍后再说">稍后再说</button>
+    <div class="mt-3 pt-3" style="border-top:1px solid rgba(212,181,199,0.15)">
+      <label class="flex items-center justify-center gap-2 cursor-pointer text-xs" style="color:var(--text-mute)">
+        <input type="checkbox" id="offer-never-again" class="accent-amber-500" onchange="neverShowOfferAgain(this.checked)">
+        <span>不再显示此优惠</span>
+      </label>
+    </div>
   </div>
 </div>
 
@@ -4899,6 +4923,7 @@
     <p class="text-sm mb-4" style="color:var(--text-soft)" id="lock-desc">升级会员即可解锁此功能</p>
     <div class="space-y-2 mb-3">
       <button type="button" onclick="closeLockModal();showPage('vip-plans')" class="btn-primary w-full py-3 rounded-xl font-medium" style="background:linear-gradient(135deg,#F59E0B,#D4B5C7)" aria-label="查看会员方案">👑 查看会员方案</button>
+      <button type="button" id="lock-crystal-btn" onclick="closeLockModal()" class="btn-soft w-full py-3 rounded-xl" aria-label="水晶解锁本次" style="display:none">💎 水晶解锁本次</button>
       <button type="button" onclick="closeLockModal();showPage('vip');initVip();" class="btn-soft w-full py-3 rounded-xl" aria-label="赚取星光水晶">💎 赚取星光水晶免费解锁</button>
     </div>
     <button type="button" onclick="closeLockModal()" class="text-xs" style="color:var(--text-mute);background:transparent;border:none;padding:4px 8px;" aria-label="稍后再说">稍后再说</button>

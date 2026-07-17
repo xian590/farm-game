@@ -6069,21 +6069,44 @@ function isFeatureLocked(feature) {
 function checkQuota(feature, action) {
   resetDailyUsageIfNeeded();
   const tier = getTierConfig();
-  if (feature === 'tarot') { if (todayUsage.tarot >= tier.dailyTarot) { showQuotaLock('星辰塔罗', tier.dailyTarot); return false; } todayUsage.tarot++; saveVipState(); return true; }
-  if (feature === 'ai') { if (todayUsage.ai >= tier.dailyAI) { showQuotaLock('AI 对话', tier.dailyAI); return false; } todayUsage.ai++; saveVipState(); return true; }
-  if (feature === 'sats') { if (todayUsage.sats >= tier.dailySats) { showQuotaLock('SATS 冥想', tier.dailySats); return false; } todayUsage.sats++; saveVipState(); return true; }
+  // 检查单次水晶解锁
+  const unlockMap = { tarot: 'tarotUnlocks', ai: 'aiUnlocks', sats: 'satsUnlocks' };
+  const unlockKey = unlockMap[feature];
+  if(unlockKey && crystalState[unlockKey] > 0) {
+    crystalState[unlockKey]--;
+    saveVipState();
+    showToast(`消耗 1 次水晶解锁的${feature === 'ai' ? 'AI对话' : feature === 'tarot' ? '塔罗占卜' : 'SATS放松'} 💎`);
+    return true;
+  }
+  if (feature === 'tarot') { if (todayUsage.tarot >= tier.dailyTarot) { showQuotaLock('星辰塔罗', tier.dailyTarot, 3, 'tarot_once'); return false; } todayUsage.tarot++; saveVipState(); return true; }
+  if (feature === 'ai') { if (todayUsage.ai >= tier.dailyAI) { showQuotaLock('AI 对话', tier.dailyAI, 5, 'ai_once'); return false; } todayUsage.ai++; saveVipState(); return true; }
+  if (feature === 'sats') { if (todayUsage.sats >= tier.dailySats) { showQuotaLock('SATS 冥想', tier.dailySats, 3, 'sats_once'); return false; } todayUsage.sats++; saveVipState(); return true; }
   if (feature === 'books') { return true; } // book lock handled by book count
   return true;
 }
-function showQuotaLock(name, limit) {
-  showLockModal(`今日${name}次数已用完`, `免费用户每天可使用 ${limit} 次。升级会员获得更多次数，或用星光水晶解锁额外使用。`);
+function showQuotaLock(name, limit, crystalCost, crystalType) {
+  showLockModal(`今日${name}次数已用完`, `免费用户每天可使用 ${limit} 次。升级会员获得更多次数，或用星光水晶解锁额外使用。`, crystalCost ? { crystalCost, crystalType } : null);
 }
-function showLockModal(title, desc) {
+function showLockModal(title, desc, options) {
   const t = document.getElementById('lock-title');
   const d = document.getElementById('lock-desc');
   const m = document.getElementById('lock-modal');
   if(t) t.textContent = title || '功能锁定';
   if(d) d.textContent = desc || '升级会员即可解锁此功能';
+  // 动态水晶解锁按钮
+  const crystalBtn = document.getElementById('lock-crystal-btn');
+  if(crystalBtn) {
+    if(options && options.crystalCost && options.crystalType) {
+      crystalBtn.style.display = 'block';
+      crystalBtn.textContent = `💎 ${options.crystalCost} 水晶解锁本次`;
+      crystalBtn.onclick = function() {
+        closeLockModal();
+        unlockWithCrystals(options.crystalType, options.crystalCost);
+      };
+    } else {
+      crystalBtn.style.display = 'none';
+    }
+  }
   if(m) m.classList.add('show');
 }
 function closeLockModal() { const m = document.getElementById('lock-modal'); if(m) m.classList.remove('show'); }
@@ -6104,6 +6127,11 @@ function initVip() {
   // 控制"我的"页面VIP横幅
   const banner = document.getElementById('me-vip-banner');
   if(banner) banner.style.display = tier === 'free' ? 'block' : 'none';
+  // 控制"我的"页面VIP标识
+  const vipBadge = document.getElementById('me-vip-badge');
+  if(vipBadge) vipBadge.style.display = tier !== 'free' ? 'inline-block' : 'none';
+  // 首页每日福利更新
+  updateDailyBonusCard();
   renderCheckIn();
   renderTasks();
   generateInviteCode();
@@ -6212,6 +6240,11 @@ function unlockWithCrystals(type, cost) {
     vipState.tier = 'member'; vipState.expiry = tomorrow.toISOString();
     showToast('已解锁 1 天会员体验！✨'); 
   }
+  // 单次解锁场景
+  if(type === 'ai_once') { crystalState.aiUnlocks += 1; showToast('已解锁 1 次 AI 对话！🤖'); }
+  if(type === 'tarot_once') { crystalState.tarotUnlocks = (crystalState.tarotUnlocks || 0) + 1; showToast('已解锁 1 次塔罗占卜！🔮'); }
+  if(type === 'sats_once') { crystalState.satsUnlocks = (crystalState.satsUnlocks || 0) + 1; showToast('已解锁 1 次 SATS 放松！🧘'); }
+  if(type === 'movie_once') { crystalState.movieUnlocks = (crystalState.movieUnlocks || 0) + 1; showToast('已解锁 1 次观影！🎬'); }
   saveVipState();
   updateCrystalDisplay();
   triggerConfetti();
@@ -6290,7 +6323,20 @@ function processPayment(planId, method) {
     setTimeout(() => { goHome(); }, 1500);
   }, 1500);
 }
+function neverShowOfferAgain(checked) {
+  if(checked) {
+    safeLocalStorage.setItem('wish_island_offer_never', 'true');
+    showToast('已设置不再显示此优惠');
+  } else {
+    safeLocalStorage.removeItem('wish_island_offer_never');
+  }
+}
+function shouldShowOffer() {
+  return safeLocalStorage.getItem('wish_island_offer_never') !== 'true';
+}
+
 function showLimitedOffer() {
+  if(safeLocalStorage.getItem('wish_island_offer_never') === 'true') return;
   const m = document.getElementById('limited-offer-modal');
   if(m) m.classList.add('show');
   startOfferTimer();
@@ -9111,6 +9157,10 @@ window.nextOnboardingStep = nextOnboardingStep;
 window.closeOnboarding = closeOnboarding;
 window.trackUsage = trackUsage;
 window.checkRetention = checkRetention;
+window.neverShowOfferAgain = neverShowOfferAgain;
+window.shouldShowOffer = shouldShowOffer;
+window.updateDailyBonusCard = updateDailyBonusCard;
+window.unlockWithCrystals = unlockWithCrystals;
 window.selectTimerDuration = selectTimerDuration;
 window.selectTimerMode = selectTimerMode;
 window.selectVoice = selectVoice;
